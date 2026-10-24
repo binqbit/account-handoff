@@ -269,7 +269,9 @@ export class Application implements ApplicationFacade {
             actionId: r.actionId,
             title: r.title,
             description:
-              "Збережений запит потребує звіряння після перезапуску.",
+              r.stage === "signed"
+                ? "Підписані байти збережені до надсилання. Відновіть їхній перегляд і перевірте поточний стан перед окремою командою надсилання."
+                : "Збережений запит потребує звіряння після перезапуску.",
             stage: r.stage,
             tone: "warning",
             actor: r.signer,
@@ -2444,15 +2446,77 @@ export class Application implements ApplicationFacade {
       throw new Error(
         "Збережений контекст підпису не узгоджується зі спробою.",
       );
-    const receipt = await this.connection.findReceipt(
-      hex(attempt.signedExtrinsicHash, 32),
-    );
-    if (!receipt)
+    const resumeSigned = r.stage === "signed";
+    const receipt = resumeSigned
+      ? null
+      : await this.connection.findReceipt(hex(attempt.signedExtrinsicHash, 32));
+    if (!receipt && !resumeSigned)
       throw new Error(
         "Точну транзакцію не знайдено; стан залишається невідомим.",
       );
     const payload = JSON.parse(r.context.originalSignPayloadJcsUtf8);
-    const action = nativeActionFromTree(envelope.callTree);
+    const innerAction = nativeActionFromTree(envelope.callTree);
+    let action = innerAction;
+    if (resumeSigned) {
+      if (
+        blake2AsHex(hex(attempt.signedExtrinsicBytes)) !==
+          attempt.signedExtrinsicHash ||
+        blake2AsHex(hex(r.context.outerCallBytes)) !== r.context.outerCallHash
+      )
+        throw new Error(
+          "Збережені підписані байти або RuntimeCall мають інший хеш.",
+        );
+      if (envelope.controller) {
+        const weight = envelope.resources.multisigInnerMaxWeight;
+        if (!weight) throw new Error("Відсутня збережена межа ваги multisig.");
+        let timepoint: { height: number; index: number } | undefined;
+        if (r.context.operationPhase === "multisig_final") {
+          const proposal = r.context.nativeProposalDigest
+            ? await this.journal.getRecordByDigest(
+                r.context.nativeProposalDigest,
+              )
+            : undefined;
+          if (
+            proposal?.kind !== "NativeProposal" ||
+            !proposal.timepoint ||
+            proposal.multisig !== envelope.controller.account ||
+            proposal.innerCallHash !== envelope.innerRuntimeCallHash ||
+            proposal.profileDigest !== envelope.intent.profileDigest
+          )
+            throw new Error(
+              "Відсутній точний збережений контекст native-пропозиції.",
+            );
+          timepoint = {
+            height: Number(proposal.timepoint.height),
+            index: Number(proposal.timepoint.index),
+          };
+          if (
+            !Number.isSafeInteger(timepoint.height) ||
+            !Number.isSafeInteger(timepoint.index)
+          )
+            throw new Error("Некоректний timepoint збереженої пропозиції.");
+        }
+        action = {
+          kind: "multisig",
+          threshold: 2,
+          others: otherSignatories(envelope.controller, r.signer),
+          timepoint,
+          inner: innerAction,
+          weight: {
+            refTime: BigInt(weight.refTime),
+            proofSize: BigInt(weight.proofSize),
+          },
+        };
+      }
+      if (
+        this.connection.transaction(innerAction).callHex !==
+          envelope.innerRuntimeCallBytes ||
+        this.connection.transaction(action).callHex !== r.context.outerCallBytes
+      )
+        throw new Error(
+          "Поточний native-декодер не відтворює точні збережені виклики.",
+        );
+    }
     const lease = await this.journal.acquireLease(
       `operation:${r.workspaceId}`,
       this.tabId,
@@ -2464,11 +2528,13 @@ export class Application implements ApplicationFacade {
       workspaceId: r.workspaceId,
       actionId: envelope.intent.operationId,
       fields: {},
-      stage: "unknown",
+      stage: resumeSigned ? "signed" : "unknown",
       title: r.title,
-      description: "Звіряння збереженої підписаної спроби.",
+      description: resumeSigned
+        ? "Відновлено ті самі підписані байти. Надсилання потребує окремої явної команди."
+        : "Звіряння збереженої підписаної спроби.",
       action,
-      innerAction: action,
+      innerAction,
       envelope,
       prepared: {
         payload,
@@ -2503,7 +2569,19 @@ export class Application implements ApplicationFacade {
         : null,
     };
     this.pending = recovered;
-    await this.finish(recovered, receipt);
+    if (resumeSigned) {
+      try {
+        await this.checkPending(recovered.id);
+        await this.saveRecovery(recovered);
+      } catch (error) {
+        this.pending = null;
+        await this.journal.releaseLease(lease);
+        throw error;
+      }
+      this.render();
+      return;
+    }
+    await this.finish(recovered, receipt!);
   }
   private async import(contents: string) {
     const raw = object(parseBoundedJson(contents));

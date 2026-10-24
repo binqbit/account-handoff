@@ -247,7 +247,9 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                       })
                     }
                   >
-                    Звірити результат
+                    {active.stage === "signed"
+                      ? "Відновити підписану операцію"
+                      : "Звірити результат"}
                   </Button>
                 )}
                 {active.canDiscard && (
@@ -273,8 +275,9 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
               )}
               {active.canReconcile && (
                 <p className="footnote">
-                  Звіряння читає результат наявної спроби. Воно не створює новий
-                  nonce або новий підпис.
+                  {active.stage === "signed"
+                    ? "Відновлення відкриває збережений підписаний пакет. Надсилання залишається окремою дією; новий підпис не запитується."
+                    : "Звіряння читає результат наявної спроби. Воно не створює новий nonce або новий підпис."}
                 </p>
               )}
             </Card>
