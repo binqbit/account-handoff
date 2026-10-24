@@ -111,6 +111,7 @@ import {
   certificateReferencesPresent,
 } from "./continuity";
 import { validateLocalWorkspaceImport } from "./local-import";
+import { buildResourceReview } from "./resources";
 import {
   assessCurrentWallet,
   buildLocalQualification,
@@ -1455,20 +1456,21 @@ export class Application implements ApplicationFacade {
       phase,
       proposalDigest,
     );
+    const freshInput = await this.operationInputs(
+      {
+        envelope,
+        action,
+        signer: selected.address,
+        phase,
+        actionId: operationId,
+      },
+      chain.fingerprint,
+    );
     const qualification = await completePreparationSnapshot({
       profile: chain.profile,
       snapshot,
       envelope,
-      freshInput: await this.operationInputs(
-        {
-          envelope,
-          action,
-          signer: selected.address,
-          phase,
-          actionId: operationId,
-        },
-        chain.fingerprint,
-      ),
+      freshInput,
       signingContext: context,
       wallet:
         this.wallets.find((session) => session.source === selected.source) ??
@@ -1551,18 +1553,10 @@ export class Application implements ApplicationFacade {
                 : []),
               "Native runtime",
             ],
-      resources: [
-        {
-          label: "Сума",
-          amount: `${formatUnits(BigInt(resources.valueNative), chain.fingerprint.tokenDecimals)} ${chain.fingerprint.tokenSymbol}`,
-          payer: selected.address,
-        },
-        {
-          label: "Орієнтовна комісія",
-          amount: `${formatUnits(fee.partialFee, chain.fingerprint.tokenDecimals)} ${chain.fingerprint.tokenSymbol}`,
-          payer: selected.address,
-        },
-      ],
+      resources: buildResourceReview(freshInput, {
+        decimals: chain.fingerprint.tokenDecimals,
+        symbol: chain.fingerprint.tokenSymbol,
+      }),
     };
     this.recovery = null;
     this.render();
@@ -1973,6 +1967,10 @@ export class Application implements ApplicationFacade {
     );
     if (blockers.length)
       throw new Error(blockers.map((b) => b.message).join("; "));
+    p.resources = buildResourceReview(fresh, {
+      decimals: f.tokenDecimals,
+      symbol: f.tokenSymbol,
+    });
     return p;
   }
   private async saveRecovery(p: PendingOperation) {

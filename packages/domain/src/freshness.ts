@@ -76,6 +76,114 @@ export interface FreshOperationInput {
   reviewerAuthorized?: boolean;
 }
 
+export interface OperationResourceRequirement {
+  kind:
+    | "outer_fee"
+    | "value"
+    | "proposal_deposit"
+    | "pure_deposit"
+    | "mapping_hold"
+    | "proxy_increment"
+    | "storage_limit";
+  payer: string | null;
+  amountNative: bigint | undefined;
+  reason: string;
+  source:
+    | "reviewed_fee_budget"
+    | "reviewed_value"
+    | "runtime_multisig_deposit"
+    | "runtime_pure_deposit"
+    | "runtime_mapping_hold"
+    | "runtime_proxy_factor"
+    | "reviewed_storage_limit";
+}
+
+/** The same disjoint requirements drive affordability guards and the review's payer split. */
+export function operationResourceRequirements(
+  input: FreshOperationInput,
+): OperationResourceRequirement[] {
+  const { envelope, signer, phase } = input;
+  const operation = envelope.intent.operationId;
+  const required: OperationResourceRequirement[] = [];
+  const add = (
+    kind: OperationResourceRequirement["kind"],
+    payer: string | null,
+    amountNative: bigint | undefined,
+    reason: string,
+    source: OperationResourceRequirement["source"],
+  ) => required.push({ kind, payer, amountNative, reason, source });
+  add(
+    "outer_fee",
+    signer,
+    envelope.resources.outerFeeLocalBudgetNative === null
+      ? undefined
+      : BigInt(envelope.resources.outerFeeLocalBudgetNative),
+    "Outer fee",
+    "reviewed_fee_budget",
+  );
+  if (envelope.signingPath === "direct")
+    add(
+      "value",
+      signer,
+      BigInt(envelope.resources.valueNative),
+      "Transferred value",
+      "reviewed_value",
+    );
+  if (phase === "multisig_first")
+    add(
+      "proposal_deposit",
+      signer,
+      input.proposalDepositNative,
+      "Multisig proposal deposit",
+      "runtime_multisig_deposit",
+    );
+  if (operation === "GRC-SETUP-CREATE-PURE")
+    add(
+      "pure_deposit",
+      input.M0,
+      input.pureCreationDepositNative,
+      "Pure creation reserve",
+      "runtime_pure_deposit",
+    );
+  if (operation === "GRC-SETUP-MAP-P")
+    add(
+      "mapping_hold",
+      input.pure,
+      input.mappingDepositNative,
+      "Mapping hold",
+      "runtime_mapping_hold",
+    );
+  if (operation === "GRC-SETUP-MAP-ACTOR")
+    add(
+      "mapping_hold",
+      signer,
+      input.mappingDepositNative,
+      "Mapping hold",
+      "runtime_mapping_hold",
+    );
+  if (operation === "GRC-ROTATION-ADD-M1")
+    add(
+      "proxy_increment",
+      input.pure,
+      input.proxyIncrementNative,
+      "Additional controller reserve",
+      "runtime_proxy_factor",
+    );
+  if (operation.startsWith("GRC-GRANT-"))
+    add(
+      "storage_limit",
+      operation === "GRC-GRANT-SUBMIT-M0" || operation === "GRC-GRANT-SUBMIT-M1"
+        ? input.pure
+        : signer,
+      envelope.resources.storageDepositLimitNative === null
+        ? undefined
+        : BigInt(envelope.resources.storageDepositLimitNative),
+      "Contract storage budget",
+      "reviewed_storage_limit",
+    );
+  return required;
+}
+
 const ZERO_ADDRESS = `0x${"00".repeat(20)}`;
 const proxyOperations = new Set([
   "GRC-SETUP-MAP-P",
@@ -399,7 +507,6 @@ export function validateFreshOperation(input: FreshOperationInput): Blocker[] {
     }
   }
 
-  const fee = envelope.resources.outerFeeLocalBudgetNative;
   const balances = new Map<string, bigint>();
   const requireFunds = (
     who: string | null,
@@ -416,45 +523,11 @@ export function validateFreshOperation(input: FreshOperationInput): Blocker[] {
     }
     balances.set(who, (balances.get(who) ?? 0n) + amount);
   };
-  requireFunds(signer, fee === null ? undefined : BigInt(fee), "Outer fee");
-  if (envelope.signingPath === "direct")
+  for (const requirement of operationResourceRequirements(input))
     requireFunds(
-      signer,
-      BigInt(envelope.resources.valueNative),
-      "Transferred value",
-    );
-  if (phase === "multisig_first")
-    requireFunds(
-      signer,
-      input.proposalDepositNative,
-      "Multisig proposal deposit",
-    );
-  if (operationId === "GRC-SETUP-CREATE-PURE")
-    requireFunds(
-      input.M0,
-      input.pureCreationDepositNative,
-      "Pure creation reserve",
-    );
-  if (operationId === "GRC-SETUP-MAP-P")
-    requireFunds(input.pure, input.mappingDepositNative, "Mapping hold");
-  if (operationId === "GRC-SETUP-MAP-ACTOR")
-    requireFunds(signer, input.mappingDepositNative, "Mapping hold");
-  if (operationId === "GRC-ROTATION-ADD-M1")
-    requireFunds(
-      input.pure,
-      input.proxyIncrementNative,
-      "Additional controller reserve",
-    );
-  if (operationId.startsWith("GRC-GRANT-"))
-    requireFunds(
-      operationId === "GRC-GRANT-SUBMIT-M0" ||
-        operationId === "GRC-GRANT-SUBMIT-M1"
-        ? input.pure
-        : signer,
-      envelope.resources.storageDepositLimitNative === null
-        ? undefined
-        : BigInt(envelope.resources.storageDepositLimitNative),
-      "Contract storage budget",
+      requirement.payer,
+      requirement.amountNative,
+      requirement.reason,
     );
   for (const [who, needed] of balances) {
     const state = input.accounts[who];
