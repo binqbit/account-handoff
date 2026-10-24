@@ -10,6 +10,43 @@ const card = (page: Page) =>
     }),
   });
 
+test("the beneficiary emblem and address stay aligned at desktop and phone widths", async ({
+  page,
+}) => {
+  for (const width of [1920, 1280, 390]) {
+    await page.setViewportSize({ width, height: 1080 });
+    await page.goto(`${harness}#overview`);
+    const beneficiary = page.locator(".card").filter({
+      has: page.getByRole("heading", {
+        name: "Grant beneficiary",
+        exact: true,
+      }),
+    });
+    const emblem = beneficiary.locator(".beneficiary-emblem");
+    const label = beneficiary.locator(".identity");
+    await expect(emblem).toHaveText("P");
+    const iconBox = (await emblem.boundingBox())!;
+    const labelBox = (await label.boundingBox())!;
+    expect(labelBox.x).toBeGreaterThan(iconBox.x + iconBox.width);
+    expect(
+      Math.abs(
+        labelBox.y + labelBox.height / 2 - iconBox.y - iconBox.height / 2,
+      ),
+    ).toBeLessThan(2);
+    const expand = label
+      .getByRole("button", { name: "Show full address", exact: true })
+      .first();
+    if (await expand.isVisible()) await expand.click();
+    const size = await beneficiary.evaluate((el) => ({
+      width: el.scrollWidth,
+      visible: el.clientWidth,
+    }));
+    expect(size.width).toBeLessThanOrEqual(size.visible);
+    const full = (await label.locator(".address-full:visible").boundingBox())!;
+    expect(full.x).toBeGreaterThanOrEqual(iconBox.x + iconBox.width);
+  }
+});
+
 test("matching identities show one result and keep comparison details optional", async ({
   page,
 }) => {

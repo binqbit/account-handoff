@@ -94,22 +94,30 @@
   color: #9fb7a6;
   margin-top: 16px;
 }
+.beneficiary-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.beneficiary-summary > .identity {
+  flex: 1;
+}
 .beneficiary-emblem {
-  height: 54px;
-  width: 54px;
+  height: 46px;
+  width: 46px;
+  flex: 0 0 46px;
   border: 1px solid #425e4c;
   border-radius: 15px;
   background: #23382d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   color: #c6e5ce;
-  margin-bottom: 15px;
 }
 .beneficiary-emblem > span {
-  margin-left: -23px;
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1;
+  font-weight: 600;
 }
 .icon-button {
   border: 0;

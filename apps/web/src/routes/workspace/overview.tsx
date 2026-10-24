@@ -83,11 +83,12 @@ export function Overview(props: ScreenProps) {
           </div>
         </Card>
         <Card eyebrow="Stable identity" title="Grant beneficiary">
-          <div className="beneficiary-emblem">
-            <Icon name="shield" size={30} />
-            <span>P</span>
+          <div className="beneficiary-summary">
+            <div className="beneficiary-emblem" aria-hidden="true">
+              <span>P</span>
+            </div>
+            <Identity identity={workspace.beneficiary} />
           </div>
-          <Identity identity={workspace.beneficiary} />
           <div className="identity-secondary">
             <span>Contract recipient (H160)</span>
             <Address
