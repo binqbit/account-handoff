@@ -124,7 +124,10 @@ test("empty workspace exposes setup and actual network configuration without a f
     page.getByRole("heading", { name: "Start with a stable beneficiary" }),
   ).toBeVisible();
   await expect(
-    page.getByLabel("Original group M0 — three addresses"),
+    page.getByRole("combobox", {
+      name: "Add account to Original group M0",
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Save team" })).toBeDisabled();
 });

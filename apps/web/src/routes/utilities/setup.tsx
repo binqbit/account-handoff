@@ -1,81 +1,36 @@
-import { useId, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Button, Card, Icon, Notice, PageHeader } from "../../components/ui";
+import { AddressPicker } from "../../components/addresses/address-picker";
+import { AddressList } from "../../components/addresses/address-list";
+import {
+  addressKey,
+  participantOptions,
+} from "../../components/addresses/options";
 import type { WorkspaceInput } from "../../ui-contract";
 import type { ScreenProps } from "../screen-types";
 import { ReadinessCards } from "../../components/readiness";
 
-function AddressField({
-  label,
-  value,
-  onChange,
-  help,
-  multiline = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  help?: string;
-  multiline?: boolean;
-}) {
-  const id = useId();
-  const helpId = `${id}-help`;
-  return (
-    <div className="field">
-      <label htmlFor={id}>{label}</label>
-      {multiline ? (
-        <textarea
-          id={id}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          rows={3}
-          required
-          aria-describedby={help ? helpId : undefined}
-          spellCheck={false}
-        />
-      ) : (
-        <input
-          id={id}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          required
-          aria-describedby={help ? helpId : undefined}
-          autoComplete="off"
-          spellCheck={false}
-        />
-      )}
-      {help && (
-        <p className="field__help" id={helpId}>
-          {help}
-        </p>
-      )}
-    </div>
-  );
-}
-
 export function Setup(props: ScreenProps) {
   const { snapshot, run, navigate, openAction } = props;
   const [name, setName] = useState("");
-  const [oldMembers, setOldMembers] = useState("");
-  const [newMembers, setNewMembers] = useState("");
+  const [oldMembers, setOldMembers] = useState<string[]>([]);
+  const [newMembers, setNewMembers] = useState<string[]>([]);
   const [funder, setFunder] = useState("");
-  const [reviewers, setReviewers] = useState("");
+  const [reviewers, setReviewers] = useState<string[]>([]);
   const [formError, setFormError] = useState("");
   const [advanced, setAdvanced] = useState(false);
   const [beneficiary, setBeneficiary] = useState("");
   const [contract, setContract] = useState("");
   const [grantId, setGrantId] = useState("");
   const workspace = snapshot.workspace;
+  const options = participantOptions(snapshot);
+  const busy = !!snapshot.busy;
   async function submit(event: FormEvent) {
     event.preventDefault();
     setFormError("");
-    const parse = (input: string) =>
-      input
-        .split(/[\s,;]+/)
-        .map((value) => value.trim())
-        .filter(Boolean);
-    const old = parse(oldMembers);
-    const next = parse(newMembers);
-    const judges = parse(reviewers);
+    const old = oldMembers.map((value) => addressKey(value)!);
+    const next = newMembers.map((value) => addressKey(value)!);
+    const judges = reviewers.map((value) => addressKey(value)!);
     if (old.length !== 3 || next.length !== 3) {
       setFormError(
         "Each group needs three distinct accounts. The supported threshold is 2 of 3.",
@@ -86,17 +41,38 @@ export function Setup(props: ScreenProps) {
       setFormError("Accounts within a group must be distinct.");
       return;
     }
+    if (old.filter((address) => next.includes(address)).length !== 2) {
+      setFormError(
+        "Keep two members from M0 and choose one replacement for M1.",
+      );
+      return;
+    }
     if (judges.length !== 2 || new Set(judges).size !== 2) {
       setFormError("Enter two distinct reviewers.");
       return;
     }
+    if (!addressKey(funder)) {
+      setFormError("Choose a valid native funder account.");
+      return;
+    }
+    if (
+      (beneficiary && !addressKey(beneficiary)) ||
+      (contract && !addressKey(contract, "contract"))
+    ) {
+      setFormError("Check the known beneficiary and contract address formats.");
+      return;
+    }
+    if (grantId && !/^(0|[1-9]\d*)$/.test(grantId)) {
+      setFormError("The grant ID must be a whole number, starting at 0.");
+      return;
+    }
     const input: WorkspaceInput = {
       name: name.trim(),
-      oldMembers: old,
-      newMembers: next,
+      oldMembers,
+      newMembers,
       threshold: 2,
       funder: funder.trim(),
-      reviewers: judges,
+      reviewers,
     };
     if (beneficiary.trim()) input.beneficiary = beneficiary.trim();
     if (contract.trim()) input.contract = contract.trim();
@@ -114,50 +90,91 @@ export function Setup(props: ScreenProps) {
         title="Start with a stable beneficiary"
         description="Define the team first. Every creation, funding and mapping action has a separate review."
       />
-      <div className="overview-grid">
+      <div className="overview-grid setup-layout">
         <Card
           title={workspace ? "New workspace details" : "Name, team and roles"}
         >
           <form onSubmit={(event) => void submit(event)}>
-            <AddressField
-              label="Workspace name"
-              value={name}
-              onChange={setName}
-              help="A recognizable team name, up to 80 characters."
-            />
-            <div className="equal-grid">
-              <AddressField
-                label="Original group M0 — three addresses"
-                value={oldMembers}
-                onChange={setOldMembers}
-                multiline
-                help="One native address or AccountId32 per line. Threshold: 2 of 3."
+            <div className="field">
+              <label htmlFor="workspace-name">Workspace name</label>
+              <input
+                id="workspace-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="e.g. Atlas Research"
+                maxLength={80}
+                required
+                disabled={busy}
+                aria-describedby="workspace-name-help"
               />
-              <AddressField
-                label="New group M1 — three addresses"
-                value={newMembers}
+              <p className="field__help" id="workspace-name-help">
+                A name for this team's local workspace. You can review every
+                on-chain action separately.
+              </p>
+            </div>
+            <div className="form-section-heading">
+              <Icon name="team" size={20} />
+              <div>
+                <h3>Choose the people who can sign</h3>
+                <p>
+                  Each group needs 2 of its 3 members to approve. Keep two
+                  members and replace one.
+                </p>
+              </div>
+            </div>
+            <div className="equal-grid signer-groups">
+              <AddressList
+                label="Original group M0"
+                values={oldMembers}
+                onChange={setOldMembers}
+                count={3}
+                options={options}
+                disabled={busy}
+                help="The three people who control the beneficiary before the handoff."
+              />
+              <AddressList
+                label="New group M1"
+                values={newMembers}
                 onChange={setNewMembers}
-                multiline
-                help="Replace one member. The group receives a separate controller address."
+                count={3}
+                options={options}
+                disabled={busy}
+                help="Two continuing members and one new member. M1 gets its own controller address."
               />
             </div>
-            <AddressField
+            <div className="form-section-heading">
+              <Icon name="grant" size={20} />
+              <div>
+                <h3>Assign the grant roles</h3>
+                <p>
+                  The funder deposits the grant. Two reviewers approve completed
+                  milestones.
+                </p>
+              </div>
+            </div>
+            <AddressPicker
               label="Funder account F"
               value={funder}
               onChange={setFunder}
-              help="The direct sender who creates and funds the grant."
+              options={options}
+              required
+              disabled={busy}
+              help="A native account that will create and fund the grant. Choose a public address; never enter a seed phrase or private key."
             />
-            <AddressField
+            <AddressList
               label="Two reviewer accounts"
-              value={reviewers}
+              values={reviewers}
               onChange={setReviewers}
-              multiline
-              help="Two reviewers with a threshold of two are supported. Each approves from their own account."
+              options={options}
+              count={2}
+              disabled={busy}
+              help="Both reviewers must approve. Each signs with their own personal wallet."
             />
             <button
               type="button"
               className="text-button"
               aria-expanded={advanced}
+              aria-controls="known-workspace-addresses"
               onClick={() => setAdvanced(!advanced)}
             >
               {advanced
@@ -166,28 +183,50 @@ export function Setup(props: ScreenProps) {
               <Icon name="chevron" size={14} />
             </button>
             {advanced && (
-              <div className="advanced-fields">
+              <div className="advanced-fields" id="known-workspace-addresses">
                 <p className="muted">
                   These values require provenance and current-state
                   verification. Entering an address does not establish
                   authority.
                 </p>
-                <div className="field">
-                  <label htmlFor="known-pure">Known native beneficiary P</label>
-                  <input
-                    id="known-pure"
-                    value={beneficiary}
-                    onChange={(event) => setBeneficiary(event.target.value)}
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="known-contract">Known grant contract</label>
-                  <input
-                    id="known-contract"
-                    value={contract}
-                    onChange={(event) => setContract(event.target.value)}
-                  />
-                </div>
+                <AddressPicker
+                  label="Known native beneficiary P"
+                  value={beneficiary}
+                  onChange={setBeneficiary}
+                  disabled={busy}
+                  options={
+                    workspace?.beneficiary
+                      ? [
+                          {
+                            address: workspace.beneficiary.address,
+                            label:
+                              workspace.beneficiary.label ?? "Beneficiary P",
+                            detail: "Current workspace",
+                          },
+                        ]
+                      : []
+                  }
+                  help="Optional. The existing Pure beneficiary's native address, not a personal wallet or an EVM address."
+                />
+                <AddressPicker
+                  label="Known grant contract"
+                  value={contract}
+                  onChange={setContract}
+                  disabled={busy}
+                  kind="contract"
+                  options={
+                    workspace?.contract
+                      ? [
+                          {
+                            address: workspace.contract,
+                            label: "Vestry contract",
+                            detail: "Current workspace",
+                          },
+                        ]
+                      : []
+                  }
+                  help="Optional. The deployed Vestry contract's 20-byte EVM address (0x + 40 hex characters)."
+                />
                 <div className="field">
                   <label htmlFor="known-grant">Grant ID</label>
                   <input
@@ -195,7 +234,14 @@ export function Setup(props: ScreenProps) {
                     value={grantId}
                     onChange={(event) => setGrantId(event.target.value)}
                     inputMode="numeric"
+                    placeholder="e.g. 0"
+                    pattern="0|[1-9][0-9]*"
+                    aria-describedby="known-grant-help"
                   />
+                  <p className="field__help" id="known-grant-help">
+                    Optional. The numeric ID of the grant in that contract, not
+                    a transaction hash.
+                  </p>
                 </div>
               </div>
             )}
@@ -223,10 +269,40 @@ export function Setup(props: ScreenProps) {
                 Back
               </Button>
             </div>
+            <p className="form-reassurance">
+              <Icon name="shield" size={15} />
+              Saving the team creates a local draft. It does not sign or send a
+              transaction.
+            </p>
           </form>
         </Card>
         <div>
-          <Card eyebrow="Sequence" title="One workspace, separate actions">
+          <Card
+            eyebrow="How it works"
+            title="One beneficiary. A changing team."
+          >
+            <div
+              className="identity-flow"
+              aria-label="Control moves from original group M0 to new group M1 while beneficiary P stays the same"
+            >
+              <span>
+                <Icon name="team" />
+                <strong>M0</strong>
+                <small>Original team</small>
+              </span>
+              <Icon name="arrow" size={17} />
+              <span className="identity-flow__stable">
+                <Icon name="shield" />
+                <strong>P</strong>
+                <small>Same beneficiary</small>
+              </span>
+              <Icon name="back" size={17} />
+              <span>
+                <Icon name="team" />
+                <strong>M1</strong>
+                <small>New team</small>
+              </span>
+            </div>
             <ol className="setup-steps">
               <li>
                 <span>1</span>
@@ -239,7 +315,10 @@ export function Setup(props: ScreenProps) {
                 <span>2</span>
                 <div>
                   <strong>Create beneficiary P</strong>
-                  <p>Reserve, creation through M0, liquidity and mapping.</p>
+                  <p>
+                    A stable native account controlled by M0. Its mapped EVM
+                    address receives the grant.
+                  </p>
                 </div>
               </li>
               <li>
