@@ -1,4 +1,5 @@
 .address-picker__input {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -291,4 +292,19 @@
 
 .address-chip__body > .address-wrap {
   margin-top: 3px;
+}
+
+.address-picker__input input.address-picker__named {
+  color: transparent;
+}
+.address-picker__name {
+  position: absolute;
+  left: 39px;
+  right: 49px;
+  color: #d7e5da;
+  font-size: 0.85rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
 }

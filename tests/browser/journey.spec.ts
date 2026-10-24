@@ -125,9 +125,11 @@ test("empty workspace exposes setup and actual network configuration without a f
   ).toBeVisible();
   await expect(
     page.getByRole("combobox", {
-      name: "Add account to Original group M0",
+      name: "Add account to Current signers",
       exact: true,
     }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Save team" })).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Create workspace" }),
+  ).toBeDisabled();
 });

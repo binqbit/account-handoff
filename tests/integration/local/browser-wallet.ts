@@ -50,13 +50,20 @@ export async function injectLocalWallet(
   page: Page,
   connection: NativeConnection,
   allowedOrigin: string,
+  setupNamespace?: string,
 ) {
   if (connection.mode !== "LOCAL")
     throw new Error("Test wallet is restricted to LOCAL");
   await cryptoWaitReady();
   const ring = new Keyring({ type: "sr25519" });
+  if (setupNamespace && !/^[a-zA-Z0-9-]+$/.test(setupNamespace))
+    throw new Error("Invalid test account namespace");
+  const uris = { ...roleUris };
+  if (setupNamespace)
+    for (const role of ["F2", "R1_2", "R2_2"] as const)
+      uris[role] += `//${setupNamespace}`;
   const pairs = Object.fromEntries(
-    Object.entries(roleUris).map(([role, uri]) => [role, ring.addFromUri(uri)]),
+    Object.entries(uris).map(([role, uri]) => [role, ring.addFromUri(uri)]),
   ) as Record<LocalRole, ReturnType<Keyring["addFromUri"]>>;
   const accounts = (Object.keys(roleUris) as LocalRole[]).map((role) => ({
     address: account(pairs[role].address),

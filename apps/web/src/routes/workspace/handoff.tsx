@@ -8,6 +8,8 @@ import {
   Notice,
   PageHeader,
 } from "../../components/ui";
+import { HandoffPlan } from "./handoff-plan";
+import { HandoffIdentity } from "./handoff-identity";
 import type { ScreenProps } from "../screen-types";
 import { ActionButton, NoWorkspace } from "./shared";
 
@@ -26,6 +28,21 @@ export function Handoff(props: ScreenProps) {
         <NoWorkspace {...props} />
       </>
     );
+  if (!workspace.newController)
+    return (
+      <>
+        <PageHeader
+          icon="handoff"
+          eyebrow="Control handoff"
+          title="Change who controls the beneficiary"
+          description="Choose a replacement group when your team is ready."
+        />
+        <div className="overview-grid">
+          <HandoffPlan {...props} />
+          <HandoffIdentity workspace={workspace} />
+        </div>
+      </>
+    );
   const stage =
     workspace.continuity === "continued" || workspace.continuity === "drift"
       ? 3
@@ -34,14 +51,21 @@ export function Handoff(props: ScreenProps) {
         : workspace.authority === "DualControl"
           ? 1
           : 0;
+  const openNextMilestone = workspace.milestones.some(
+    (item) => item.index === 1 && item.state === "Open",
+  );
+  const controlComplete = workspace.authority === "M1";
+  const continuationRecorded =
+    workspace.continuity === "continued" || workspace.continuity === "drift";
+  const finished = stage === 3 || (controlComplete && !openNextMilestone);
   const actionIds = [
     "GRC-ROTATION-ADD-M1",
     "GRC-ROTATION-REMOVE-M0",
     "GRC-GRANT-SUBMIT-M1",
   ];
   const titles = [
-    "Add the new controller M1",
-    "Remove M0 only",
+    "Authorize the new group",
+    "Remove the previous group",
     "Continue the grant",
   ];
   return (
@@ -72,19 +96,23 @@ export function Handoff(props: ScreenProps) {
       <div className="overview-grid">
         <Card
           title={
-            stage < 3
+            !finished
               ? (titles[stage] ?? "Hand off control")
-              : "Handoff and continuation verified"
+              : continuationRecorded
+                ? "Handoff and continuation recorded"
+                : "Controller changed"
           }
         >
           <p className="lede">
-            {stage === 0
-              ? "The original group adds M1. Both groups retain full authority until the next step."
-              : stage === 1
-                ? "The new group removes the exact M0 / Any / 0 permission. The full delegate inventory is then checked."
-                : stage === 2
-                  ? "The new group submits the next milestone separately. That action proves grant continuation."
-                  : workspace.continuityDetail}
+            {finished && !continuationRecorded
+              ? "The replacement group is the sole controller. There is no open next milestone to submit."
+              : stage === 0
+                ? "The current group authorizes the replacement. Both groups retain full authority until the next step."
+                : stage === 1
+                  ? "The replacement group removes the previous controller’s Any / 0 permission. The full delegate inventory is then checked."
+                  : stage === 2
+                    ? "The new group submits the next milestone separately. That action proves grant continuation."
+                    : workspace.continuityDetail}
           </p>
           <KeyValues
             rows={[
@@ -94,7 +122,9 @@ export function Handoff(props: ScreenProps) {
               },
               {
                 label: "New group",
-                value: <Address value={workspace.newController?.address ?? ""} />,
+                value: (
+                  <Address value={workspace.newController?.address ?? ""} />
+                ),
               },
               {
                 label: "Beneficiary",
@@ -104,12 +134,12 @@ export function Handoff(props: ScreenProps) {
           />
           <Notice tone={stage === 1 ? "warning" : "neutral"}>
             {stage === 0
-              ? "M0 is not frozen during the transition. Its quorum must remain available."
+              ? "The current group retains authority during the transition. Its quorum must remain available."
               : stage === 1
-                ? "M0 and M1 can both act now. Removing M0 does not cancel existing native proposals."
-                : "Separate A and D signatures are required for both M0 removal and the next milestone submission."}
+                ? "Both groups can act now. Removing the previous group does not cancel existing native proposals."
+                : "Each action requires its own quorum approval from the replacement group."}
           </Notice>
-          {stage < 3 ? (
+          {!finished ? (
             <ActionButton
               action={snapshot.actions.find(
                 (action) => action.id === actionIds[stage],
@@ -126,7 +156,19 @@ export function Handoff(props: ScreenProps) {
               Open evidence
             </Button>
           )}
+          {controlComplete && (
+            <div className="actions">
+              <Button
+                icon="handoff"
+                disabled={!!snapshot.busy}
+                onClick={() => void props.run({ type: "next-handoff" })}
+              >
+                Start another handoff
+              </Button>
+            </div>
+          )}
         </Card>
+        <HandoffIdentity workspace={workspace} />
         <Card eyebrow="Before each action" title="What we verify">
           <ul className="check-list">
             <li>

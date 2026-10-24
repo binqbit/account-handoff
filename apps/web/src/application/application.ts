@@ -464,6 +464,7 @@ export class Application implements ApplicationFacade {
       );
     }
     if (verified) {
+      w.creator = verified.creator;
       w.creationBlock = verified.creationBlock;
       w.creationEvidence = verified.creationEvidence;
     }

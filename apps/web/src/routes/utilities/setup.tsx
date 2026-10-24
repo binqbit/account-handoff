@@ -13,17 +13,17 @@ export function Setup(props: ScreenProps) {
         icon="team"
         eyebrow="Team setup"
         title="Start with a stable beneficiary"
-        description="Choose the signers, funder and reviewers."
+        description="Create a multisig configuration or connect your existing group."
       />
       <div className="setup-layout">
         <HelpDisclosure title="How setup works">
           <div
             className="identity-flow"
-            aria-label="Control moves from original group M0 to new group M1 while beneficiary P stays the same"
+            aria-label="The signing group can change while the beneficiary stays the same"
           >
             <span>
               <Icon name="team" />
-              <strong>M0</strong>
+              <strong>Current</strong>
               <small>Original team</small>
             </span>
             <Icon name="arrow" size={17} />
@@ -35,7 +35,7 @@ export function Setup(props: ScreenProps) {
             <Icon name="back" size={17} />
             <span>
               <Icon name="team" />
-              <strong>M1</strong>
+              <strong>Next</strong>
               <small>New team</small>
             </span>
           </div>
@@ -44,7 +44,10 @@ export function Setup(props: ScreenProps) {
               <span>1</span>
               <div>
                 <strong>Define the team</strong>
-                <p>The original and next groups, funder and reviewers.</p>
+                <p>
+                  The current signers, funder and reviewers. Choose a
+                  replacement group only when you start a handoff.
+                </p>
               </div>
             </li>
             <li>
@@ -52,8 +55,8 @@ export function Setup(props: ScreenProps) {
               <div>
                 <strong>Create beneficiary P</strong>
                 <p>
-                  A stable native account controlled by M0. Its mapped EVM
-                  address receives the grant.
+                  A stable native account controlled by your multisig. Its
+                  mapped EVM address receives the grant.
                 </p>
               </div>
             </li>

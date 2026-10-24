@@ -269,6 +269,32 @@ function fixture() {
 }
 beforeEach(() => vi.clearAllMocks());
 describe("LOCAL workspace import verifies original chain provenance", () => {
+  it("recovers the original Pure creator when connecting a later controller", async () => {
+    const f = fixture();
+    const { newMembers: _next, ...input } = f.raw.input;
+    input.oldMembers = [A, B, D];
+    const currentController = u8aToHex(createKeyMulti(input.oldMembers, 2));
+    f.state.mappedTo = P;
+    vi.mocked(f.connection.readAccount).mockImplementation(
+      async (_address, block) =>
+        block === creationBlock
+          ? f.state
+          : {
+              ...f.state,
+              proxies: [
+                { delegate: currentController, proxyType: "Any", delay: 0 },
+              ],
+            },
+    );
+    const connected = await verifyWorkspaceConnection(
+      input,
+      { blockHash: creationBlock, transactionHash: creationHash },
+      f.connection,
+      f.expected,
+    );
+    expect(connected.creator.account).toBe(M0);
+    expect(connected.input.oldMembers).toEqual([A, B, D]);
+  });
   it("connects an existing Pure without preconfiguring a replacement or grant", async () => {
     const f = fixture();
     const {

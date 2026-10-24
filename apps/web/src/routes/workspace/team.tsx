@@ -42,10 +42,10 @@ export function Team(props: ScreenProps) {
             </dd>
           </div>
           <div>
-            <dt>Controller M0 or M1</dt>
+            <dt>Controller multisig</dt>
             <dd>
-              A 2-of-3 group: two members must sign. M0 is the original group;
-              M1 is the replacement group.
+              A 2-of-3 group: two members must sign. Choose a replacement only
+              when the team needs to change.
             </dd>
           </div>
           <div>
@@ -62,46 +62,53 @@ export function Team(props: ScreenProps) {
       ) : (
         <>
           <div className="equal-grid">
-            {[workspace.oldController, ...(workspace.newController ? [workspace.newController] : [])].map(
-              (controller, index) => (
-                <Card
-                  key={controller.address || index}
-                  eyebrow={
-                    index === 0 ? "Original group · M0" : "Next group · M1"
-                  }
-                  title={`${controller.threshold} of ${controller.members.length} signers`}
-                  action={
-                    <Badge
-                      tone={
-                        controller.active
-                          ? workspace.authority === "DualControl"
-                            ? "warning"
-                            : "positive"
-                          : "neutral"
-                      }
-                    >
-                      {controller.active === null
-                        ? "Not verified"
-                        : controller.active
-                          ? "Authorized"
-                          : "Not authorized"}
-                    </Badge>
-                  }
-                >
-                  <Address value={controller.address} />
-                  <ul className="member-list">
-                    {controller.members.map((member, memberIndex) => (
-                      <li key={member.address}>
-                        <span className="member-avatar">
-                          {member.label?.slice(0, 1) ?? memberIndex + 1}
-                        </span>
-                        <Identity identity={member} />
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              ),
-            )}
+            {[
+              workspace.oldController,
+              ...(workspace.newController ? [workspace.newController] : []),
+            ].map((controller, index) => (
+              <Card
+                key={controller.address || index}
+                eyebrow={
+                  index === 0
+                    ? workspace.authority === "M1"
+                      ? "Previous group"
+                      : "Current group"
+                    : workspace.authority === "M1"
+                      ? "Current group"
+                      : "Replacement group"
+                }
+                title={`${controller.threshold} of ${controller.members.length} signers`}
+                action={
+                  <Badge
+                    tone={
+                      controller.active
+                        ? workspace.authority === "DualControl"
+                          ? "warning"
+                          : "positive"
+                        : "neutral"
+                    }
+                  >
+                    {controller.active === null
+                      ? "Not verified"
+                      : controller.active
+                        ? "Authorized"
+                        : "Not authorized"}
+                  </Badge>
+                }
+              >
+                <Address value={controller.address} />
+                <ul className="member-list">
+                  {controller.members.map((member, memberIndex) => (
+                    <li key={member.address}>
+                      <span className="member-avatar">
+                        {member.label?.slice(0, 1) ?? memberIndex + 1}
+                      </span>
+                      <Identity identity={member} />
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            ))}
           </div>
           <Card
             title="Budgets and identities"

@@ -27,6 +27,26 @@ export function History(props: ScreenProps) {
         <NoWorkspace {...props} />
       ) : (
         <>
+          {!!workspace.handoffs?.length && (
+            <Card title="Previous control handoffs">
+              {workspace.handoffs.map((handoff, index) => (
+                <div className="archived-handoff" key={handoff.id}>
+                  <strong>Handoff {index + 1}</strong>
+                  <div>
+                    <Address value={handoff.from} />
+                    <Icon name="arrow" size={16} />
+                    <Address value={handoff.to} />
+                  </div>
+                  <small>
+                    {handoff.continued
+                      ? "Control change and continuation record saved"
+                      : "Control change record saved"}{" "}
+                    · {new Date(handoff.completedAt).toLocaleString()}
+                  </small>
+                </div>
+              ))}
+            </Card>
+          )}
           <Card
             className="proof-card"
             title={
@@ -34,7 +54,7 @@ export function History(props: ScreenProps) {
               workspace.continuity === "drift"
                 ? "Grant continuation recorded"
                 : workspace.continuity === "rotated"
-                  ? "Control changed. Continuation required."
+                  ? "Control change recorded"
                   : "Continuation evidence is not complete yet"
             }
             action={
@@ -58,9 +78,9 @@ export function History(props: ScreenProps) {
                 The same P
               </span>
               <Icon name="arrow" size={16} />
-              <span>Exact M0 removal</span>
+              <span>Exact previous-controller removal</span>
               <Icon name="arrow" size={16} />
-              <span>Separate M1 submission</span>
+              <span>Separate next-milestone submission</span>
             </div>
           </Card>
           {workspace.history.length ? (

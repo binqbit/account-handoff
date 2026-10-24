@@ -133,7 +133,10 @@ export function AddressPicker({
           id={id}
           type="text"
           role="combobox"
-          value={displayValue}
+          value={value}
+          className={
+            hasSelection && !editing ? "address-picker__named" : undefined
+          }
           required={required}
           disabled={disabled}
           autoComplete="off"
@@ -167,6 +170,11 @@ export function AddressPicker({
             setOpen(true);
           }}
         />
+        {hasSelection && !editing && (
+          <span className="address-picker__name" aria-hidden="true">
+            {displayValue}
+          </span>
+        )}
         <button
           type="button"
           className="icon-button"

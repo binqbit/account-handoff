@@ -118,7 +118,7 @@ test("selected addresses use account names at rest and exact values when edited"
 }) => {
   await page.goto(`${harness}#setup`);
   const input = page.getByRole("combobox", {
-    name: "Funder account F",
+    name: "Funder account",
     exact: true,
   });
   await input.fill("Alice");
@@ -128,11 +128,14 @@ test("selected addresses use account names at rest and exact values when edited"
     .filter({ hasText: "Alice" })
     .click();
   await page.getByLabel("Workspace name").focus();
-  await expect(input).toHaveValue("Alice");
+  await expect(input).toHaveValue(full);
+  await expect(
+    page.locator(".address-picker__name").filter({ hasText: "Alice" }),
+  ).toBeVisible();
   await expect(input).toHaveAccessibleDescription(new RegExp(full));
   const selected = page.locator(".address-picker").filter({ has: input });
   await selected
-    .getByRole("button", { name: "Show full Funder account F address" })
+    .getByRole("button", { name: "Show full Funder account address" })
     .click();
   await expect(selected.locator(".address-full")).toHaveText(full);
   await input.focus();
@@ -144,7 +147,7 @@ test("selected group members keep their full addresses available", async ({
 }) => {
   await page.goto(`${harness}#setup`);
   const input = page.getByRole("combobox", {
-    name: "Add account to Original group M0",
+    name: "Add account to Current signers",
     exact: true,
   });
   await input.fill("Alice");
@@ -154,13 +157,13 @@ test("selected group members keep their full addresses available", async ({
     .filter({ hasText: "Alice" })
     .click();
   const group = page.getByRole("group", {
-    name: "Original group M0",
+    name: "Current signers",
     exact: true,
   });
   await group.getByRole("button", { name: "Show full Alice address" }).click();
   await expect(group.locator(".address-full")).toHaveText(full);
   await expect(
-    group.getByRole("button", { name: "Remove Alice from Original group M0" }),
+    group.getByRole("button", { name: "Remove Alice from Current signers" }),
   ).toBeVisible();
 });
 

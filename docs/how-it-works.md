@@ -1,5 +1,11 @@
 # How it works
 
+## Start with your current multisig
+
+Create a workspace for a new group or connect an existing native multisig. Both routes use the complete member list and threshold to derive its address; connecting also checks the supplied address. A multisig configuration has no deployment transaction of its own. Saving it does not send funds or grant authority.
+
+Only the current group is required. Choose a replacement later, from Control handoff. You can also attach a Pure account controlled by that group and its existing grant: the application verifies the creation receipt, current permissions, identity mapping and grant history before accepting the connection.
+
 ## 1. Establish the beneficiary before funding
 
 The team agrees on its signing group and threshold. That group creates a dedicated Pure beneficiary. The application verifies its native identity and the application address that resolves back to it. This identity relationship must be established before grant creation and before a native vesting payout.
@@ -31,3 +37,9 @@ If removal fails, the interface must not report success merely because the surro
 The application verifies the new native controller and the same beneficiary identities. The new group then submits the next open milestone on the existing grant.
 
 Only after that application action is verified does the workflow say that grant work has continued. Review approval and payout remain separate future steps. Existing vesting follows its original timeline; the interface distinguishes the schedule from the current lock and spendable balance.
+
+## Repeat a control change
+
+After the replacement is the verified sole controller, choose **Start another handoff**. The application rechecks the native approval and removal receipts, retains the previous handoff, and makes the authorized group the current group for the next change. The Pure address, application address, grant contract and grant ID stay with the workspace.
+
+A controller change and a grant submission are separate outcomes. Another control change does not need an open next milestone; it still checks the beneficiary, grant, current vesting state and reserve backing. Continued grant work is reported only when a separate eligible submission is verified. The original Pure creator remains recorded for its historical reserve even after several controller changes.

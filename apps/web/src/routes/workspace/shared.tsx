@@ -16,9 +16,9 @@ import type {
 import type { ScreenProps } from "../screen-types";
 
 export const authorityText: Record<WorkspaceView["authority"], string> = {
-  M0: "Original group M0",
+  M0: "Current group",
   DualControl: "Both groups have authority",
-  M1: "New group M1",
+  M1: "Replacement group",
   Diverged: "Unexpected authority",
   Unknown: "Verification required",
 };

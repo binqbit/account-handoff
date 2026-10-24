@@ -23,6 +23,14 @@ npm run preview -- --port 4174
 
 Static assets are emitted to `dist/`. Reserve port 4173 for browser tests and 4175 for the dedicated real-LOCAL browser suite.
 
+## Create or connect a workspace
+
+Connect the native network, then open **New workspace**. **Create multisig** derives the current group's address locally. **Connect existing** checks a supplied multisig address against the same complete membership. Both routes retain the existing two-of-three profile. A replacement group is entered only in **Control handoff**.
+
+An existing Pure and optional grant can be attached using the Pure creation block and transaction hashes. This uses the qualified LOCAL import verification path, including the exact creator, initial and current permissions, persistent mapping and contract history. Saving arbitrary address text does not establish provenance.
+
+After a verified removal, **Start another handoff** reconstructs the native approval/removal evidence before advancing the current controller. Historical grant baseline, creator reserve, receipt references and wallet preferences survive. Closed grants can have their controller changed; a closed milestone is never presented as a new continuation action.
+
 ## Run checks
 
 ```bash
@@ -195,6 +203,12 @@ npm run local:reset -- --run development --generation 1
 ```
 
 Replace `1` with the current generation reported by status. The reset refuses a mismatch, symlinked state, or active native operation. It preserves old deployment/seed evidence, increments the generation, and invalidates the previous local descriptor. Browser records and wallet storage are retained. Start, qualify, deploy, and seed the new generation explicitly before using it.
+
+## Workspace state and handoff evidence
+
+`apps/web/src/application/workspace-state.ts` owns current/replacement configuration, checkpoints and pure lifecycle transformations. `advance-handoff.ts` verifies native removal evidence before archiving and advancing a completed handoff. `local-import.ts` shares chain-provenance checks between imported LOCAL packages and connected Pure/grant addresses. `presentation/` derives the visible state, including the comparison with the saved beneficiary identity.
+
+A workspace keeps its original grant baseline and Pure creator separately from the current controller. Handoff history rows carry the handoff identifier, so a previous removal cannot complete a later cycle. Persisted continuity certificates are reconstructed before being used as current proof. Legacy workspaces with a preconfigured replacement remain readable.
 
 ## Contract and schema maintenance
 

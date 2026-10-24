@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from "react";
-import { Button, Card, Icon } from "../../../components/ui";
+import { useMemo, useState, type FormEvent } from "react";
+import { createKeyMulti } from "@polkadot/util-crypto";
+import { u8aToHex } from "dedot/utils";
+import { Address, Button, Card, Icon } from "../../../components/ui";
 import { AddressPicker } from "../../../components/addresses/address-picker";
 import { AddressList } from "../../../components/addresses/address-list";
 import {
@@ -8,83 +10,108 @@ import {
 } from "../../../components/addresses/options";
 import type { WorkspaceInput } from "../../../ui-contract";
 import type { ScreenProps } from "../../screen-types";
+import { ExistingBeneficiaryFields } from "./existing-beneficiary-fields";
 
-export function TeamForm(props: ScreenProps) {
-  const { snapshot, run, navigate } = props;
+export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
+  const [mode, setMode] = useState<"create" | "connect">("create");
   const [name, setName] = useState("");
-  const [oldMembers, setOldMembers] = useState<string[]>([]);
-  const [newMembers, setNewMembers] = useState<string[]>([]);
+  const [members, setMembers] = useState<string[]>([]);
+  const [controllerAddress, setControllerAddress] = useState("");
   const [funder, setFunder] = useState("");
   const [reviewers, setReviewers] = useState<string[]>([]);
+  const [existing, setExisting] = useState<Partial<WorkspaceInput>>({});
   const [formError, setFormError] = useState("");
-  const [advanced, setAdvanced] = useState(false);
-  const [beneficiary, setBeneficiary] = useState("");
-  const [contract, setContract] = useState("");
-  const [grantId, setGrantId] = useState("");
-  const workspace = snapshot.workspace;
   const options = participantOptions(snapshot);
   const busy = !!snapshot.busy;
+  const derived = useMemo(() => {
+    const accounts = members.map((value) => addressKey(value));
+    return accounts.length === 3 &&
+      accounts.every(Boolean) &&
+      new Set(accounts).size === 3
+      ? u8aToHex(createKeyMulti(accounts as string[], 2))
+      : null;
+  }, [members]);
   async function submit(event: FormEvent) {
     event.preventDefault();
     setFormError("");
-    const old = oldMembers.map((value) => addressKey(value)!);
-    const next = newMembers.map((value) => addressKey(value)!);
-    const judges = reviewers.map((value) => addressKey(value)!);
-    if (old.length !== 3 || next.length !== 3) {
+    if (!derived) {
+      setFormError("Choose three distinct native signing accounts.");
+      return;
+    }
+    if (mode === "connect" && addressKey(controllerAddress) !== derived) {
       setFormError(
-        "Each group needs three distinct accounts. The supported threshold is 2 of 3.",
+        "The multisig address does not match these members and the 2-of-3 threshold.",
       );
-      return;
-    }
-    if (new Set(old).size !== 3 || new Set(next).size !== 3) {
-      setFormError("Accounts within a group must be distinct.");
-      return;
-    }
-    if (old.filter((address) => next.includes(address)).length !== 2) {
-      setFormError(
-        "Keep two members from M0 and choose one replacement for M1.",
-      );
-      return;
-    }
-    if (judges.length !== 2 || new Set(judges).size !== 2) {
-      setFormError("Enter two distinct reviewers.");
-      return;
-    }
-    if (!addressKey(funder)) {
-      setFormError("Choose a valid native funder account.");
       return;
     }
     if (
-      (beneficiary && !addressKey(beneficiary)) ||
-      (contract && !addressKey(contract, "contract"))
+      !addressKey(funder) ||
+      reviewers.length !== 2 ||
+      new Set(reviewers.map((value) => addressKey(value))).size !== 2
     ) {
-      setFormError("Check the known beneficiary and contract address formats.");
+      setFormError("Choose a funder and two distinct reviewers.");
       return;
     }
-    if (grantId && !/^(0|[1-9]\d*)$/.test(grantId)) {
-      setFormError("The grant ID must be a whole number, starting at 0.");
+    const attachment = mode === "connect" ? existing : {};
+    if (
+      (attachment.contract || attachment.grantId) &&
+      !attachment.beneficiary
+    ) {
+      setFormError(
+        "Enter the grant's Pure beneficiary and its creation receipt.",
+      );
+      return;
+    }
+    if (
+      attachment.beneficiary &&
+      (!attachment.creation?.blockHash || !attachment.creation.transactionHash)
+    ) {
+      setFormError(
+        "Enter the block hash and transaction hash that created this Pure account.",
+      );
       return;
     }
     const input: WorkspaceInput = {
       name: name.trim(),
-      oldMembers,
-      newMembers,
+      oldMembers: members,
       threshold: 2,
       funder: funder.trim(),
       reviewers,
+      ...attachment,
     };
-    if (beneficiary.trim()) input.beneficiary = beneficiary.trim();
-    if (contract.trim()) input.contract = contract.trim();
-    if (grantId.trim()) input.grantId = grantId.trim();
+    if (mode === "connect") input.controllerAddress = controllerAddress.trim();
     try {
       await run({ type: "create-workspace", input });
+      navigate("overview");
     } catch {
-      /* Parent renders the command error. */
+      /* The application displays the command error. */
     }
   }
   return (
-    <Card title={workspace ? "New workspace details" : "Name, team and roles"}>
+    <Card title="Your multisig">
       <form onSubmit={(event) => void submit(event)}>
+        <div
+          className="actions workspace-entry"
+          role="group"
+          aria-label="Multisig setup"
+        >
+          <Button
+            type="button"
+            variant={mode === "create" ? "primary" : "secondary"}
+            aria-pressed={mode === "create"}
+            onClick={() => setMode("create")}
+          >
+            Create multisig
+          </Button>
+          <Button
+            type="button"
+            variant={mode === "connect" ? "primary" : "secondary"}
+            aria-pressed={mode === "connect"}
+            onClick={() => setMode("connect")}
+          >
+            Connect existing
+          </Button>
+        </div>
         <div className="field">
           <label htmlFor="workspace-name">Workspace name</label>
           <input
@@ -97,50 +124,47 @@ export function TeamForm(props: ScreenProps) {
             disabled={busy}
           />
         </div>
-        <div className="form-section-heading">
-          <Icon name="team" size={20} />
-          <div>
-            <h3>Signing groups</h3>
-            <p>2 of 3 signatures required. Replace one member.</p>
+        {mode === "connect" && (
+          <AddressPicker
+            label="Existing multisig address"
+            value={controllerAddress}
+            onChange={setControllerAddress}
+            options={[]}
+            required
+            disabled={busy}
+            help="The address of your current native multisig."
+          />
+        )}
+        <AddressList
+          label="Current signers"
+          values={members}
+          onChange={setMembers}
+          count={3}
+          options={options}
+          disabled={busy}
+          help="2 of 3 signatures required. Enter the complete membership, including your own account."
+        />
+        {derived && (
+          <div className="derived-address">
+            <span>Multisig address</span>
+            <Address value={derived} />
           </div>
-        </div>
-        <div className="equal-grid signer-groups">
-          <AddressList
-            label="Original group M0"
-            values={oldMembers}
-            onChange={setOldMembers}
-            count={3}
-            options={options}
-            disabled={busy}
-            help="Three current signers."
-          />
-          <AddressList
-            label="New group M1"
-            values={newMembers}
-            onChange={setNewMembers}
-            count={3}
-            options={options}
-            disabled={busy}
-            help="Two members from M0 and one replacement."
-          />
-        </div>
+        )}
         <div className="form-section-heading">
           <Icon name="grant" size={20} />
-          <div>
-            <h3>Grant roles</h3>
-          </div>
+          <h3>Grant roles</h3>
         </div>
         <AddressPicker
-          label="Funder account F"
+          label="Funder account"
           value={funder}
           onChange={setFunder}
           options={options}
           required
           disabled={busy}
-          help="Native account that funds the grant."
+          help="The account that funds the grant."
         />
         <AddressList
-          label="Two reviewer accounts"
+          label="Reviewer accounts"
           values={reviewers}
           onChange={setReviewers}
           options={options}
@@ -148,73 +172,12 @@ export function TeamForm(props: ScreenProps) {
           disabled={busy}
           help="Both reviewers must approve."
         />
-        <button
-          type="button"
-          className="text-button"
-          aria-expanded={advanced}
-          aria-controls="known-workspace-addresses"
-          onClick={() => setAdvanced(!advanced)}
-        >
-          {advanced
-            ? "Hide known addresses"
-            : "I know the P and grant addresses"}
-          <Icon name="chevron" size={14} />
-        </button>
-        {advanced && (
-          <div className="advanced-fields" id="known-workspace-addresses">
-            <AddressPicker
-              label="Known native beneficiary P"
-              value={beneficiary}
-              onChange={setBeneficiary}
-              disabled={busy}
-              options={
-                workspace?.beneficiary
-                  ? [
-                      {
-                        address: workspace.beneficiary.address,
-                        label: workspace.beneficiary.label ?? "Beneficiary P",
-                        detail: "Current workspace",
-                      },
-                    ]
-                  : []
-              }
-              help="Optional. The Pure beneficiary's native address, not a personal account."
-            />
-            <AddressPicker
-              label="Known grant contract"
-              value={contract}
-              onChange={setContract}
-              disabled={busy}
-              kind="contract"
-              options={
-                workspace?.contract
-                  ? [
-                      {
-                        address: workspace.contract,
-                        label: "Vestry contract",
-                        detail: "Current workspace",
-                      },
-                    ]
-                  : []
-              }
-              help="Optional. Vestry contract: 0x + 40 hex characters."
-            />
-            <div className="field">
-              <label htmlFor="known-grant">Grant ID</label>
-              <input
-                id="known-grant"
-                value={grantId}
-                onChange={(event) => setGrantId(event.target.value)}
-                inputMode="numeric"
-                placeholder="e.g. 0"
-                pattern="0|[1-9][0-9]*"
-                aria-describedby="known-grant-help"
-              />
-              <p className="field__help" id="known-grant-help">
-                Optional. Grant number in that contract.
-              </p>
-            </div>
-          </div>
+        {mode === "connect" && (
+          <ExistingBeneficiaryFields
+            value={existing}
+            onChange={setExisting}
+            disabled={busy}
+          />
         )}
         {formError && (
           <p className="form-error" role="alert">
@@ -226,11 +189,9 @@ export function TeamForm(props: ScreenProps) {
             variant="primary"
             type="submit"
             icon="arrow"
-            disabled={
-              !!snapshot.busy || !name.trim() || name.trim().length > 80
-            }
+            disabled={busy || !name.trim() || !snapshot.network.connected}
           >
-            Save team
+            {mode === "create" ? "Create workspace" : "Connect workspace"}
           </Button>
           <Button
             type="button"
@@ -242,7 +203,7 @@ export function TeamForm(props: ScreenProps) {
         </div>
         <p className="form-reassurance">
           <Icon name="shield" size={15} />
-          Saved locally. No transaction is sent.
+          Saved locally. Creating a multisig configuration sends no transaction.
         </p>
       </form>
     </Card>

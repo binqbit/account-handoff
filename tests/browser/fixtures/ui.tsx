@@ -1,4 +1,9 @@
 import React from "react";
+import {
+  createWorkspaceRecord,
+  planHandoff,
+} from "../../../apps/web/src/application/workspace-state";
+import { workspaceView } from "../../../apps/web/src/application/presentation";
 import { createRoot } from "react-dom/client";
 import { App } from "../../../apps/web/src/App";
 import type {
@@ -192,6 +197,16 @@ if (scenario === "same-names") {
     },
   };
 }
+if (scenario === "current-only")
+  snapshot.workspace = { ...snapshot.workspace!, newController: null };
+if (scenario === "rotated")
+  snapshot.workspace = {
+    ...snapshot.workspace!,
+    authority: "M1",
+    continuity: "rotated",
+    oldController: { ...snapshot.workspace!.oldController, active: false },
+    newController: { ...snapshot.workspace!.newController!, active: true },
+  };
 if (scenario === "empty")
   snapshot = {
     ...snapshot,
@@ -289,6 +304,50 @@ const facade: ApplicationFacade = {
             }
           : null,
       });
+    if (command.type === "plan-handoff" && snapshot.workspace) {
+      const current = snapshot.workspace;
+      const record = createWorkspaceRecord(
+        {
+          name: current.name,
+          oldMembers: current.oldController.members.map(
+            (member) => member.address,
+          ),
+          threshold: 2,
+          funder: addresses[7]!,
+          reviewers: [addresses[5]!, addresses[6]!],
+        },
+        "LOCAL",
+        `0x${"a".repeat(64)}`,
+      );
+      const planned = workspaceView(planHandoff(record, command.members), null);
+      publish({
+        ...snapshot,
+        workspace: { ...current, newController: planned.newController },
+      });
+    }
+    if (command.type === "next-handoff" && snapshot.workspace?.newController) {
+      const current = snapshot.workspace;
+      publish({
+        ...snapshot,
+        workspace: {
+          ...current,
+          authority: "M0",
+          continuity: "not-started",
+          oldController: current.newController!,
+          newController: null,
+          handoffs: [
+            {
+              id: "saved-handoff",
+              from: current.oldController.address,
+              to: current.newController!.address,
+              completedAt: new Date().toISOString(),
+              continued: false,
+              receiptId: "synthetic-receipt",
+            },
+          ],
+        },
+      });
+    }
     if (command.type === "prepare-operation") {
       const action = snapshot.actions.find(
         (item) => item.id === command.actionId,

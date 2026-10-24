@@ -5,6 +5,7 @@ import {
   canonicalJson,
   sha256,
   type EvidenceRef,
+  type Controller,
 } from "@account-handoff/contracts";
 import { makeController } from "@account-handoff/domain";
 import {
@@ -29,6 +30,7 @@ import type { LocalDescriptor } from "./models";
 
 export interface VerifiedLocalWorkspaceImport {
   input: WorkspaceInput;
+  creator: Controller;
   creationEvidence: EvidenceRef[];
   creationBlock: number;
   grantCreationEvidence: EvidenceRef[];
@@ -405,9 +407,28 @@ export async function validateLocalWorkspaceImport(
     created.length === 1,
     "Expected one attributable PureCreated event",
   );
+  const creationTx = await connection.inspectExtrinsic(blockHash, txIndex);
+  let creator = M0;
+  if (currentOnly) {
+    const outer = object(creationTx.call);
+    const call = object(outer["palletCall"]);
+    const parameters = object(call["params"]);
+    const creatorMembers = [
+      ...accounts(
+        parameters["otherSignatories"],
+        2,
+        "Pure creator signatories",
+      ),
+      account(text(creationTx.signer, "Pure creation signer")),
+    ];
+    creator = makeController(creatorMembers, 2, "M0", {
+      deriveMultisig: (members, threshold) =>
+        u8aToHex(createKeyMulti([...members], threshold)),
+    });
+  }
   requireValue(
     sameNative(created[0]!.data["pure"], pure) &&
-      sameNative(created[0]!.data["who"], M0.account) &&
+      sameNative(created[0]!.data["who"], creator.account) &&
       created[0]!.data["proxyType"] === "Any",
     "PureCreated has a different beneficiary, creator or proxy type",
   );
@@ -416,16 +437,15 @@ export async function validateLocalWorkspaceImport(
       (item) =>
         item.pallet === "Multisig" &&
         item.name === "MultisigExecuted" &&
-        sameNative(item.data["multisig"], M0.account),
+        sameNative(item.data["multisig"], creator.account),
     ),
     "The M0 execution event is missing from Pure creation",
   );
-  const creationTx = await connection.inspectExtrinsic(blockHash, txIndex);
-  verifyPureCall(creationTx.call, creationTx.signer, oldMembers);
+  verifyPureCall(creationTx.call, creationTx.signer, creator.members);
   const initial = await connection.readAccount(pure, blockHash);
   requireValue(
     initial.proxies.length === 1 &&
-      initial.proxies[0]!.delegate === M0.account &&
+      initial.proxies[0]!.delegate === creator.account &&
       initial.proxies[0]!.proxyType === "Any" &&
       initial.proxies[0]!.delay === 0,
     "Pure initial authority was not exactly M0 / Any / 0",
@@ -448,6 +468,7 @@ export async function validateLocalWorkspaceImport(
   if (!contract || grantId === undefined)
     return {
       input,
+      creator,
       creationEvidence: [await evidence(receipt)],
       creationBlock: blockNumber,
       grantCreationEvidence: [],
@@ -529,6 +550,7 @@ export async function validateLocalWorkspaceImport(
   );
   return {
     input,
+    creator,
     creationEvidence: [await evidence(receipt)],
     creationBlock: blockNumber,
     grantCreationEvidence: [

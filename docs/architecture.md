@@ -44,3 +44,9 @@ There is no required language-model decision-maker in the transaction path. Huma
 The application coordinator exposes explicit prepare, sign, send and reconcile commands. Separate workflow modules qualify the network, gather anchored inputs, check the pending operation, record its finalized outcome and reconstruct continuity evidence. The native adapter provides one connection API with focused metadata, call, signing, state and receipt implementations. The wallet adapter requests signatures, and the local journal retains the exact reviewed context and signed attempts.
 
 Development-only LOCAL tooling builds and runs the pinned node/gateway, creates the test baseline and checks the complete handoff. Its signing identities and scenario runners are outside the browser dependency tree. The [development module map](../DEVELOPMENT.md#module-ownership) lists the implementation files and their responsibilities.
+
+## Workspace lifecycle
+
+A workspace holds one current controller and an optional planned replacement. Creating or connecting the current multisig does not preconfigure a future team. A handoff checkpoint records the beneficiary and grant state before the change; finalized receipts establish the resulting authority.
+
+Starting the next handoff archives the previous controller pair and receipt references. The original grant baseline and Pure creator remain separate from the current controller. This preserves identity and reserve accounting across successive changes, while each operation keeps its own reviewed context and native evidence.

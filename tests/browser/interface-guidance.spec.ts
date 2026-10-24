@@ -64,22 +64,33 @@ test("known contract input explains and checks the EVM address format", async ({
 }) => {
   await page.goto(`${harness}#setup`);
   await page
-    .getByRole("button", { name: "I know the P and grant addresses" })
+    .getByRole("button", { name: "Connect existing", exact: true })
+    .click();
+  await page
+    .getByRole("button", {
+      name: "Attach an existing beneficiary or grant",
+      exact: true,
+    })
     .click();
   const contract = page.getByRole("combobox", {
-    name: "Known grant contract",
+    name: "Grant contract (optional)",
     exact: true,
   });
   await contract.fill(`0x${"1".repeat(64)}`);
-  await page.getByLabel("Grant ID", { exact: true }).focus();
+  await page.getByLabel("Grant ID (optional)", { exact: true }).focus();
   await expect(contract).toHaveAttribute("aria-invalid", "true");
   await expect(page.getByRole("alert")).toContainText(
     "20-byte contract address",
   );
   await contract.fill(`0x${"b".repeat(40)}`);
-  await page.getByLabel("Grant ID", { exact: true }).focus();
+  await page.getByLabel("Grant ID (optional)", { exact: true }).focus();
   await expect(contract).toHaveAttribute("aria-invalid", "false");
-  await expect(contract).toHaveValue("Vestry contract");
+  await expect(contract).toHaveValue(`0x${"b".repeat(40)}`);
+  await expect(
+    page
+      .locator(".address-picker__name")
+      .filter({ hasText: "Contract address" }),
+  ).toBeVisible();
   await expect(contract).toHaveAccessibleDescription(
     new RegExp(`0x${"b".repeat(40)}`),
   );
@@ -107,7 +118,9 @@ test("setup keeps essential rules visible and preserves input when opening optio
   await page.goto(`${harness}#setup`);
   await page.getByLabel("Workspace name").fill("Compact workspace");
   await expect(
-    page.getByText("2 of 3 signatures required. Replace one member."),
+    page.getByText(
+      "2 of 3 signatures required. Enter the complete membership, including your own account.",
+    ),
   ).toBeVisible();
   await expect(
     page.getByText("Both reviewers must approve.", { exact: true }),

@@ -96,8 +96,9 @@ export function Overview(props: ScreenProps) {
       </div>
       {workspace.authority === "DualControl" && (
         <Notice tone="warning" title="Shared authority period">
-          M0 and M1 can currently act for the beneficiary. Complete the separate
-          M0 removal and verify the full permission inventory.
+          Both groups can currently act for the beneficiary. Complete the
+          separate removal of the previous group and verify the full permission
+          inventory.
         </Notice>
       )}
       {workspace.authority === "Diverged" && (

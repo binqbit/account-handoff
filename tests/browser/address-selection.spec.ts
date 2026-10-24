@@ -32,13 +32,13 @@ test("searchable account lists save the selected team without requesting signatu
   await page.goto(`${harness}#setup`);
   await page.getByLabel("Workspace name").fill("New team");
   for (const name of ["Alice", "Bob", "Charlie"])
-    await choose(page, "Add account to Original group M0", name);
-  for (const name of ["Alice", "Bob", "Dave"])
-    await choose(page, "Add account to New group M1", name);
-  await choose(page, "Funder account F", "Alice");
+    await choose(page, "Add account to Current signers", name);
+  await choose(page, "Funder account", "Alice");
   for (const name of ["Bob", "Dave"])
-    await choose(page, "Add account to Two reviewer accounts", name);
-  await page.getByRole("button", { name: "Save team", exact: true }).click();
+    await choose(page, "Add account to Reviewer accounts", name);
+  await page
+    .getByRole("button", { name: "Create workspace", exact: true })
+    .click();
   const commands = await page.evaluate(
     () =>
       (window as unknown as { __uiTest: { commands: unknown[] } }).__uiTest
@@ -50,7 +50,6 @@ test("searchable account lists save the selected team without requesting signatu
       input: {
         name: "New team",
         oldMembers: [address(1), address(2), address(3)],
-        newMembers: [address(1), address(2), address(4)],
         threshold: 2,
         funder: address(1),
         reviewers: [address(2), address(4)],
@@ -62,10 +61,10 @@ test("bulk paste accepts native addresses and rejects duplicates and incorrect f
   page,
 }) => {
   await page.goto(`${harness}#setup`);
-  const field = "Add account to Original group M0";
+  const field = "Add account to Current signers";
   await paste(page, field, `${address(1)},\n${address(2)}`);
   const group = page.getByRole("group", {
-    name: "Original group M0",
+    name: "Current signers",
     exact: true,
   });
   await expect(group.getByRole("listitem")).toHaveCount(2);
@@ -79,7 +78,7 @@ test("bulk paste accepts native addresses and rejects duplicates and incorrect f
   );
   await expect(group.getByRole("listitem")).toHaveCount(2);
   await page
-    .getByRole("button", { name: "Remove Alice from Original group M0" })
+    .getByRole("button", { name: "Remove Alice from Current signers" })
     .click();
   await expect(group.getByRole("listitem")).toHaveCount(1);
 });
@@ -89,7 +88,7 @@ test("keyboard account selection and mobile suggestions retain labels, addresses
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${harness}#setup`);
   const input = page.getByRole("combobox", {
-    name: "Funder account F",
+    name: "Funder account",
     exact: true,
   });
   await input.focus();
@@ -135,7 +134,7 @@ test("completing a group keeps keyboard focus inside the selected accounts", asy
 }) => {
   await page.goto(`${harness}#setup`);
   const field = page.getByRole("combobox", {
-    name: "Add account to Original group M0",
+    name: "Add account to Current signers",
     exact: true,
   });
   await field.focus();
@@ -144,12 +143,19 @@ test("completing a group keeps keyboard focus inside the selected accounts", asy
     await page.keyboard.press("Enter");
   }
   await expect(
-    page.getByRole("button", { name: "Remove Charlie from Original group M0" }),
+    page.getByRole("button", { name: "Remove Charlie from Current signers" }),
   ).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(
+    page
+      .locator(".derived-address")
+      .getByRole("button", { name: "Show full address", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Tab");
+  await expect(
     page.getByRole("combobox", {
-      name: "Add account to New group M1",
+      name: "Funder account",
       exact: true,
     }),
   ).toBeFocused();

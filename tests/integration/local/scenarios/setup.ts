@@ -5,6 +5,10 @@ import {
   contractAddress,
 } from "@account-handoff/native-adapter";
 import { readGrant } from "@account-handoff/grant-adapter";
+import {
+  connectExistingWorkspaceThroughUi,
+  readCreationLocator,
+} from "../connect-workspace";
 import { injectLocalWallet } from "../browser-wallet";
 import {
   readFixture,
@@ -26,10 +30,16 @@ export function registerSetupScenarios() {
       binding,
     );
     try {
+      const setupNamespace = `${runId}-${Date.now()}`;
+      testInfo.annotations.push({
+        type: "setup-namespace",
+        description: setupNamespace,
+      });
       const wallet = await injectLocalWallet(
         page,
         connection,
         "http://127.0.0.1:4175",
+        setupNamespace,
       );
       for (const role of ["F2", "R1_2", "R2_2"] as const) {
         const state = await connection.readAccount(wallet.accounts[role]);
@@ -44,14 +54,10 @@ export function registerSetupScenarios() {
       await page.getByLabel("Workspace name").fill(`LOCAL ${runId} UI setup`);
       for (const [label, addresses] of [
         [
-          "Original group M0",
+          "Current signers",
           [wallet.accounts.A, wallet.accounts.B, wallet.accounts.C],
         ],
-        [
-          "New group M1",
-          [wallet.accounts.A, wallet.accounts.B, wallet.accounts.D],
-        ],
-        ["Two reviewer accounts", [wallet.accounts.R1_2, wallet.accounts.R2_2]],
+        ["Reviewer accounts", [wallet.accounts.R1_2, wallet.accounts.R2_2]],
       ] as const) {
         for (const address of addresses) {
           const input = page.getByRole("combobox", {
@@ -62,13 +68,15 @@ export function registerSetupScenarios() {
           await input.press("Enter");
         }
       }
-      await page.getByLabel("Funder account F").fill(wallet.accounts.F2);
       await page
-        .getByRole("button", { name: "Save team", exact: true })
+        .getByRole("combobox", { name: "Funder account", exact: true })
+        .fill(wallet.accounts.F2);
+      await page
+        .getByRole("button", { name: "Create workspace", exact: true })
         .click();
       await expect(
         page.getByRole("heading", {
-          name: `Setup: LOCAL ${runId} UI setup`,
+          name: `LOCAL ${runId} UI setup`,
           exact: true,
         }),
       ).toBeVisible();
@@ -100,11 +108,18 @@ export function registerSetupScenarios() {
           exact: true,
         }),
       });
+      await beneficiaryCard
+        .locator(".identity")
+        .getByRole("button", { name: "Show full address", exact: true })
+        .click();
       const pure = (
-        await beneficiaryCard.locator(".identity .address").innerText()
+        await beneficiaryCard
+          .locator(".identity .address-full code")
+          .innerText()
       ).trim();
       expect(pure).toMatch(/^0x[0-9a-f]{64}$/);
       expect(pure).not.toBe(fixture.input.beneficiary);
+      console.info(`[LOCAL] Created isolated Pure ${pure}`);
       const initial = await connection.readAccount(pure);
       expect(initial.proxies).toHaveLength(1);
       const m0 = initial.proxies[0]!.delegate;
@@ -194,6 +209,41 @@ export function registerSetupScenarios() {
         expect(grant.milestones[0]!.state).toBe(index === 0 ? 1 : 2);
       }
       expect((await connection.readAccount(pure)).frozen).toBeGreaterThan(0n);
+      console.info(`[LOCAL] Grant ${grantId} has its first vested release`);
+      await page
+        .getByRole("button", { name: "Control handoff", exact: true })
+        .click();
+      const initialReplacementGroup = page.getByRole("group", {
+        name: "Replacement signers",
+        exact: true,
+      });
+      for (let index = 0; index < 2; index++)
+        await initialReplacementGroup
+          .getByRole("button", { name: /^Remove / })
+          .first()
+          .click();
+      for (const member of [wallet.accounts.A, wallet.accounts.B]) {
+        const field = page.getByRole("combobox", {
+          name: "Add account to Replacement signers",
+          exact: true,
+        });
+        await field.fill(member);
+        await field.press("Enter");
+      }
+      const replacement = page.getByRole("combobox", {
+        name: "Add account to Replacement signers",
+        exact: true,
+      });
+      await replacement.fill(wallet.accounts.D);
+      await replacement.press("Enter");
+      await page
+        .getByRole("button", { name: "Prepare handoff", exact: true })
+        .click();
+      await expect(
+        page.getByRole("heading", {
+          name: "Three actions. One stable beneficiary.",
+        }),
+      ).toBeVisible();
       for (const role of ["A", "B"] as const)
         await performApproval(
           page,
@@ -233,6 +283,9 @@ export function registerSetupScenarios() {
       );
       expect(grant.milestones[1]!.state).toBe(1);
       expect(wallet.requests).toHaveLength(23);
+      console.info(
+        "[LOCAL] First handoff and separate continuation are finalized",
+      );
       await page.getByRole("button", { name: "History", exact: true }).click();
       await expect(page.getByText("Continued", { exact: true })).toBeVisible();
       await testInfo.attach("setup-native-wallet-request-identities", {
@@ -244,6 +297,102 @@ export function registerSetupScenarios() {
         fullPage: true,
       });
       await captureActualWorkspace(page, testInfo, "ui-created-continued");
+      // A second control change uses the same Pure and grant, with no new milestone claim.
+      await page
+        .getByRole("button", { name: "Control handoff", exact: true })
+        .click();
+      await page
+        .getByRole("button", { name: "Start another handoff", exact: true })
+        .click();
+      await expect(
+        page.getByRole("heading", {
+          name: "Choose the replacement group",
+          exact: true,
+        }),
+      ).toBeVisible();
+      const group = page.getByRole("group", {
+        name: "Replacement signers",
+        exact: true,
+      });
+      for (let index = 0; index < 2; index++)
+        await group
+          .getByRole("button", { name: /^Remove / })
+          .first()
+          .click();
+      for (const role of ["A", "B", "C"] as const) {
+        const field = page.getByRole("combobox", {
+          name: "Add account to Replacement signers",
+          exact: true,
+        });
+        await field.fill(wallet.accounts[role]);
+        await field.press("Enter");
+      }
+      await page
+        .getByRole("button", { name: "Prepare handoff", exact: true })
+        .click();
+      await expect(
+        page.getByRole("heading", {
+          name: "Three actions. One stable beneficiary.",
+        }),
+      ).toBeVisible();
+      for (const role of ["A", "B"] as const)
+        await performApproval(
+          page,
+          role,
+          wallet.accounts[role],
+          "GRC-ROTATION-ADD-M1",
+        );
+      for (const role of ["A", "C"] as const)
+        await performApproval(
+          page,
+          role,
+          wallet.accounts[role],
+          "GRC-ROTATION-REMOVE-M0",
+        );
+      const finalState = await connection.readAccount(pure);
+      expect(finalState.proxies).toEqual([
+        { delegate: m0, proxyType: "Any", delay: 0 },
+      ]);
+      expect(finalState.mappedAddress).toBe(contractAddress(pure));
+      const unchangedGrant = await readGrant(
+        connection,
+        wallet.accounts.F2,
+        fixture.input.contract,
+        grantId,
+      );
+      expect(unchangedGrant.grantee).toBe(grant.grantee);
+      expect(unchangedGrant.milestones[1]!.state).toBe(1);
+      expect(wallet.requests).toHaveLength(27);
+      console.info(
+        "[LOCAL] Second handoff is finalized; beneficiary and grant are unchanged",
+      );
+      await page.getByRole("button", { name: "History", exact: true }).click();
+      await expect(
+        page.getByRole("heading", {
+          name: "Previous control handoffs",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await page.screenshot({
+        path: testInfo.outputPath("second-handoff-same-beneficiary.png"),
+        fullPage: true,
+      });
+      const creation = await readCreationLocator(page, pure);
+      await connectExistingWorkspaceThroughUi(page, {
+        name: `Connected LOCAL ${runId}`,
+        members: [wallet.accounts.A, wallet.accounts.B, wallet.accounts.C],
+        controller: m0,
+        funder: wallet.accounts.F2,
+        reviewers: [wallet.accounts.R1_2, wallet.accounts.R2_2],
+        pure,
+        contract: fixture.input.contract,
+        grantId: String(grantId),
+        creation,
+      });
+      expect(wallet.requests).toHaveLength(27);
+      console.info(
+        "[LOCAL] Connected the existing controller, Pure and grant without signing",
+      );
     } finally {
       await connection.close();
     }

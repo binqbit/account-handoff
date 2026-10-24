@@ -6,6 +6,12 @@ The grant must name the Pure account's correct application identity when it is c
 
 The application checks the network profile, identity mapping, account permissions, balances and grant state before preparing an operation. Unsupported configuration or incomplete evidence blocks the affected action.
 
+## Supported multisig profile
+
+The current profile uses two-of-three native multisigs and replaces one member per handoff. It supports successive handoffs; it does not provide arbitrary thresholds or a general-purpose wallet dashboard. The configured approval sequence remains explicit in each operation review.
+
+Connecting a multisig verifies its derived identity, not ownership of a signing key. Connecting an existing Pure requires its creation block and transaction and verifies that the supplied group is its sole current controller. An unrelated personal beneficiary cannot be converted into this dedicated-account workflow. Native operations remain gated by the qualified network profile.
+
 ## Continuity is not universal recovery
 
 An available current quorum is necessary. One unavailable signer in a two-of-three group can be replaced by the remaining quorum; losing that quorum is a different problem. An authorized compromised quorum can still act, and changing controllers does not undo earlier transfers or submissions.
