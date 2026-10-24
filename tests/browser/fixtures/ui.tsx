@@ -195,11 +195,19 @@ function reviewOperation(): OperationView {
     description: action.description,
     stage: "Prepared",
     tone: "neutral",
-    actor: action.actor,
+    actor:
+      scenario === "review-native-identifiers"
+        ? snapshot.wallet.selectedAddress!
+        : action.actor,
     signer: { address: snapshot.wallet.selectedAddress! },
     route: ["Alice", "Multisig M0", "Proxy P", "addProxy M1"],
     consequences: ["M0 remains authorized."],
-    terms: [{ label: "Permission", value: "Any / 0" }],
+    terms: [
+      { label: "Permission", value: "Any / 0" },
+      ...(scenario === "review-native-identifiers"
+        ? [{ label: "Signer", value: snapshot.wallet.selectedAddress! }]
+        : []),
+    ],
     resources: [
       {
         label: "Test estimate",

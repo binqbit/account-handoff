@@ -165,7 +165,9 @@ test("failed copying reveals the full value for manual copying", async ({
 });
 
 test("the signer stays fully visible in operation review", async ({ page }) => {
-  await page.goto(`${harness}#review?action=GRC-ROTATION-ADD-M1`);
+  await page.goto(
+    `${harness}?scenario=review-native-identifiers#review?action=GRC-ROTATION-ADD-M1`,
+  );
   await page
     .getByRole("button", { name: "Prepare for review", exact: true })
     .click();
@@ -173,6 +175,19 @@ test("the signer stays fully visible in operation review", async ({ page }) => {
     has: page.getByRole("heading", { name: "Execution route", exact: true }),
   });
   await expect(route.locator(".address-wrap > .address")).toHaveText(full);
+  await expect(route.locator(".key-values")).not.toContainText(
+    /0x[0-9a-f]{64}/i,
+  );
+  const terms = page.locator(".card").filter({
+    has: page.getByRole("heading", {
+      name: "Consequences and exact terms",
+      exact: true,
+    }),
+  });
+  await expect(terms.locator(".key-values")).toContainText(full);
+  await expect(terms.locator(".key-values")).not.toContainText(
+    /0x[0-9a-f]{64}/i,
+  );
   await expect(
     route.getByRole("button", { name: "Show full signer address" }),
   ).toHaveCount(0);

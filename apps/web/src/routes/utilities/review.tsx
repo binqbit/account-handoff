@@ -181,7 +181,7 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
             <Card title="Who performs the action">
               <KeyValues
                 rows={[
-                  { label: "Role", value: action.actor },
+                  { label: "Role", value: displayAddress(action.actor) },
                   {
                     label: "Personal account",
                     value: <Address value={snapshot.wallet.selectedAddress} />,
@@ -222,7 +222,12 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                   </li>
                 ))}
               </ul>
-              <KeyValues rows={active.terms} />
+              <KeyValues
+                rows={active.terms.map((term) => ({
+                  ...term,
+                  value: displayAddress(term.value),
+                }))}
+              />
               <div className="field">
                 <label className="checkbox-label">
                   <input
@@ -352,7 +357,7 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                       />
                     ),
                   },
-                  { label: "Role", value: active.actor },
+                  { label: "Role", value: displayAddress(active.actor) },
                 ]}
               />
             </Card>
