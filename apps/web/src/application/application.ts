@@ -17,10 +17,7 @@ import {
   type NativeReceipt,
   type NativeFingerprint,
 } from "@account-handoff/native-adapter";
-import {
-  connectWallets,
-  type WalletSession,
-} from "@account-handoff/wallet-adapter";
+import type { WalletSession } from "@account-handoff/wallet-adapter";
 import { type GrantHistory } from "@account-handoff/grant-adapter";
 import { openJournal, type Journal } from "@account-handoff/local-store";
 import type {
@@ -55,6 +52,11 @@ import { readLocalDescriptor, qualifiedProfile } from "./network-profile";
 import { readWorkspaceState, connectedNetwork } from "./network-state";
 import { checkPendingOperation } from "./check-pending";
 import { signOperation } from "./sign-operation";
+import {
+  WalletConnection,
+  readWalletPreference,
+  WALLET_PREFERENCE,
+} from "./wallet-connection";
 
 const terminal = new Set(["finalized", "failed", "stale"]);
 
@@ -89,7 +91,7 @@ export class Application implements ApplicationFacade {
   private workspaces: WorkspaceRecord[] = [];
   private currentId: string | null = null;
   private wallets: WalletSession[] = [];
-  private walletUnsub: (() => void)[] = [];
+  private walletConnection: WalletConnection;
   private journal: Journal | null = null;
   private pending: PendingOperation | null = null;
   private recovery: OperationRecovery | null = null;
@@ -98,7 +100,17 @@ export class Application implements ApplicationFacade {
   private commandRunning = false;
   private tabId = id();
   private grantHistory: GrantHistory | null = null;
-  private constructor(private metadata: Journal) {}
+  private constructor(private metadata: Journal) {
+    this.walletConnection = new WalletConnection(
+      metadata,
+      (wallet, sessions, reason) => {
+        this.wallets = sessions;
+        this.state = { ...this.state, wallet };
+        if (reason) this.invalidateReview(reason);
+        this.render();
+      },
+    );
+  }
   static async create(): Promise<Application> {
     const app = new Application(await openJournal("account-handoff:local:ui"));
     const stored = await app.metadata.getPreference<unknown>("workspaces");
@@ -114,7 +126,11 @@ export class Application implements ApplicationFacade {
       (await app.metadata.getPreference<string>("currentId")) ??
       app.workspaces[0]?.id ??
       null;
+    const wallet = readWalletPreference(
+      await app.metadata.getPreference<unknown>(WALLET_PREFERENCE),
+    );
     app.render();
+    if (wallet) void app.walletConnection.restore(wallet);
     return app;
   }
   getSnapshot = (): AppSnapshot => this.state;
@@ -128,7 +144,9 @@ export class Application implements ApplicationFacade {
   private selected() {
     return (
       this.state.wallet.accounts.find(
-        (a) => a.address === this.state.wallet.selectedAddress,
+        (a) =>
+          a.address === this.state.wallet.selectedAddress &&
+          (!this.state.wallet.source || a.source === this.state.wallet.source),
       ) ?? null
     );
   }
@@ -179,33 +197,10 @@ export class Application implements ApplicationFacade {
           await this.connectWallet();
           break;
         case "disconnect-wallet":
-          this.walletUnsub.forEach((fn) => fn());
-          this.wallets = [];
-          this.state = {
-            ...this.state,
-            wallet: {
-              connected: false,
-              connecting: false,
-              accounts: [],
-              selectedAddress: null,
-            },
-          };
-          this.invalidateReview("Wallet disconnected");
+          await this.walletConnection.disconnect();
           break;
         case "select-account":
-          if (
-            !this.state.wallet.accounts.some(
-              (a) => a.address === command.address,
-            )
-          )
-            throw new Error(
-              "This account is not available in the connected wallet",
-            );
-          this.state = {
-            ...this.state,
-            wallet: { ...this.state.wallet, selectedAddress: command.address },
-          };
-          this.invalidateReview("Signer changed; review the operation again");
+          await this.walletConnection.select(command.address);
           break;
         case "connect-network":
           await this.connectNetwork(command.mode, command.endpoint);
@@ -279,53 +274,14 @@ export class Application implements ApplicationFacade {
     return restoreWorkspace(input);
   }
   private async connectWallet() {
-    this.state = {
-      ...this.state,
-      wallet: { ...this.state.wallet, connecting: true },
-    };
-    this.render();
-    try {
-      this.walletUnsub.forEach((fn) => fn());
-      this.wallets = await connectWallets();
-      const accounts = this.wallets.flatMap((s) => s.accounts);
-      this.state = {
-        ...this.state,
-        wallet: {
-          connected: true,
-          connecting: false,
-          accounts,
-          selectedAddress: null,
-        },
-      };
-      for (const session of this.wallets)
-        this.walletUnsub.push(
-          await session.subscribe((items) => {
-            session.accounts = items;
-            const accounts = this.wallets.flatMap((s) => s.accounts);
-            const selected = this.state.wallet.selectedAddress;
-            this.state = {
-              ...this.state,
-              wallet: {
-                ...this.state.wallet,
-                accounts,
-                selectedAddress: accounts.some((a) => a.address === selected)
-                  ? selected
-                  : null,
-              },
-            };
-            this.invalidateReview("The available accounts changed");
-            this.render();
-          }),
-        );
+    await this.walletConnection.connect();
+    if (this.state.wallet.connected) {
       this.notify(
-        "Wallet connected. Select your personal account.",
+        this.state.wallet.selectedAddress
+          ? "Wallet reconnected."
+          : "Wallet connected. Select your personal account.",
         "positive",
       );
-    } finally {
-      this.state = {
-        ...this.state,
-        wallet: { ...this.state.wallet, connecting: false },
-      };
     }
   }
   private async descriptor(): Promise<LocalDescriptor | null> {

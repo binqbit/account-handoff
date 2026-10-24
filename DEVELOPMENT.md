@@ -12,7 +12,7 @@ npm run doctor
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. The website starts with locally retained records or an empty workspace. Opening it does not create accounts, seed a chain, connect a wallet, or submit a transaction. The network page selects the native WebSocket endpoint; the wallet button separately requests access to personal native accounts.
+Open `http://127.0.0.1:5173`. The website restores local records and reconnects previously selected wallet providers. The selected account is restored only if that same provider still exposes it; no other signer is selected as a fallback. First-time wallet access remains explicit. Disconnect clears the saved connection. The connection preference contains only provider names and the public account address, never keys or permission to sign. Reloading does not create accounts, connect a native node, request a signature or submit a transaction. The network page separately selects the native WebSocket endpoint.
 
 Build and inspect the production assets with:
 
@@ -88,6 +88,8 @@ The public entry point is [packages/native-adapter/src/index.ts](packages/native
 ### Application workflow
 
 [apps/web/src/application/application.ts](apps/web/src/application/application.ts) owns command serialization, selected workspace/wallet state and the current journal connection. Focused modules receive the dependencies needed for their stage:
+
+`wallet-connection.ts` owns provider subscriptions, saved public connection preferences, restoration and disconnect cancellation. Reloaded wallet context never restores an approval to sign.
 
 | Files                                                                         | Responsibility                                                                                                       |
 | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
