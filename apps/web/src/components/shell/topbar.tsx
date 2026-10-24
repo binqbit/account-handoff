@@ -1,7 +1,8 @@
 import type { Destination } from "../../ui-contract";
 import type { ScreenProps } from "../../routes/screen-types";
 import { titles } from "../../state/navigation";
-import { Button, Icon } from "../ui";
+import { Address, Button, Icon } from "../ui";
+import { compactAddress } from "../addresses/options";
 
 export function Topbar({
   snapshot,
@@ -37,35 +38,44 @@ export function Topbar({
             <span className="wallet-avatar">
               <Icon name="wallet" size={17} />
             </span>
-            <label className="sr-only" htmlFor="selected-wallet-account">
-              Personal account
-            </label>
-            <select
-              id="selected-wallet-account"
-              value={snapshot.wallet.selectedAddress ?? ""}
-              onChange={(event) =>
-                void run({
-                  type: "select-account",
-                  address: event.target.value,
-                })
-              }
-              disabled={!!snapshot.busy}
-            >
-              {!snapshot.wallet.selectedAddress && (
-                <option value="">Select an account</option>
-              )}
-              {snapshot.wallet.accounts.map((account) => (
-                <option
-                  key={`${account.source}-${account.address}`}
-                  value={account.address}
-                >
-                  {account.label ??
-                    account.name ??
-                    `${account.address.slice(0, 7)}…${account.address.slice(-5)}`}
-                  {account.role ? ` · ${account.role}` : ""}
-                </option>
-              ))}
-            </select>
+            <div className="wallet-details">
+              <label
+                className="wallet-details__label"
+                htmlFor="selected-wallet-account"
+              >
+                Personal account
+              </label>
+              <select
+                id="selected-wallet-account"
+                value={snapshot.wallet.selectedAddress ?? ""}
+                onChange={(event) =>
+                  void run({
+                    type: "select-account",
+                    address: event.target.value,
+                  })
+                }
+                disabled={!!snapshot.busy}
+              >
+                {!snapshot.wallet.selectedAddress && (
+                  <option value="">Select an account</option>
+                )}
+                {snapshot.wallet.accounts.map((account) => (
+                  <option
+                    key={`${account.source}-${account.address}`}
+                    value={account.address}
+                  >
+                    {account.label ?? account.name ?? "Wallet account"}
+                    {` · ${compactAddress(account.address)}`}
+                    {account.role ? ` · ${account.role}` : ""}
+                  </option>
+                ))}
+              </select>
+              <Address
+                value={snapshot.wallet.selectedAddress}
+                compact
+                label="signing account address"
+              />
+            </div>
             <button
               type="button"
               className="disconnect-button"

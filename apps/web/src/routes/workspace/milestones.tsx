@@ -15,6 +15,7 @@ export function Milestones(props: ScreenProps) {
   return (
     <>
       <PageHeader
+        icon="milestones"
         eyebrow="Grant and milestones"
         title="Continue work on the same grant"
         description="Submission, approval and release have different outcomes. Review the terms and state of each milestone here."

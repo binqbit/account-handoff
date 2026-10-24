@@ -122,3 +122,28 @@ test("keyboard account selection and mobile suggestions retain labels, addresses
     ),
   ).toBe(true);
 });
+
+test("completing a group keeps keyboard focus inside the selected accounts", async ({
+  page,
+}) => {
+  await page.goto(`${harness}#setup`);
+  const field = page.getByRole("combobox", {
+    name: "Add account to Original group M0",
+    exact: true,
+  });
+  await field.focus();
+  for (let index = 0; index < 3; index++) {
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+  }
+  await expect(
+    page.getByRole("button", { name: "Remove Charlie from Original group M0" }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("combobox", {
+      name: "Add account to New group M1",
+      exact: true,
+    }),
+  ).toBeFocused();
+});

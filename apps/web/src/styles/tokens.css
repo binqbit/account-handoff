@@ -11,7 +11,7 @@
   background: #10181b;
   font-synthesis: none;
   font-weight: 400;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.55;
   color-scheme: dark;
   --bg: #10181b;
@@ -23,5 +23,5 @@
   --accent-dark: #142c22;
   --warning: #efd094;
   --negative: #f0afaa;
-  --sidebar: 232px;
+  --sidebar: 264px;
 }

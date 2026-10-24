@@ -18,6 +18,7 @@ export function History(props: ScreenProps) {
   return (
     <>
       <PageHeader
+        icon="history"
         eyebrow="History and evidence"
         title="An outcome you can verify"
         description="The outer transaction, nested call and business outcome are shown separately. Historical evidence does not replace the current state."

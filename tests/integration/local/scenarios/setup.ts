@@ -42,20 +42,27 @@ export function registerSetupScenarios() {
         .getByRole("button", { name: "New workspace", exact: true })
         .click();
       await page.getByLabel("Workspace name").fill(`LOCAL ${runId} UI setup`);
-      await page
-        .getByLabel("Original group M0 — three addresses")
-        .fill(
-          [wallet.accounts.A, wallet.accounts.B, wallet.accounts.C].join("\n"),
-        );
-      await page
-        .getByLabel("New group M1 — three addresses")
-        .fill(
-          [wallet.accounts.A, wallet.accounts.B, wallet.accounts.D].join("\n"),
-        );
+      for (const [label, addresses] of [
+        [
+          "Original group M0",
+          [wallet.accounts.A, wallet.accounts.B, wallet.accounts.C],
+        ],
+        [
+          "New group M1",
+          [wallet.accounts.A, wallet.accounts.B, wallet.accounts.D],
+        ],
+        ["Two reviewer accounts", [wallet.accounts.R1_2, wallet.accounts.R2_2]],
+      ] as const) {
+        for (const address of addresses) {
+          const input = page.getByRole("combobox", {
+            name: `Add account to ${label}`,
+            exact: true,
+          });
+          await input.fill(address);
+          await input.press("Enter");
+        }
+      }
       await page.getByLabel("Funder account F").fill(wallet.accounts.F2);
-      await page
-        .getByLabel("Two reviewer accounts")
-        .fill([wallet.accounts.R1_2, wallet.accounts.R2_2].join("\n"));
       await page
         .getByRole("button", { name: "Save team", exact: true })
         .click();

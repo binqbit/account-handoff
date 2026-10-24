@@ -8,6 +8,7 @@ import {
 } from "../../components/ui";
 import type { ScreenProps } from "../screen-types";
 import { NoWorkspace } from "./shared";
+import { HelpDisclosure } from "../../components/help-disclosure";
 
 export function Team(props: ScreenProps) {
   const { snapshot, navigate, openAction } = props;
@@ -15,6 +16,7 @@ export function Team(props: ScreenProps) {
   return (
     <>
       <PageHeader
+        icon="team"
         eyebrow="Team and authority"
         title="People change. The beneficiary stays."
         description="Each group has its own controller address. A personal wallet signs only actions allowed for its owner."
@@ -30,6 +32,31 @@ export function Team(props: ScreenProps) {
           )
         }
       />
+      <HelpDisclosure title="How wallets, controllers and the beneficiary differ">
+        <dl className="role-explainer">
+          <div>
+            <dt>Personal wallet</dt>
+            <dd>
+              One person's signing account. A wallet connection alone does not
+              grant authority.
+            </dd>
+          </div>
+          <div>
+            <dt>Controller M0 or M1</dt>
+            <dd>
+              A 2-of-3 group: two members must sign. M0 is the original group;
+              M1 is the replacement group.
+            </dd>
+          </div>
+          <div>
+            <dt>Beneficiary P</dt>
+            <dd>
+              The stable account named by the grant. Its address stays the same
+              when the controller changes.
+            </dd>
+          </div>
+        </dl>
+      </HelpDisclosure>
       {!workspace ? (
         <NoWorkspace {...props} />
       ) : (

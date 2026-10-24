@@ -18,6 +18,7 @@ export function Workspaces(props: ScreenProps) {
   return (
     <>
       <PageHeader
+        icon="overview"
         eyebrow="Your workspaces"
         title="Return to your team's work"
         description="Open a saved workspace or create a new one. The wallet provides personal accounts; grant details are stored separately."

@@ -7,7 +7,9 @@ import {
   KeyValues,
   Notice,
   PageHeader,
+  Icon,
 } from "../../components/ui";
+import { HelpDisclosure } from "../../components/help-disclosure";
 import type { RuntimeMode } from "../../ui-contract";
 import type { ScreenProps } from "../screen-types";
 import { ReadinessCards } from "../../components/readiness";
@@ -43,6 +45,7 @@ export function Network(props: ScreenProps) {
   return (
     <>
       <PageHeader
+        icon="network"
         eyebrow="Network and readiness"
         title="Check the environment before acting"
         description="A node connection and readiness for an operation are separate checks. Each environment has its own data and evidence."
@@ -63,6 +66,16 @@ export function Network(props: ScreenProps) {
                     else if (value !== network.mode) setEndpoint("");
                   }}
                 >
+                  <Icon
+                    name={
+                      value === "LOCAL"
+                        ? "device"
+                        : value === "DEMO"
+                          ? "network"
+                          : "shield"
+                    }
+                    size={20}
+                  />
                   <span>{value}</span>
                   <small>
                     {value === "LOCAL"
@@ -86,12 +99,27 @@ export function Network(props: ScreenProps) {
                 }
                 required
                 autoComplete="url"
+                aria-describedby="native-endpoint-help"
               />
-              <p className="field__help">
-                The address is stored locally. An imported package does not
-                change the endpoint.
+              <p className="field__help" id="native-endpoint-help">
+                Paste the native chain's WebSocket URL: ws:// for a local node,
+                wss:// for a remote node. An EVM HTTP RPC URL is a different
+                endpoint.
               </p>
             </div>
+            <HelpDisclosure title="Which endpoint should I use?">
+              <p>
+                For the default host-run local node, use{" "}
+                <code>ws://127.0.0.1:9944</code>. For Docker Compose, use the
+                port configured as <code>AH_NATIVE_PORT</code> in your local
+                .env.
+              </p>
+              <p>
+                The URL is saved on this device. Changing the environment does
+                not connect automatically; use “Connect and verify” to check the
+                selected chain.
+              </p>
+            </HelpDisclosure>
             {mode === "LIVE" && (
               <Notice
                 tone="warning"

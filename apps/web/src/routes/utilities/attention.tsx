@@ -16,6 +16,7 @@ export function Attention(props: ScreenProps) {
   return (
     <>
       <PageHeader
+        icon="alert"
         eyebrow="Needs attention"
         title="Resolve the outcome before acting again"
         description="An unknown outcome does not mean the transaction failed. Check the existing attempt and native proposal."

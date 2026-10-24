@@ -119,13 +119,14 @@ export interface WorkspaceView {
 export interface OperationField {
   name: string;
   label: string;
-  type: "text" | "textarea" | "number" | "select";
+  type: "text" | "textarea" | "number" | "select" | "contract";
+  inputMode?: "numeric" | "decimal";
   help?: string;
   placeholder?: string;
   required?: boolean;
   value?: string;
   readOnly?: boolean;
-  options?: { value: string; label: string }[];
+  options?: { value: string; label: string; detail?: string }[];
   maxBytes?: number;
 }
 export interface ActionView {

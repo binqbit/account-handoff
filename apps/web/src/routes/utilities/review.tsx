@@ -14,6 +14,7 @@ import {
 } from "../../components/ui";
 import type { ActionView } from "../../ui-contract";
 import type { ScreenProps } from "../screen-types";
+import { addressError } from "../../components/addresses/options";
 
 function ActionForm({
   action,
@@ -39,6 +40,13 @@ function ActionForm({
       if (field.required && !value.trim()) {
         setError(`Complete the “${field.label}” field.`);
         return;
+      }
+      if (field.type === "contract") {
+        const invalid = addressError(value, "contract");
+        if (invalid) {
+          setError(invalid);
+          return;
+        }
       }
       if (
         field.maxBytes &&
@@ -131,6 +139,7 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
         Back to task
       </Button>
       <PageHeader
+        icon="shield"
         eyebrow="Separate operation review"
         title={active?.title ?? action?.title ?? "Review the planned action"}
         description={
@@ -139,6 +148,34 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
           "Choose a workspace action to review its parameters and consequences."
         }
       />
+      {(action || active) && (
+        <ol className="review-steps" aria-label="Operation steps">
+          {[
+            "Set parameters",
+            "Review and sign",
+            "Send operation",
+            "Verify outcome",
+          ].map((label, index) => {
+            const current = !active
+              ? 0
+              : active.stage.toLowerCase() === "prepared" ||
+                  active.stage.toLowerCase() === "stale"
+                ? 1
+                : active.stage.toLowerCase() === "signed"
+                  ? 2
+                  : 3;
+            return (
+              <li
+                key={label}
+                aria-current={index === current ? "step" : undefined}
+              >
+                <span>{index + 1}</span>
+                {label}
+              </li>
+            );
+          })}
+        </ol>
+      )}
       {!active ? (
         action ? (
           <div className="overview-grid">

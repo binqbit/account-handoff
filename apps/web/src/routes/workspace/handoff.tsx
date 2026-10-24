@@ -18,6 +18,7 @@ export function Handoff(props: ScreenProps) {
     return (
       <>
         <PageHeader
+          icon="handoff"
           eyebrow="Control handoff"
           title="Select a workspace"
           description="A handoff requires a known beneficiary, the current controller and an available quorum."
@@ -49,6 +50,7 @@ export function Handoff(props: ScreenProps) {
         Back to team
       </Button>
       <PageHeader
+        icon="handoff"
         eyebrow="Control handoff"
         title="Three actions. One stable beneficiary."
         description="Transfer authority to the new group and verify its work on the same grant."

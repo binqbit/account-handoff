@@ -25,6 +25,7 @@ export function Overview(props: ScreenProps) {
     return (
       <>
         <PageHeader
+          icon="overview"
           eyebrow="Your workspace"
           title="The team changes. The grant stays."
           description="Create a stable beneficiary and manage a control handoff with verified outcomes."
@@ -38,6 +39,7 @@ export function Overview(props: ScreenProps) {
   return (
     <>
       <PageHeader
+        icon="overview"
         eyebrow="Workspace / overview"
         title={workspace.name}
         description="Stable beneficiary. Visible authority. Each next action has a verified outcome."

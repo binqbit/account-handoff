@@ -1,5 +1,5 @@
-import { useId, useState } from "react";
-import { Icon } from "../ui";
+import { useEffect, useId, useRef, useState } from "react";
+import { Icon } from "../icon";
 import { AddressPicker } from "./address-picker";
 import { addressKey, compactAddress, type AddressOption } from "./options";
 
@@ -21,9 +21,20 @@ export function AddressList({
   disabled?: boolean;
 }) {
   const id = useId();
+  const group = useRef<HTMLFieldSetElement>(null);
+  const focusLastAccount = useRef(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const keys = values.map((value) => addressKey(value));
+  useEffect(() => {
+    if (focusLastAccount.current && values.length === count) {
+      const buttons = group.current?.querySelectorAll<HTMLButtonElement>(
+        ".address-chips button",
+      );
+      buttons?.[buttons.length - 1]?.focus();
+      focusLastAccount.current = false;
+    }
+  }, [values.length, count]);
   function add(addresses: string[]) {
     if (addresses.some((value) => !addressKey(value))) {
       setError(
@@ -46,12 +57,14 @@ export function AddressList({
       setError("This account is already in the group.");
       return;
     }
+    focusLastAccount.current = next.length === count;
     onChange(next);
     setDraft("");
     setError("");
   }
   return (
     <fieldset
+      ref={group}
       aria-label={label}
       className="address-list"
       aria-describedby={`${id}-help`}

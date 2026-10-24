@@ -8,12 +8,7 @@ export function Sidebar({
   navigate,
   destination,
 }: Pick<ScreenProps, "snapshot" | "navigate"> & { destination: Destination }) {
-  const activeDestination =
-    destination === "handoff"
-      ? "team"
-      : destination === "review"
-        ? ""
-        : destination;
+  const activeDestination = destination === "review" ? "" : destination;
   return (
     <aside className="sidebar">
       <button
@@ -22,7 +17,9 @@ export function Sidebar({
         onClick={() => navigate("overview")}
         aria-label="Account Handoff — overview"
       >
-        <span className="brand-symbol">⇄</span>
+        <span className="brand-symbol">
+          <Icon name="handoff" size={22} />
+        </span>
         <span>
           Account<span className="brand-light">Handoff</span>
         </span>
@@ -49,11 +46,15 @@ export function Sidebar({
           <button
             type="button"
             key={item.id}
+            aria-label={item.label}
             aria-current={activeDestination === item.id ? "page" : undefined}
             onClick={() => navigate(item.id)}
           >
             <Icon name={item.icon} size={19} />
-            <span>{item.label}</span>
+            <span className="nav-copy">
+              <strong>{item.label}</strong>
+              <small>{item.description}</small>
+            </span>
             {activeDestination === item.id && (
               <span className="nav-active-mark" />
             )}

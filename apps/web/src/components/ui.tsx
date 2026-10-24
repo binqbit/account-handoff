@@ -1,10 +1,5 @@
-import {
-  useId,
-  useState,
-  type ButtonHTMLAttributes,
-  type ReactNode,
-} from "react";
-import type { IdentityView, OperationField, Tone } from "../ui-contract";
+import { useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import type { IdentityView, Tone } from "../ui-contract";
 import { Icon } from "./icon";
 export { Icon } from "./icon";
 
@@ -74,20 +69,29 @@ export function PageHeader({
   title,
   description,
   actions,
+  icon,
 }: {
   eyebrow?: string;
   title: string;
   description: string;
   actions?: ReactNode;
+  icon?: string;
 }) {
   return (
     <header className="page-heading">
-      <div>
-        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-        <h1 tabIndex={-1} id="page-heading">
-          {title}
-        </h1>
-        <p className="lede">{description}</p>
+      <div className="page-heading__content">
+        {icon && (
+          <span className="page-heading__icon">
+            <Icon name={icon} size={24} />
+          </span>
+        )}
+        <div>
+          {eyebrow && <p className="eyebrow">{eyebrow}</p>}
+          <h1 tabIndex={-1} id="page-heading">
+            {title}
+          </h1>
+          <p className="lede">{description}</p>
+        </div>
       </div>
       {actions && <div className="actions">{actions}</div>}
     </header>
@@ -215,74 +219,6 @@ export function EmptyState({
     </div>
   );
 }
-export function OperationInput({
-  field,
-  value,
-  onChange,
-}: {
-  field: OperationField;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const id = useId();
-  const helpId = `${id}-help`;
-  const count = new TextEncoder().encode(value).length;
-  const common = {
-    id,
-    name: field.name,
-    value,
-    onChange: (
-      event: React.ChangeEvent<
-        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-      >,
-    ) => onChange(event.target.value),
-    required: field.required,
-    readOnly: field.readOnly,
-    "aria-describedby": field.help || field.maxBytes ? helpId : undefined,
-    "aria-invalid": field.maxBytes ? count > field.maxBytes : undefined,
-  };
-  return (
-    <div className="field">
-      <label htmlFor={id}>
-        {field.label}
-        {field.required && <span aria-hidden="true"> *</span>}
-      </label>
-      {field.type === "textarea" ? (
-        <textarea {...common} placeholder={field.placeholder} rows={5} />
-      ) : field.type === "select" ? (
-        <select {...common} disabled={field.readOnly}>
-          {field.options?.map((option) => (
-            <option value={option.value} key={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input
-          {...common}
-          type="text"
-          inputMode={field.type === "number" ? "numeric" : undefined}
-          placeholder={field.placeholder}
-          autoComplete="off"
-        />
-      )}
-      {(field.help || field.maxBytes) && (
-        <p
-          id={helpId}
-          className={`field__help ${field.maxBytes && count > field.maxBytes ? "text-negative" : ""}`}
-        >
-          {field.help}
-          {field.maxBytes && (
-            <span className="byte-count">
-              {count.toLocaleString("en-US")} /{" "}
-              {field.maxBytes.toLocaleString("en-US")} bytes
-            </span>
-          )}
-        </p>
-      )}
-    </div>
-  );
-}
 export function Evidence({
   value,
   title = "Technical details",
@@ -304,3 +240,5 @@ export function Evidence({
     </details>
   );
 }
+
+export { OperationInput } from "./forms/operation-input";

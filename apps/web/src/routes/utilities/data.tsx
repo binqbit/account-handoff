@@ -48,6 +48,7 @@ export function Data(props: ScreenProps) {
   return (
     <>
       <PageHeader
+        icon="download"
         eyebrow="Workspace data"
         title="Transfer context between devices"
         description="The package contains data and evidence for independent verification. Signatures, endpoints and local permissions are excluded."

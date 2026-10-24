@@ -26,16 +26,21 @@ const profileGates = new Set<GateId>([
   "Q-RECEIPTS",
 ]);
 function roles(
-  _workspace: WorkspaceRecord,
+  workspace: WorkspaceRecord,
   keys: ParticipantRole[],
-): { value: string; label: string }[] {
-  return keys.map((role) => ({ value: role, label: roleNames[role] }));
+): { value: string; label: string; detail: string }[] {
+  return keys.map((role) => ({
+    value: role,
+    label: `${roleNames[role]} · ${workspace.participants[role].slice(0, 8)}…${workspace.participants[role].slice(-6)}`,
+    detail: workspace.participants[role],
+  }));
 }
 function amountField(symbol: string): OperationField {
   return {
     name: "amount",
     label: `Amount (${symbol})`,
     type: "number",
+    inputMode: "decimal",
     required: true,
     placeholder: "0.00",
     help: "Decimal amount in network tokens. Exact native units and the fee are shown before signing.",
@@ -55,6 +60,7 @@ function roleField(
     required: true,
     options: roles(workspace, keys),
     value: initial ?? keys[0]!,
+    help: "Choose the participant by role and verify their address below. This does not switch your signing account.",
   };
 }
 export function actionViews(
@@ -151,24 +157,28 @@ export function actionViews(
     {
       name: "contract",
       label: "Deployed Vestry contract address",
-      type: "text",
+      type: "contract",
       required: true,
       value: workspace.contract ?? "",
-      help: "Exact H160 address of the unchanged contract on the current network.",
+      help: "Paste the deployed Vestry contract address on this network: 0x followed by 40 hexadecimal characters. This is not a personal wallet address.",
     },
     {
       name: "firstAmount",
       label: `First tranche (${symbol})`,
       type: "number",
+      inputMode: "decimal",
       required: true,
       value: "18",
+      help: `The first milestone's amount in ${symbol}, not raw base units. It is held in the grant until release.`,
     },
     {
       name: "secondAmount",
       label: `Second tranche (${symbol})`,
       type: "number",
+      inputMode: "decimal",
       required: true,
       value: "12",
+      help: `The next milestone's amount in ${symbol}. The funder needs both tranches plus transaction costs.`,
     },
     {
       name: "vestingBlocks",
@@ -176,6 +186,7 @@ export function actionViews(
       type: "number",
       required: true,
       value: "1800",
+      help: "Number of chain blocks over which the first released tranche unlocks. Enter 0 for no vesting; this is not a number of seconds.",
     },
     {
       name: "deadlineDays",
@@ -369,6 +380,8 @@ export function actionViews(
           type: "textarea",
           required: true,
           maxBytes: 1024,
+          placeholder:
+            "https://example.org/deliverable — what was completed and how to verify it",
           help: "Description or link. Text is recorded on-chain; do not include secrets.",
         },
       ],
@@ -460,6 +473,8 @@ export function actionViews(
           type: "textarea",
           required: true,
           maxBytes: 1024,
+          placeholder:
+            "Link to the next deliverable and describe what the new team completed",
           help: "This is a separate M1 submission on the same grant. Data is recorded on-chain.",
         },
       ],

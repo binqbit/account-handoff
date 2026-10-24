@@ -6,7 +6,7 @@ import {
   type ClipboardEvent,
   type KeyboardEvent,
 } from "react";
-import { Icon } from "../ui";
+import { Icon } from "../icon";
 import {
   addressError,
   addressKey,
