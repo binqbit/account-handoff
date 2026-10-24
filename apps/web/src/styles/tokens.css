@@ -8,17 +8,18 @@
     "Segoe UI",
     sans-serif;
   color: #e8efeb;
-  background: #10181b;
+  background: #0c171b;
   font-synthesis: none;
   font-weight: 400;
   font-size: 16px;
   line-height: 1.55;
   color-scheme: dark;
-  --bg: #10181b;
-  --panel: #172125;
+  --bg: #0c171b;
+  --panel: #162329;
   --panel-soft: #1c282c;
-  --border: #304047;
-  --muted: #a4b5b5;
+  --border: #2d4146;
+  --muted: #a1b5b3;
+  --text: #e8f0ec;
   --accent: #b7edcd;
   --accent-dark: #142c22;
   --warning: #efd094;

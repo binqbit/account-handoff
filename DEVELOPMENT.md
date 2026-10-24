@@ -23,6 +23,10 @@ npm run preview -- --port 4174
 
 Static assets are emitted to `dist/`. Reserve port 4173 for browser tests and 4175 for the dedicated real-LOCAL browser suite.
 
+## Website navigation
+
+The default route is **Home**, with a short product explanation and a three-step introduction. **Docs** contains the in-app usage guide and recovery vocabulary. The header keeps Home, Workspaces, Docs and the creation action available; opening a workspace adds its task tabs underneath. Wallet account choices show the name and a compact public address in an accessible custom menu.
+
 ## Create or connect a workspace
 
 Connect the native network, then open **New workspace**. **Create multisig** derives the current group's address locally. **Connect existing** checks a supplied multisig address against the same complete membership. Both routes retain the existing two-of-three profile. A replacement group is entered only in **Control handoff**.

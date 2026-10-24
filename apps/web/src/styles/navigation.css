@@ -3,7 +3,7 @@
   top: 0;
   z-index: 40;
   border-bottom: 1px solid var(--border);
-  background: #111d20;
+  background: #101e23;
 }
 .site-header__main {
   display: flex;
@@ -209,5 +209,23 @@
   .workspace-tabs svg {
     width: 14px;
     height: 14px;
+  }
+}
+
+.site-header .wallet-control {
+  padding: 4px 6px;
+  border: 1px solid #2e4647;
+  background: #17292b;
+  border-radius: 8px;
+}
+.site-header .wallet-account-trigger {
+  font-weight: 550;
+}
+@media (max-width: 680px) {
+  .site-header .wallet-control {
+    padding: 3px 4px;
+  }
+  .docs-content h2 {
+    scroll-margin-top: 20px;
   }
 }

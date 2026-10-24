@@ -1,0 +1,85 @@
+.docs-index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 24px;
+}
+.docs-index button {
+  border: 1px solid var(--border);
+  padding: 7px 11px;
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.83rem;
+}
+.docs-content {
+  max-width: 940px;
+}
+.docs-content > section {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.docs-content h2 {
+  scroll-margin-top: 140px;
+  font-size: 1.25rem;
+}
+.docs-content p,
+.docs-steps,
+.docs-states {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.75;
+}
+.docs-steps {
+  padding-left: 22px;
+}
+.docs-steps li + li {
+  margin-top: 12px;
+}
+.docs-steps strong,
+.docs-states dt {
+  color: var(--text);
+}
+.docs-accounts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.docs-accounts .card {
+  padding: 18px;
+}
+.docs-accounts .card__heading h2 {
+  font-size: 1rem;
+}
+.docs-accounts .card__heading {
+  margin-bottom: 12px;
+}
+.docs-accounts p {
+  margin-bottom: 0;
+  font-size: 0.85rem;
+}
+.docs-states > div {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 16px;
+  padding: 10px 0;
+}
+.docs-states dt {
+  font-weight: 600;
+}
+.docs-states dd {
+  margin: 0;
+}
+@media (max-width: 680px) {
+  .docs-accounts {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .docs-states > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

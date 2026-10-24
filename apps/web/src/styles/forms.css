@@ -243,3 +243,8 @@ input[type="checkbox"] {
 .archived-handoff > small {
   color: var(--muted);
 }
+
+select option {
+  background: #17252a;
+  color: #e1ece6;
+}

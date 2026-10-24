@@ -10,7 +10,8 @@
 @import "./identity.css";
 @import "./guidance.css";
 @import "./wallet.css";
-@import "./public.css";
+@import "./docs.css";
+@import "./home.css";
 @import "./navigation.css";
 @import "./operations.css";
 @import "./feedback.css";

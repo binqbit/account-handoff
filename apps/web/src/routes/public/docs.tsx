@@ -9,7 +9,12 @@ const sections = [
 ] as const;
 function showSection(id: string) {
   const heading = document.getElementById(`docs-${id}`);
-  heading?.scrollIntoView({ behavior: "smooth", block: "start" });
+  heading?.scrollIntoView({
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "instant"
+      : "smooth",
+    block: "start",
+  });
   heading?.focus({ preventScroll: true });
 }
 export function Docs({ navigate }: ScreenProps) {
