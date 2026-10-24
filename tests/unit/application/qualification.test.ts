@@ -343,9 +343,62 @@ describe("operation-specific LOCAL qualification", () => {
         ],
       },
     };
+    const observedActor = Object.assign(fresh.accounts[participants.S]!, {
+      nonce: 0,
+      proxies: [{ delay: 0 }],
+      enabled: true,
+    });
+    fresh.authorityTuples = [{ delegate: "old", proxyType: "Any", delay: 0 }];
+    fresh.proposal = {
+      depositor: participants.S,
+      approvals: [],
+      when: { height: 10, index: 1 },
+    };
+    fresh.grant = {
+      grantee: "synthetic",
+      funder: "synthetic",
+      threshold: 2,
+      milestoneCount: 2,
+      token: "synthetic",
+      milestones: [
+        {
+          state: 0,
+          round: 0,
+          deadline: 1000n,
+          vestingBlocks: 10,
+          metricTarget: "synthetic",
+          metricSelector: "0x00000000",
+          metricMin: 0n,
+        },
+      ],
+    };
     const result = await completePreparationSnapshot(input);
     expect(result.blockers).toEqual([]);
     expect(result.snapshot.completeness).toBe("complete");
+    const observed = result.snapshot.observations.preparation!.value as {
+      accounts: Record<
+        string,
+        { nonce: string; enabled: boolean; proxies: { delay: string }[] }
+      >;
+      proposal: { when: { height: string; index: string } };
+      grant: { threshold: string; milestoneCount: string };
+    };
+    expect(observed.accounts[participants.S]).toMatchObject({
+      nonce: "0",
+      enabled: true,
+      proxies: [{ delay: "0" }],
+    });
+    expect(observed.proposal.when).toEqual({ height: "10", index: "1" });
+    expect(observed.grant).toMatchObject({
+      threshold: "2",
+      milestoneCount: "2",
+    });
+    expect(JSON.parse(context.originalSignPayloadJcsUtf8).version).toBe(4);
+    observedActor.nonce = 1.5;
+    await expect(completePreparationSnapshot(input)).rejects.toThrow(
+      "Imprecise native numeric observation",
+    );
+    observedActor.nonce = 0;
     fresh.accounts[participants.S]!.free = 5n;
     expect(
       (await completePreparationSnapshot(input)).blockers.some(
