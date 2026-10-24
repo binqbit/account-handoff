@@ -722,6 +722,35 @@ export class NativeConnection {
     });
     return receipt;
   }
+  async inspectExtrinsic(
+    blockHash: Hex,
+    txIndex: number,
+  ): Promise<{ bytes: Hex; signer: Hex | null; call: unknown; callHex: Hex }> {
+    if (!Number.isSafeInteger(txIndex) || txIndex < 0)
+      throw new Error("Invalid transaction index");
+    await this.fingerprint(blockHash);
+    const block = object(
+      object(await this.api.provider.send("chain_getBlock", [blockHash]))[
+        "block"
+      ],
+    );
+    if (!Array.isArray(block["extrinsics"]))
+      throw new Error("Block extrinsics unavailable");
+    const bytes = hex(block["extrinsics"][txIndex]);
+    const at = await this.api.at(blockHash);
+    const tx = at.registry.$Extrinsic.tryDecode(bytes);
+    let signer: Hex | null = null;
+    if (tx.signature) {
+      const address = plain(tx.signature.address);
+      if (typeof address === "string") signer = account(address);
+      else {
+        const value = object(address);
+        if (value["type"] === "Id" && typeof value["value"] === "string")
+          signer = account(value["value"]);
+      }
+    }
+    return { bytes, signer, call: plain(tx.call), callHex: tx.callHex };
+  }
   async findReceipt(
     txHash: Hex,
     lookback = 256,

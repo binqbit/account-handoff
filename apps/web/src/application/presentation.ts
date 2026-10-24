@@ -1,4 +1,13 @@
 import type { NativeAccountState } from "@account-handoff/native-adapter";
+import {
+  OPERATION_REQUIREMENTS,
+  validateRecord,
+} from "@account-handoff/contracts";
+import type {
+  Controller,
+  EnabledOperationId,
+  GateId,
+} from "@account-handoff/contracts";
 import type {
   ActionView,
   BalanceView,
@@ -12,6 +21,16 @@ import type {
 import type { ChainView, WorkspaceHistory, WorkspaceRecord } from "./models";
 
 type ParticipantRole = keyof WorkspaceRecord["participants"];
+const profileGates = new Set<GateId>([
+  "Q-RUNTIME",
+  "Q-CURRENCY",
+  "Q-MAPPING",
+  "Q-REVIVE-API",
+  "Q-VESTING",
+  "Q-CONTRACT",
+  "Q-ADAPTER",
+  "Q-RECEIPTS",
+]);
 const eq = (
   left: string | null | undefined,
   right: string | null | undefined,
@@ -95,6 +114,63 @@ function after(left: WorkspaceHistory, right: WorkspaceHistory): boolean {
       left.receipt.txIndex > right.receipt.txIndex)
   );
 }
+function sameController(left: Controller, right: Controller): boolean {
+  return (
+    eq(left.account, right.account) &&
+    left.role === right.role &&
+    left.threshold === right.threshold &&
+    left.members.length === right.members.length &&
+    left.members.every((member, index) => eq(member, right.members[index]))
+  );
+}
+/** The application supplies a certificate only after reconstructing its native evidence. */
+function hasBoundCertificate(
+  workspace: WorkspaceRecord,
+  chain: ChainView | null,
+): boolean {
+  const certificate = workspace.continuityCertificate;
+  const baseline = workspace.baseline;
+  if (!chain || !certificate || !baseline || !validateRecord(certificate).ok)
+    return false;
+  return (
+    ["verified", "historically_verified_current_drift"].includes(
+      certificate.verdict,
+    ) &&
+    Object.values(certificate.criteria).every(
+      (criterion) => criterion === "passed",
+    ) &&
+    certificate.removalReceiptId !== null &&
+    certificate.milestone1SubmissionReceiptId !== null &&
+    certificate.removalReceiptId !==
+      certificate.milestone1SubmissionReceiptId &&
+    certificate.removalParticipationEvidence.length > 0 &&
+    certificate.continuationParticipationEvidence.length > 0 &&
+    certificate.grantScopeAtSubmission === "EligibleSingleRound" &&
+    certificate.profileId === chain.profile.profileId &&
+    certificate.profileDigest === chain.profile.digest &&
+    sameController(certificate.M0, workspace.M0) &&
+    sameController(certificate.M1, workspace.M1) &&
+    eq(certificate.identity.P, workspace.pure) &&
+    eq(certificate.identity.reverseMappingAccount, workspace.pure) &&
+    eq(certificate.identity.originalAccountEntry, workspace.pure) &&
+    eq(certificate.identity.hP, baseline.account.mappedAddress) &&
+    eq(certificate.identity.grantee, baseline.grant.grantee) &&
+    eq(certificate.identity.contractAddress, workspace.contract) &&
+    certificate.identity.grantId === workspace.grantId &&
+    eq(certificate.before.blockHash, baseline.blockHash) &&
+    BigInt(certificate.after.blockNumber) <=
+      BigInt(chain.fingerprint.anchor.number) &&
+    [certificate.before, certificate.after].every((anchor) =>
+      Object.values(anchor.contextBindings).every(
+        (context) =>
+          eq(context.genesis, workspace.genesis) &&
+          eq(context.genesis, chain.fingerprint.genesis) &&
+          context.metadataSha256 === chain.profile.metadataSha256 &&
+          eq(context.runtimeCodeHash, chain.profile.runtimeCodeHash),
+      ),
+    )
+  );
+}
 function proof(
   workspace: WorkspaceRecord,
   chain: ChainView | null,
@@ -122,14 +198,29 @@ function proof(
     !!workspace.grantId;
   const continued =
     identityPreserved &&
+    hasBoundCertificate(workspace, chain) &&
     submissions.some((submission) =>
-      removals.some((removal) => after(submission, removal)),
+      removals.some(
+        (removal) =>
+          submission.attemptId !== removal.attemptId &&
+          submission.receipt.txHash !== removal.receipt.txHash &&
+          after(submission, removal),
+      ),
     );
   if (continued) {
     const state = authority(workspace, chain);
     const grantMatches =
-      !!chain?.grant && eq(chain.grant.grantee, baseline.grant.grantee);
-    if (state !== "M1" || !grantMatches)
+      !!chain?.grant &&
+      eq(chain.grant.grantee, baseline.grant.grantee) &&
+      eq(chain.grant.funder, baseline.grant.funder) &&
+      chain.grant.milestones.every((milestone) => milestone.round === 0);
+    if (
+      state !== "M1" ||
+      !mapped(stateFor(chain, workspace.pure)) ||
+      !grantMatches ||
+      workspace.continuityCertificate?.verdict ===
+        "historically_verified_current_drift"
+    )
       return {
         continuity: "drift",
         detail:
@@ -312,7 +403,7 @@ export function actionViews(
     },
   ];
   function action(
-    id: string,
+    id: EnabledOperationId,
     title: string,
     description: string,
     category: ActionView["category"],
@@ -320,7 +411,22 @@ export function actionViews(
     ownBlockers: string[],
     inputs: OperationField[] = [],
   ): ActionView {
-    const blockers = [...common, ...ownBlockers];
+    const unavailableCapabilities = chain
+      ? OPERATION_REQUIREMENTS[id].requiredGateIds
+          .filter(
+            (gate) =>
+              profileGates.has(gate) &&
+              !(chain.profile.gateRecords ?? []).some(
+                (record) =>
+                  record.id === gate &&
+                  record.stage === "profile_capability" &&
+                  record.status === "accepted" &&
+                  record.evidence.length > 0,
+              ),
+          )
+          .map((gate) => `Потрібне підтвердження можливості мережі: ${gate}.`)
+      : [];
+    const blockers = [...common, ...unavailableCapabilities, ...ownBlockers];
     return {
       id,
       title,
