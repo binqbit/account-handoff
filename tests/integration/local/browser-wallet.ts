@@ -12,13 +12,21 @@ import {
   type NativeConnection,
 } from "@account-handoff/native-adapter";
 
-export type LocalRole = "A" | "B" | "C" | "D" | "F" | "R1" | "R2" | "S";
+export type LocalRole =
+  "A" | "B" | "C" | "D" | "F" | "R1" | "R2" | "S" | "F2" | "R1_2" | "R2_2";
 export interface WalletRequestLog {
   role: LocalRole;
   address: string;
   callHash: string;
   nonce: string;
   sequence: number;
+}
+const walletTraces = new WeakMap<
+  Page,
+  { requests: WalletRequestLog[]; rejected: LocalRole[] }
+>();
+export function localWalletTrace(page: Page) {
+  return walletTraces.get(page);
 }
 const roleUris: Record<LocalRole, string> = {
   A: "//Alice",
@@ -29,6 +37,9 @@ const roleUris: Record<LocalRole, string> = {
   R1: "//Ferdie",
   R2: "//Alice//stash",
   S: "//Bob//stash",
+  F2: "//Eve//account-handoff-browser-setup",
+  R1_2: "//Ferdie//account-handoff-browser-setup",
+  R2_2: "//Alice//stash//account-handoff-browser-setup",
 };
 function unsigned(value: unknown): bigint {
   if (typeof value !== "string" || !/^(0x[0-9a-fA-F]+|[0-9]+)$/.test(value))
@@ -54,6 +65,7 @@ export async function injectLocalWallet(
   }));
   const requests: WalletRequestLog[] = [];
   const rejected: LocalRole[] = [];
+  walletTraces.set(page, { requests, rejected });
   let rejectNext = false;
   await page.exposeBinding(
     "__signAccountHandoffLocalPayload",

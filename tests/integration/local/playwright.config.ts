@@ -12,6 +12,12 @@ const executablePath =
     "/usr/bin/chromium",
     "/usr/bin/chromium-browser",
   ].find((candidate) => existsSync(candidate));
+const outputDirectory = fileURLToPath(
+  new URL(
+    "../../../.agent-workspace/verification/local-browser/current",
+    import.meta.url,
+  ),
+);
 export default defineConfig({
   testDir: ".",
   testMatch: "browser.spec.ts",
@@ -23,20 +29,20 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:4175",
     browserName: "chromium",
     headless: true,
+    actionTimeout: 45000,
     launchOptions: {
       ...(executablePath ? { executablePath } : {}),
       args: ["--no-sandbox"],
     },
     trace: "retain-on-failure",
   },
-  outputDir: fileURLToPath(
-    new URL(
-      "../../../.agent-workspace/verification/local-browser/current/",
-      import.meta.url,
-    ),
-  ),
+  outputDir: outputDirectory,
+  reporter: [
+    ["line"],
+    ["json", { outputFile: `${outputDirectory}/report.json` }],
+  ],
   webServer: {
-    command: "npm run dev -- --port 4175",
+    command: "npm run build && npm run preview -- --port 4175",
     url: "http://127.0.0.1:4175",
     reuseExistingServer: false,
     timeout: 60000,
