@@ -156,6 +156,30 @@ let snapshot: AppSnapshot = {
   busy: null,
 };
 const scenario = new URLSearchParams(location.search).get("scenario");
+if (scenario?.startsWith("identity-") && snapshot.workspace) {
+  const missing = scenario === "identity-unknown";
+  snapshot.workspace.identityComparison =
+    scenario === "identity-unchecked"
+      ? []
+      : [
+          {
+            label: "Native beneficiary",
+            before: addresses[4]!,
+            current: addresses[4]!,
+            matches: true,
+          },
+          {
+            label: "Grant recipient",
+            before: `0x${"a".repeat(40)}`,
+            current: missing
+              ? null
+              : scenario === "identity-changed"
+                ? `0x${"d".repeat(40)}`
+                : `0x${"a".repeat(40)}`,
+            matches: missing ? null : scenario !== "identity-changed",
+          },
+        ];
+}
 if (!location.hash && scenario !== "public-home")
   history.replaceState(
     null,
