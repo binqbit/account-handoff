@@ -91,6 +91,7 @@ export function MilestoneCard({
   actions: ActionView[];
   openAction: (id: string) => void;
 }) {
+  const approvalCount = milestone.approvalCount ?? milestone.approvals?.length;
   return (
     <Card
       className="milestone-card"
@@ -120,9 +121,9 @@ export function MilestoneCard({
           {
             label: "Approvals",
             value:
-              milestone.approvals === null
+              approvalCount === undefined
                 ? "Unknown"
-                : `${milestone.approvals.length} of ${milestone.requiredApprovals}`,
+                : `${approvalCount} of ${milestone.requiredApprovals}`,
           },
         ]}
       />

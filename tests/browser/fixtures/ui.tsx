@@ -239,6 +239,19 @@ if (scenario === "read-only")
       blockers: ["Connect the network and wallet for a new review."],
     })),
   };
+if (scenario === "approval-counts" || scenario === "approval-unknown")
+  snapshot = {
+    ...snapshot,
+    workspace: {
+      ...snapshot.workspace!,
+      milestones: snapshot.workspace!.milestones.map((milestone, index) => ({
+        ...milestone,
+        approvals: null,
+        approvalCount:
+          scenario === "approval-counts" ? (index === 0 ? 2 : 0) : null,
+      })),
+    },
+  };
 const listeners = new Set<() => void>();
 const commands: AppCommand[] = [];
 const publish = (next: AppSnapshot) => {
