@@ -11,6 +11,7 @@ import type {
 import type {
   NativeAccountState,
   NativeFingerprint,
+  NativeMetadataBinding,
   NativeReceipt,
   NativeAction,
   PreparedSigning,
@@ -99,6 +100,7 @@ export interface LocalDescriptor {
   runtimeCodeHash?: string;
   metadataSha256?: string;
   qualification?: unknown;
+  nativeMetadataBinding?: NativeMetadataBinding;
   capabilities?: LocalCapabilityManifest;
   qualified?: boolean;
   genesisHash?: string;

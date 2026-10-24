@@ -4,7 +4,8 @@ import type {
   SignerPayloadJSON,
   ISubmittableResult,
 } from "dedot/types";
-import { AccountId32, $Metadata } from "dedot/codecs";
+import { AccountId32, $Metadata, $OpaqueMetadata } from "dedot/codecs";
+import { Option, u32 } from "dedot/shape";
 import { blake2AsHex, hexToU8a, u8aToHex } from "dedot/utils";
 import { keccak256 } from "viem";
 import { sha256 } from "@account-handoff/contracts";
@@ -61,6 +62,31 @@ export interface NativeFingerprint {
   tokenDecimals: number;
   tokenSymbol: string;
   ss58Prefix: number;
+  metadataBinding?: "pinned-runtime-code" | "unbound-client-cache";
+  metadataSourceAnchor?: { blockHash: Hex; blockNumber: number };
+}
+export interface NativeMetadataBinding {
+  genesis: Hex;
+  specVersion: number;
+  runtimeCodeHash: Hex;
+  metadataSha256: string;
+  rawMetadata: Hex;
+  sourceAnchor: { blockHash: Hex; blockNumber: number };
+}
+export interface NativeMetadataCapture {
+  genesis: Hex;
+  blockHash: Hex;
+  blockNumber: number;
+  finalized: true;
+  /** Runtime code serving the Metadata API in this block's post-state. */
+  runtimeCodeHash: Hex;
+  specName: string;
+  specVersion: number;
+  transactionVersion: number;
+  metadataVersion: number;
+  metadataSha256: string;
+  metadataHash: Hex;
+  rawMetadata: Hex;
 }
 export interface NativeAccountState {
   address: Hex;
@@ -408,12 +434,46 @@ export class NativeConnection {
     readonly api: DedotClient,
     readonly endpoint: string,
     readonly mode: "LOCAL" | "DEMO" | "LIVE",
+    private readonly metadataBinding?: NativeMetadataBinding,
   ) {}
   static async connect(
     endpoint: string,
     mode: "LOCAL" | "DEMO" | "LIVE",
+    binding?: NativeMetadataBinding,
   ): Promise<NativeConnection> {
     const url = safeEndpoint(endpoint, mode);
+    let pinned: NativeMetadataBinding | undefined;
+    if (binding) {
+      if (
+        !Number.isSafeInteger(binding.specVersion) ||
+        binding.specVersion < 0 ||
+        !Number.isSafeInteger(binding.sourceAnchor.blockNumber) ||
+        binding.sourceAnchor.blockNumber < 0 ||
+        binding.rawMetadata.length > 2 * 2_097_152 + 2 ||
+        !/^[0-9a-f]{64}$/.test(binding.metadataSha256)
+      )
+        throw new Error("Invalid bounded native metadata binding");
+      pinned = {
+        ...binding,
+        genesis: hex(binding.genesis, 32),
+        runtimeCodeHash: hex(binding.runtimeCodeHash, 32),
+        rawMetadata: hex(binding.rawMetadata),
+        sourceAnchor: {
+          blockHash: hex(binding.sourceAnchor.blockHash, 32),
+          blockNumber: binding.sourceAnchor.blockNumber,
+        },
+      };
+      const decoded = $Metadata.tryDecode(pinned.rawMetadata);
+      if (
+        ![14, 15, 16].includes(decoded.versionNumber) ||
+        (await sha256(hexToU8a(pinned.rawMetadata))) !==
+          pinned.metadataSha256 ||
+        u8aToHex($Metadata.tryEncode(decoded)) !== pinned.rawMetadata
+      )
+        throw new Error(
+          "Pinned metadata bytes do not match their exact hash and format",
+        );
+    }
     const api = await DedotClient.legacy({
       provider: new WsProvider({
         endpoint: url,
@@ -423,11 +483,60 @@ export class NativeConnection {
       }),
       cacheMetadata: false,
       throwOnUnknownApi: true,
+      ...(pinned
+        ? {
+            metadata: {
+              [`RAW_META/${pinned.genesis}/${pinned.specVersion}`]:
+                pinned.rawMetadata,
+            },
+          }
+        : {}),
     });
-    return new NativeConnection(api, url, mode);
+    const connection = new NativeConnection(api, url, mode, pinned);
+    if (pinned) {
+      try {
+        const source = await connection.captureMetadata(
+          pinned.sourceAnchor.blockHash,
+          $Metadata.tryDecode(pinned.rawMetadata).versionNumber as 14 | 15 | 16,
+        );
+        if (
+          source.genesis !== pinned.genesis ||
+          source.blockNumber !== pinned.sourceAnchor.blockNumber ||
+          source.specVersion !== pinned.specVersion ||
+          source.runtimeCodeHash !== pinned.runtimeCodeHash ||
+          source.metadataSha256 !== pinned.metadataSha256 ||
+          source.rawMetadata !== pinned.rawMetadata
+        )
+          throw new Error(
+            "Pinned metadata does not match its immutable native source",
+          );
+        await connection.fingerprint();
+      } catch (error) {
+        await api.disconnect();
+        throw error;
+      }
+    }
+    return connection;
   }
   close(): Promise<void> {
     return this.api.disconnect();
+  }
+  /** Verify the code identity before using the pinned registry at an immutable block. */
+  async assertRuntimeAt(blockHash: Hex): Promise<void> {
+    const binding = this.metadataBinding;
+    if (!binding) return;
+    const [codeHash, version] = await Promise.all([
+      this.api.rpc.state_getStorageHash("0x3a636f6465", blockHash),
+      this.api.rpc.state_getRuntimeVersion(blockHash),
+    ]);
+    if (
+      this.api.genesisHash !== binding.genesis ||
+      codeHash !== binding.runtimeCodeHash ||
+      version.specVersion !== binding.specVersion
+    )
+      throw new Error(
+        "Native runtime differs from the immutable metadata binding",
+      );
   }
   transaction(action: NativeAction): NativeTx {
     const tx = this.api.toTx(actionCall(action));
@@ -453,6 +562,15 @@ export class NativeConnection {
     if (!header || !code)
       throw new Error("Finalized runtime identity is unavailable");
     if (
+      this.metadataBinding &&
+      (this.api.genesisHash !== this.metadataBinding.genesis ||
+        blake2AsHex(code) !== this.metadataBinding.runtimeCodeHash ||
+        version.specVersion !== this.metadataBinding.specVersion)
+    )
+      throw new Error(
+        "Native runtime differs from the immutable metadata binding",
+      );
+    if (
       version.specVersion !== this.api.runtimeVersion.specVersion ||
       version.transactionVersion !== this.api.runtimeVersion.transactionVersion
     )
@@ -460,6 +578,8 @@ export class NativeConnection {
         "Runtime changed at the finalized boundary; refresh its exact metadata before preparing operations",
       );
     if (header.number > 0) {
+      if (this.metadataBinding)
+        await this.assertRuntimeAt(hex(header.parentHash, 32));
       const before = await this.api.rpc.state_getRuntimeVersion(
         header.parentHash,
       );
@@ -475,6 +595,15 @@ export class NativeConnection {
       ? (await this.api.at(hash)).metadata
       : this.api.metadata;
     const metadata = u8aToHex($Metadata.tryEncode(metadataObject));
+    const metadataSha256 = await sha256(hexToU8a(hex(metadata)));
+    if (
+      this.metadataBinding &&
+      (metadataSha256 !== this.metadataBinding.metadataSha256 ||
+        metadata !== this.metadataBinding.rawMetadata)
+    )
+      throw new Error(
+        "The active native registry does not use the exact pinned metadata",
+      );
     const symbol = properties.tokenSymbol;
     const decimals = properties.tokenDecimals;
     return {
@@ -484,7 +613,7 @@ export class NativeConnection {
       transactionVersion: version.transactionVersion,
       metadataVersion: metadataObject.versionNumber,
       metadataHash: blake2AsHex(hex(metadata)),
-      metadataSha256: await sha256(hexToU8a(hex(metadata))),
+      metadataSha256,
       rawMetadata: hex(metadata),
       runtimeCodeHash: blake2AsHex(code),
       signedExtensions:
@@ -506,6 +635,73 @@ export class NativeConnection {
             ? String(symbol[0])
             : "UNIT",
       ss58Prefix: number(properties.ss58Format ?? 42),
+      metadataBinding: this.metadataBinding
+        ? "pinned-runtime-code"
+        : "unbound-client-cache",
+      ...(this.metadataBinding
+        ? { metadataSourceAnchor: { ...this.metadataBinding.sourceAnchor } }
+        : {}),
+    };
+  }
+  /** Captures exact RPC bytes at one finalized hash, independently of the client's cached registry. */
+  async captureMetadata(
+    blockHash: Hex,
+    metadataVersion: 14 | 15 | 16 = 16,
+  ): Promise<NativeMetadataCapture> {
+    const sourceHash = hex(blockHash, 32);
+    const [header, code, version, finalizedHash, response] = await Promise.all([
+      this.api.rpc.chain_getHeader(sourceHash),
+      this.api.rpc.state_getStorage("0x3a636f6465", sourceHash),
+      this.api.rpc.state_getRuntimeVersion(sourceHash),
+      this.api.rpc.chain_getFinalizedHead(),
+      this.api.rpc.state_call(
+        "Metadata_metadata_at_version",
+        u8aToHex(u32.tryEncode(metadataVersion)),
+        sourceHash,
+      ),
+    ]);
+    if (!header || !code)
+      throw new Error("Metadata source block or runtime code is unavailable");
+    const [finalizedHeader, canonicalHash] = await Promise.all([
+      this.api.rpc.chain_getHeader(finalizedHash),
+      this.api.rpc.chain_getBlockHash(header.number),
+    ]);
+    if (
+      !finalizedHeader ||
+      header.number > finalizedHeader.number ||
+      canonicalHash !== sourceHash
+    )
+      throw new Error("Metadata source is not a canonical finalized block");
+    const codec = Option($OpaqueMetadata);
+    const raw = codec.tryDecode(response);
+    if (u8aToHex(codec.tryEncode(raw)) !== hex(response))
+      throw new Error("Metadata API returned a noncanonical SCALE envelope");
+    if (!raw)
+      throw new Error(
+        `Metadata version ${metadataVersion} is unavailable at the source block`,
+      );
+    const exact = hex(raw);
+    const decoded = $Metadata.tryDecode(exact);
+    if (
+      decoded.versionNumber !== metadataVersion ||
+      u8aToHex($Metadata.tryEncode(decoded)) !== exact
+    )
+      throw new Error(
+        "Metadata API returned different or noncanonical metadata bytes",
+      );
+    return {
+      genesis: hex(this.api.genesisHash, 32),
+      blockHash: sourceHash,
+      blockNumber: number(header.number),
+      finalized: true,
+      runtimeCodeHash: blake2AsHex(code),
+      specName: version.specName,
+      specVersion: version.specVersion,
+      transactionVersion: version.transactionVersion,
+      metadataVersion,
+      metadataSha256: await sha256(hexToU8a(exact)),
+      metadataHash: blake2AsHex(exact),
+      rawMetadata: exact,
     };
   }
   async readAccount(
@@ -513,9 +709,10 @@ export class NativeConnection {
     blockHash?: Hex,
   ): Promise<NativeAccountState> {
     const raw = account(address);
-    const at = await this.api.at(
-      blockHash ?? (await this.api.rpc.chain_getFinalizedHead()),
-    );
+    const hash =
+      blockHash ?? hex(await this.api.rpc.chain_getFinalizedHead(), 32);
+    await this.assertRuntimeAt(hash);
+    const at = await this.api.at(hash);
     const [info, proxies, mapping, holds, vesting, namedReserves] =
       await Promise.all([
         at.query.system.account(raw),
@@ -554,9 +751,10 @@ export class NativeConnection {
     depositor: Hex;
     approvals: Hex[];
   } | null> {
-    const at = await this.api.at(
-      blockHash ?? (await this.api.rpc.chain_getFinalizedHead()),
-    );
+    const hash =
+      blockHash ?? hex(await this.api.rpc.chain_getFinalizedHead(), 32);
+    await this.assertRuntimeAt(hash);
+    const at = await this.api.at(hash);
     const proposal = await at.query.multisig.multisigs([
       account(controller),
       callHash,
@@ -571,7 +769,9 @@ export class NativeConnection {
       : null;
   }
   async dispatchWeight(tx: NativeTx): Promise<Weight> {
-    const at = await this.api.at(await this.api.rpc.chain_getFinalizedHead());
+    const hash = hex(await this.api.rpc.chain_getFinalizedHead(), 32);
+    await this.assertRuntimeAt(hash);
+    const at = await this.api.at(hash);
     const query = at.call.transactionPaymentCallApi["queryCallInfo"];
     if (!query)
       throw new Error("TransactionPaymentCallApi.queryCallInfo is unavailable");
@@ -591,9 +791,10 @@ export class NativeConnection {
     data: Hex,
     blockHash?: Hex,
   ): Promise<{ weight: Weight; storage: bigint; data: Hex }> {
-    const at = await this.api.at(
-      blockHash ?? (await this.api.rpc.chain_getFinalizedHead()),
-    );
+    const hash =
+      blockHash ?? hex(await this.api.rpc.chain_getFinalizedHead(), 32);
+    await this.assertRuntimeAt(hash);
+    const at = await this.api.at(hash);
     const result = await at.call.reviveApi.call(
       account(origin),
       destination,
@@ -615,6 +816,8 @@ export class NativeConnection {
     ).data;
   }
   async prepareSigning(tx: NativeTx, signer: string): Promise<PreparedSigning> {
+    if (!this.metadataBinding)
+      throw new Error("Signing requires an explicit verified metadata binding");
     const fingerprint = await this.fingerprint();
     const raw = account(signer);
     const info = await this.api.query.system.account(raw);
@@ -680,6 +883,9 @@ export class NativeConnection {
     signedBytes: Hex,
     onProgress?: (result: ISubmittableResult) => void,
   ): Promise<NativeReceipt> {
+    if (!this.metadataBinding)
+      throw new Error("Sending requires an explicit verified metadata binding");
+    await this.fingerprint();
     const result = await this.api
       .sendTx(signedBytes, onProgress ?? (() => {}))
       .untilFinalized();
@@ -688,6 +894,7 @@ export class NativeConnection {
     return this.receiptAt(result.status.value.blockHash, result.txHash);
   }
   async receiptAt(blockHash: Hex, txHash: Hex): Promise<NativeReceipt> {
+    await this.fingerprint(blockHash);
     const [raw, head, header] = await Promise.all([
       this.api.provider.send("chain_getBlock", [blockHash]),
       this.api.rpc.chain_getFinalizedHead(),
@@ -783,9 +990,10 @@ export class NativeConnection {
     return null;
   }
   async currentBlockTime(blockHash?: Hex): Promise<bigint> {
-    const at = await this.api.at(
-      blockHash ?? (await this.api.rpc.chain_getFinalizedHead()),
-    );
+    const hash =
+      blockHash ?? hex(await this.api.rpc.chain_getFinalizedHead(), 32);
+    await this.assertRuntimeAt(hash);
+    const at = await this.api.at(hash);
     return integer(await at.query.timestamp.now());
   }
 }

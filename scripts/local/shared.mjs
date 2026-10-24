@@ -106,6 +106,21 @@ export function emitDescriptor(data, { activate = false } = {}) {
   let deployment;
   let contract;
   let generated;
+  let nativeMetadataBinding;
+  const bindingPath = join(
+    runDirectory(data.runId),
+    "native-metadata-binding.json",
+  );
+  if (existsSync(bindingPath)) {
+    const binding = JSON.parse(readFileSync(bindingPath, "utf8"));
+    if (
+      binding.genesis === data.genesisHash &&
+      binding.metadataSha256 === data.qualification?.metadataSha256 &&
+      binding.runtimeCodeHash === data.qualification?.runtimeCodeHash &&
+      binding.specVersion === data.qualification?.version?.specVersion
+    )
+      nativeMetadataBinding = binding;
+  }
   const generatedPath = join(
     ROOT,
     "packages/native-adapter/generated-manifest.json",
@@ -141,13 +156,15 @@ export function emitDescriptor(data, { activate = false } = {}) {
     sourceCommit: LOCK.source.commit,
     qualified:
       data.status === "running" &&
-      data.qualification?.status === "IDENTITY_VERIFIED",
+      data.qualification?.status === "IDENTITY_VERIFIED" &&
+      nativeMetadataBinding !== undefined,
     genesisHash: data.genesisHash ?? null,
     metadataHash: data.qualification?.metadataHash ?? null,
     metadataSha256: data.qualification?.metadataSha256 ?? null,
     metadataVersion: data.qualification?.metadataVersion ?? null,
     runtimeCodeHash: data.qualification?.runtimeCodeHash ?? null,
     generatedNativeTypesSha256: generated?.generatedNativeTypesSha256 ?? null,
+    nativeMetadataBinding: nativeMetadataBinding ?? null,
     capabilities:
       data.capabilities?.generation === data.generation &&
       data.capabilities?.metadataSha256 ===

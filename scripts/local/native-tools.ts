@@ -22,6 +22,7 @@ import {
   NativeConnection,
   type NativeAction,
   type NativeReceipt,
+  type NativeMetadataBinding,
   type Hex,
   account,
   contractAddress,
@@ -44,7 +45,7 @@ const ROOT = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const UNIT = 100_000_000_000_000n;
 const EVM_UNIT = 1_000_000_000_000_000_000n;
 const ZERO4 = "0x00000000" as Hex;
-type Role = "A" | "B" | "C" | "D" | "F" | "R1" | "R2";
+type Role = "A" | "B" | "C" | "D" | "F" | "R1" | "R2" | "X";
 type Step = {
   status: "prepared" | "signed" | "broadcast-unknown" | "finalized";
   startBlock: number;
@@ -77,6 +78,13 @@ interface Session {
   dualControl?: unknown;
   cancellationProbe?: { reservedBefore: string; callHash: Hex };
   maintenance?: unknown;
+  mappingProbe?: {
+    address: Hex;
+    initiallyUnmapped: true;
+    reservedBefore: string;
+    receiptHash?: Hex;
+    result?: unknown;
+  };
   operations: Record<
     string,
     {
@@ -237,13 +245,22 @@ async function main() {
     nativeRpc: string;
     status: string;
     genesisHash: Hex;
+    qualification?: {
+      status: string;
+      generation: number;
+      genesis: Hex;
+      runtimeCodeHash: Hex;
+      metadataSha256: string;
+    };
   };
   requireCondition(
     run.owner === "account-handoff" &&
       run.mode === "LOCAL" &&
       run.runId === id &&
-      run.status === "running",
-    "A running owned LOCAL environment is required",
+      run.status === "running" &&
+      run.qualification?.status === "IDENTITY_VERIFIED" &&
+      run.qualification.generation === run.generation,
+    "A running, independently qualified LOCAL environment is required",
   );
   const deployment = JSON.parse(
     readFileSync(join(directory, "deployment.json"), "utf8"),
@@ -263,6 +280,7 @@ async function main() {
     F: keyring.addFromUri("//Eve"),
     R1: keyring.addFromUri("//Ferdie"),
     R2: keyring.addFromUri("//Alice//stash"),
+    X: keyring.addFromUri("//Alice//AccountHandoffMappingProbe"),
   };
   const actors = Object.fromEntries(
     Object.entries(pairs).map(([role, pair]) => [role, account(pair.address)]),
@@ -274,10 +292,20 @@ async function main() {
     u8aToHex(createKeyMulti([actors.A, actors.B, actors.D].sort(), 2)),
   );
   const sessionPath = join(directory, "seed.json");
+  const metadataBinding = JSON.parse(
+    readFileSync(join(directory, "native-metadata-binding.json"), "utf8"),
+  ) as NativeMetadataBinding;
+  requireCondition(
+    metadataBinding.genesis === run.genesisHash &&
+      metadataBinding.metadataSha256 === run.qualification?.metadataSha256 &&
+      metadataBinding.runtimeCodeHash === run.qualification.runtimeCodeHash,
+    "LOCAL decoder binding differs from the qualified runtime",
+  );
   const releaseLock = acquireRunLock(directory, action);
   const connection = await NativeConnection.connect(
     run.nativeRpc,
     "LOCAL",
+    metadataBinding,
   ).catch((error) => {
     releaseLock();
     throw error;
@@ -287,7 +315,10 @@ async function main() {
     requireCondition(
       fingerprint.specName === "account-handoff-local" &&
         fingerprint.genesis === run.genesisHash &&
-        fingerprint.tokenDecimals === 14,
+        fingerprint.tokenDecimals === 14 &&
+        fingerprint.genesis === run.qualification?.genesis &&
+        fingerprint.runtimeCodeHash === run.qualification.runtimeCodeHash &&
+        fingerprint.metadataSha256 === run.qualification.metadataSha256,
       "LOCAL runtime identity mismatch",
     );
     const session: Session = existsSync(sessionPath)
@@ -311,6 +342,11 @@ async function main() {
         session.contract === deployment.contractAddress,
       "LOCAL seed belongs to a different environment generation/deployment",
     );
+    requireCondition(
+      !session.actors.X || session.actors.X === actors.X,
+      "The retained direct-mapping probe identity changed",
+    );
+    session.actors.X = actors.X;
     save(sessionPath, session);
 
     function assertOutcome(
@@ -360,6 +396,13 @@ async function main() {
         typeof actionInput === "function" ? await actionInput() : actionInput;
       const tx = connection.transaction(nativeAction);
       const prepared = await connection.prepareSigning(tx, actors[role]);
+      requireCondition(
+        prepared.fingerprint.genesis === fingerprint.genesis &&
+          prepared.fingerprint.runtimeCodeHash ===
+            fingerprint.runtimeCodeHash &&
+          prepared.fingerprint.metadataSha256 === fingerprint.metadataSha256,
+        "The qualified runtime changed before the LOCAL signature",
+      );
       const entry: Step = {
         status: "prepared",
         startBlock: prepared.fingerprint.anchor.number,
@@ -479,9 +522,23 @@ async function main() {
         }
         const proposal = await connection.proposal(controller, callHash);
         requireCondition(
+          i !== 0 || proposal === null,
+          `An unrecorded ${name} proposal already exists; reconcile its incarnation before approving`,
+        );
+        requireCondition(
           i === 0 || proposal,
           `Missing expected pending proposal for ${name}; cannot invent a timepoint`,
         );
+        if (i > 0 && proposal) {
+          const first = session.steps[`${name}-${roles[0]}`]?.receipt;
+          requireCondition(
+            first &&
+              proposal.when.height === first.blockNumber &&
+              proposal.when.index === first.txIndex &&
+              proposal.depositor === actors[roles[0]],
+            `The ${name} proposal incarnation changed after the first approval`,
+          );
+        }
         result = await transact(
           `${name}-${role}`,
           {
@@ -606,6 +663,29 @@ async function main() {
       );
     }
 
+    let currentSeedBaseline = true;
+    if (action === "seed" && session.baseline) {
+      requireCondition(
+        session.p && session.grantId,
+        "Retained baseline has incomplete identities",
+      );
+      const actual = await connection.readAccount(session.p);
+      const grant = await readGrant(
+        connection,
+        actors.F,
+        session.contract,
+        BigInt(session.grantId),
+      );
+      currentSeedBaseline =
+        actual.mappedTo === session.p &&
+        grant.grantee.toLowerCase() === contractAddress(session.p) &&
+        actual.proxies.length === 1 &&
+        actual.proxies[0]?.delegate === m0 &&
+        actual.proxies[0]?.proxyType === "Any" &&
+        actual.proxies[0]?.delay === 0 &&
+        grant.milestones[0]?.state === 2 &&
+        grant.milestones[1]?.state === 0;
+    }
     if (action === "seed" && !session.baseline) {
       await transact(
         "fund-actor-D",
@@ -820,6 +900,7 @@ async function main() {
     const failureProbe = session.steps["probe-unauthorized-M1-D"]?.receipt;
     if (
       action === "seed" &&
+      currentSeedBaseline &&
       !(failureProbe?.outerSuccess && !failureProbe.nestedSuccess)
     ) {
       requireCondition(
@@ -837,7 +918,11 @@ async function main() {
       );
       await proxySet(session.p, [m0]);
     }
-    if (action === "seed" && !session.steps["cancel-probe-cancel"]?.receipt) {
+    if (
+      action === "seed" &&
+      currentSeedBaseline &&
+      !session.steps["cancel-probe-cancel"]?.receipt
+    ) {
       requireCondition(
         session.p && session.baseline,
         "Seed baseline is required before cancellation probe",
@@ -859,6 +944,11 @@ async function main() {
         session.cancellationProbe.callHash === callHash,
         "Cancellation probe preimage changed",
       );
+      if (!session.steps["cancel-probe-open"])
+        requireCondition(
+          (await connection.proposal(m0, callHash)) === null,
+          "An unrelated mapping proposal already exists; cancellation probe will not adopt it",
+        );
       const first = await transact(
         "cancel-probe-open",
         {
@@ -877,7 +967,10 @@ async function main() {
       );
       const proposal = await connection.proposal(m0, callHash);
       requireCondition(
-        proposal && proposal.depositor === actors.A,
+        proposal &&
+          proposal.depositor === actors.A &&
+          proposal.when.height === first.blockNumber &&
+          proposal.when.index === first.txIndex,
         "Cancellation must use the actual original depositor",
       );
       const reserved = (await connection.readAccount(actors.A)).reserved;
@@ -1096,6 +1189,50 @@ async function main() {
         save(sessionPath, session);
       }
     }
+    if (action === "negative") {
+      // The grant parties are mapped by upstream genesis. Exercise direct mapping
+      // separately on a fresh deterministic native identity, without changing them.
+      if (!session.mappingProbe) {
+        const unmapped = await connection.readAccount(actors.X);
+        requireCondition(
+          unmapped.mappedTo === null,
+          "Direct-mapping probe must begin with a verified unmapped native account",
+        );
+        session.mappingProbe = {
+          address: actors.X,
+          initiallyUnmapped: true,
+          reservedBefore: unmapped.reserved.toString(),
+        };
+        save(sessionPath, session);
+      }
+      requireCondition(
+        session.mappingProbe.address === actors.X,
+        "Direct-mapping probe identity differs from its retained plan",
+      );
+      await transact(
+        "fund-direct-mapping-probe",
+        { kind: "transfer", destination: actors.X, amount: 100n * UNIT },
+        "A",
+      );
+      const mappedReceipt = await transact(
+        "map-direct-native-actor-probe",
+        { kind: "map-account" },
+        "X",
+      );
+      const mapped = await connection.readAccount(actors.X);
+      const holds = mapped.holds as { amount: string }[];
+      requireCondition(
+        mapped.mappedTo === actors.X &&
+          mapped.reserved > BigInt(session.mappingProbe.reservedBefore) &&
+          JSON.stringify(holds).includes("AddressMapping") &&
+          holds.reduce((total, item) => total + BigInt(item.amount), 0n) ===
+            mapped.reserved,
+        "Direct native mapping lacks exact reverse mapping or attributed backing",
+      );
+      session.mappingProbe.result = mapped;
+      session.mappingProbe.receiptHash = mappedReceipt.txHash;
+      save(sessionPath, session);
+    }
     const workspace =
       session.p && session.grantId
         ? {
@@ -1136,7 +1273,9 @@ async function main() {
         {
           status:
             action === "seed"
-              ? "BASELINE_VERIFIED"
+              ? currentSeedBaseline
+                ? "BASELINE_VERIFIED"
+                : "HISTORICAL_BASELINE_RETAINED"
               : action === "handoff"
                 ? "CONTINUED"
                 : action === "negative"

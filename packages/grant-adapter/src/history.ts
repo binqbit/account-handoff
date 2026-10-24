@@ -303,6 +303,7 @@ export async function scanGrantHistory(
       if (!blockHash) throw new Error("Historical block hash is unavailable");
       const signedBlock = await connection.api.rpc.chain_getBlock(blockHash);
       if (!signedBlock) throw new Error("Historical block is unavailable");
+      await connection.assertRuntimeAt(hex(blockHash, 32));
       const at = await connection.api.at(blockHash);
       const [events, currentCodeHash, parentCodeHash] = await Promise.all([
         at.query.system.events(),

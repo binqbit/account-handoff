@@ -132,6 +132,18 @@ export async function buildLocalQualification(input: {
     d.runtime.nativeDecimals === f.tokenDecimals &&
     d.runtime.nativeToEthRatio === "10000" &&
     d.runtime.autoMap === false &&
+    f.metadataBinding === "pinned-runtime-code" &&
+    !!f.metadataSourceAnchor &&
+    !!d.nativeMetadataBinding &&
+    d.nativeMetadataBinding.metadataSha256 === f.metadataSha256 &&
+    d.nativeMetadataBinding.rawMetadata === f.rawMetadata &&
+    d.nativeMetadataBinding.specVersion === f.specVersion &&
+    d.nativeMetadataBinding.runtimeCodeHash === f.runtimeCodeHash &&
+    d.nativeMetadataBinding.genesis === f.genesis &&
+    d.nativeMetadataBinding.sourceAnchor.blockHash ===
+      f.metadataSourceAnchor.blockHash &&
+    d.nativeMetadataBinding.sourceAnchor.blockNumber ===
+      f.metadataSourceAnchor.blockNumber &&
     SHA.test(d.generatedNativeTypesSha256 ?? "") &&
     SHA.test(d.buildHash ?? "") &&
     COMMIT.test(d.sourceCommit ?? "") &&
@@ -160,7 +172,7 @@ export async function buildLocalQualification(input: {
     bindingEvidence: {
       rawMetadataEvidence: {
         kind: "native_chain",
-        locator: `native:${f.genesis}:metadata:${f.metadataSha256}`,
+        locator: `native:${f.genesis}:${f.metadataSourceAnchor?.blockHash ?? "unbound"}:metadata:${f.metadataSha256}`,
         sourceId: f.metadataSha256,
         contentSha256: f.metadataSha256,
       },

@@ -83,6 +83,8 @@ async function localFixture(): Promise<{
       [blake2AsHex(new TextEncoder().encode("ReviveApi"), 64)]: 2,
     },
     anchor: { hash: HASH as `0x${string}`, number: 10 },
+    metadataBinding: "pinned-runtime-code",
+    metadataSourceAnchor: { blockHash: HASH as `0x${string}`, blockNumber: 1 },
     tokenDecimals: 14,
     tokenSymbol: "UNIT",
     ss58Prefix: 42,
@@ -101,6 +103,14 @@ async function localFixture(): Promise<{
     genesisHash: HASH,
     runtimeCodeHash: HASH,
     metadataSha256: fingerprint.metadataSha256,
+    nativeMetadataBinding: {
+      genesis: fingerprint.genesis,
+      specVersion: fingerprint.specVersion,
+      runtimeCodeHash: fingerprint.runtimeCodeHash,
+      metadataSha256: fingerprint.metadataSha256,
+      rawMetadata: fingerprint.rawMetadata,
+      sourceAnchor: fingerprint.metadataSourceAnchor!,
+    },
     generatedNativeTypesSha256: DIGEST,
     runtime: {
       specName: "account-handoff-local",
@@ -169,6 +179,14 @@ describe("operation-specific LOCAL qualification", () => {
     const first = await buildLocalQualification(input);
     input.fingerprint.anchor = { hash: `0x${"ab".repeat(32)}`, number: 500 };
     expect(await buildLocalQualification(input)).toEqual(first);
+  });
+  it("requires the exact verified decoder binding instead of accepting an unbound client", async () => {
+    const input = await localFixture();
+    input.fingerprint.metadataBinding = "unbound-client-cache";
+    expect((await buildLocalQualification(input)).status).toBe("candidate");
+    input.fingerprint.metadataBinding = "pinned-runtime-code";
+    input.descriptor.nativeMetadataBinding!.rawMetadata = "0x00";
+    expect((await buildLocalQualification(input)).status).toBe("candidate");
   });
   it("derives API method codec IDs from exact metadata and refuses another advertised API version", async () => {
     const { descriptor, fingerprint } = await localFixture();

@@ -92,6 +92,8 @@ npm run local:refresh-descriptor -- --run development
 
 `local:plan` is a one-time run allocation; it rejects an existing run ID. `local:up` preserves existing native/gateway state. Qualification captures finalized metadata, runtime code, units, and gateway alignment. Native type generation reads the captured metadata rather than querying an arbitrary endpoint during a frontend build. The active local descriptor is served as `local-run.json`; it binds the website to one run and generation.
 
+The LOCAL descriptor also supplies the exact qualified decoder metadata and its source block. The client uses that pinned blob only while genesis, spec version and runtime code match; it continues reading balances, fees and contract state from the requested RPC block. Metadata provenance and live-state anchors are separate because this upstream runtime embeds a changing EVM fee in one metadata storage default. See the [LOCAL metadata binding](packages/contracts/schema/LOCAL-AMENDMENT.md) for the byte-exact convention and refusal conditions.
+
 Deploy and verify the unchanged contract, then create the controlled grant baseline:
 
 ```bash

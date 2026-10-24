@@ -557,7 +557,16 @@ export class Application implements ApplicationFacade {
     };
     this.render();
     try {
-      this.connection = await NativeConnection.connect(endpoint, mode);
+      const descriptor = await this.descriptor();
+      if (descriptor?.qualified && !descriptor.nativeMetadataBinding)
+        throw new Error(
+          "Кваліфіковані метадані кодека відсутні; оновіть LOCAL-кваліфікацію.",
+        );
+      this.connection = await NativeConnection.connect(
+        endpoint,
+        mode,
+        descriptor?.nativeMetadataBinding,
+      );
       await this.refresh();
     } catch (error) {
       this.state = {
@@ -575,6 +584,9 @@ export class Application implements ApplicationFacade {
     f: NativeFingerprint,
     d: LocalDescriptor | null,
   ): Promise<ChainProfile> {
+    const metadataBindingDigest = d?.nativeMetadataBinding
+      ? await sha256(canonicalJson(d.nativeMetadataBinding))
+      : null;
     const key = canonicalJson({
       mode: this.state.network.mode,
       genesis: f.genesis,
@@ -590,6 +602,8 @@ export class Application implements ApplicationFacade {
       source: d?.sourceCommit ?? null,
       contract: d?.contract ?? null,
       capabilities: d?.capabilities ?? null,
+      metadataSourceAnchor: d?.nativeMetadataBinding?.sourceAnchor ?? null,
+      metadataBindingDigest,
       generatedNativeTypesSha256: d?.generatedNativeTypesSha256 ?? null,
     });
     const existing = this.profiles.get(key);

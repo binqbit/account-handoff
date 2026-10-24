@@ -18,7 +18,9 @@ Build prerequisites are native Rust 1.99.1, the separate Rust 1.99.0 toolchain w
 
 `local:up` starts only the two pinned binaries. It neither deploys a contract nor creates a grant. `local:qualify` captures finalized runtime identity, raw metadata, runtime code and gateway alignment. Contract deployment and seed operations are explicit commands and retain their own attempt/receipt manifests. `local:status` reports process and read availability without inventing ready state.
 
-The seed command creates the vested first-milestone baseline and a separate rejected nested-controller probe. It writes a public-address-only `workspace.json` for the browser and source/probe-bound capability evidence. It does not rotate the account. Use `npm run local:handoff -- --run development` for the separate A+B authorization, A+D exact removal, and A+D next-milestone submission. `npm run local:test -- --run development` runs baseline, handoff and old-route rejection in sequence. An interrupted signed attempt remains unresolved until `npm run local:reconcile -- --run development` finds its exact finalized receipt; commands never automatically rebuild and resend it.
+Qualification records one exact finalized metadata blob and its source block in `native-metadata-binding.json`. Native codecs use those reviewed bytes while account state, fees, balances and receipts remain live reads. Every read boundary checks the actual runtime code against the binding; a runtime upgrade requires a new qualification. This also avoids treating state-dependent metadata storage defaults as a new call schema. An existing qualification without accurate metadata provenance requires an explicit `--metadata-anchor <block-hash>` whose captured bytes must exactly match the retained artifact.
+
+The seed command creates the vested first-milestone baseline, a separate rejected nested-controller probe, and an original-depositor cancellation probe that checks the exact proposal deposit refund. It writes a public-address-only `workspace.json` for the browser and source/probe-bound capability evidence. It does not rotate the account. Use `npm run local:handoff -- --run development` for the separate A+B authorization, A+D exact removal, and A+D next-milestone submission. `npm run local:test -- --run development` runs baseline, handoff and old-route rejection in sequence, then exercises `vest_other` as a distinct maintenance operation after the continuation proof. An interrupted signed attempt remains unresolved until `npm run local:reconcile -- --run development` finds its exact finalized receipt; commands never automatically rebuild and resend it.
 
 For Docker-enabled hosts, the optional [Compose configuration](compose.yaml) builds the same source and patch with digest-pinned Rust/Debian images and a dated Debian package snapshot:
 
@@ -29,7 +31,7 @@ AH_RUN_ID=development docker compose -f infra/local/compose.yaml up -d
 
 Only loopback ports are published. The private network prevents native peering outside this stack. Persistent volumes belong to the selected Compose project. Container startup is not full qualification; run the application-level native and gateway checks before transactions. The host process launcher and Compose are alternative process owners: do not start both on the same ports.
 
-Ordinary stop/restart preserves state:
+Both services retain archive history. Ordinary stop/restart preserves state:
 
 ```bash
 npm run local:stop -- --run development

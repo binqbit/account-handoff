@@ -165,6 +165,12 @@ await main(async (args) => {
       successEvidence: [success],
       failureEvidence: [failure],
     };
+  if (session?.mappingProbe?.result && receipt("map-direct-native-actor-probe"))
+    local("direct-native-actor-mapping", {
+      purpose:
+        "separate direct mapping capability probe; grant parties remain unchanged",
+      probe: session.mappingProbe,
+    });
   atomicJSON(join(directory, "capabilities.json"), capabilities);
   run.capabilities = capabilities;
   saveRun(run);
