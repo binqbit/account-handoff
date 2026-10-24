@@ -153,7 +153,18 @@ export async function readGrant(
       }),
     ),
   );
-  return { funder, threshold, milestoneCount, grantee, token, milestones };
+  const canonical = (address: Hex): Hex => address.toLowerCase() as Hex;
+  return {
+    funder: canonical(funder),
+    threshold,
+    milestoneCount,
+    grantee: canonical(grantee),
+    token: canonical(token),
+    milestones: milestones.map((milestone) => ({
+      ...milestone,
+      metricTarget: canonical(milestone.metricTarget),
+    })),
+  };
 }
 export async function verifyGrantConstants(
   connection: NativeConnection,

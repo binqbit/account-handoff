@@ -1,11 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { decodeFunctionData } from "viem";
+import { describe, expect, it, vi } from "vitest";
+import { decodeFunctionData, encodeFunctionResult, getAddress } from "viem";
+import type { NativeConnection } from "@account-handoff/native-adapter";
 import {
   encodeApproval,
   encodeCreateGrant,
   encodeSubmission,
   vestryAbi,
   ZERO_ADDRESS,
+  readGrant,
 } from "@account-handoff/grant-adapter";
 const address = (byte: string) => `0x${byte.repeat(40)}` as `0x${string}`;
 describe("controlled unchanged Vestry ABI", () => {
@@ -44,5 +46,50 @@ describe("controlled unchanged Vestry ABI", () => {
       decodeFunctionData({ abi: vestryAbi, data: encodeApproval(7n, 0) }).args,
     ).toEqual([7n, 0n]);
     expect(() => encodeApproval(-1n, 0)).toThrow();
+  });
+  it("canonicalizes checksummed ABI addresses before native identity comparison", async () => {
+    const grantee = "0x24e53fbb9c8b13e4a7e82484f65354bfe3cc4d10" as const;
+    const funder = "0x203aedc6e1ee061f55ec52309d5ac8674d4e8352" as const;
+    const milestone = {
+      amount: 10_000n,
+      deadline: 2_000_000_000n,
+      vestingBlocks: 10,
+      approvals: 0,
+      round: 0,
+      state: 0,
+      metricTarget: grantee,
+      metricSelector: "0x00000000" as const,
+      metricMin: 0n,
+    };
+    const readContract = vi
+      .fn()
+      .mockResolvedValueOnce(
+        encodeFunctionResult({
+          abi: vestryAbi,
+          functionName: "grants",
+          result: [funder, 2, 2, grantee, ZERO_ADDRESS],
+        }),
+      )
+      .mockResolvedValue(
+        encodeFunctionResult({
+          abi: vestryAbi,
+          functionName: "getMilestone",
+          result: milestone,
+        }),
+      );
+    const connection = { readContract } as unknown as NativeConnection;
+    expect(getAddress(grantee)).not.toBe(grantee);
+    const result = await readGrant(
+      connection,
+      address("1"),
+      address("2"),
+      0n,
+      `0x${"11".repeat(32)}`,
+    );
+    expect(result.grantee).toBe(grantee);
+    expect(result.funder).toBe(funder);
+    expect(
+      result.milestones.every((item) => item.metricTarget === grantee),
+    ).toBe(true);
   });
 });
