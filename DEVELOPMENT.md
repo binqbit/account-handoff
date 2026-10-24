@@ -67,6 +67,8 @@ Browser checks cover explicit prepare/sign/send boundaries, account changes, inp
 
 The application coordinator owns side effects. View components do not call native RPC, a wallet signer, or the journal directly. A reviewed call remains immutable while the coordinator records approvals, attempts, and evidence separately. A local record cannot establish chain authority.
 
+Contract wire types live in [packages/contracts/src/records/](packages/contracts/src/records/), grouped into primitives, runtime, observed state, intents, calls, transactions, receipts, continuity and portable packages. `records.ts` preserves the public export surface. These modules contain type-only dependencies; the executable schemas and their generated validators remain the runtime authority.
+
 ### Native adapter
 
 The public entry point is [packages/native-adapter/src/index.ts](packages/native-adapter/src/index.ts). Its implementation is organized by the boundary being checked:
