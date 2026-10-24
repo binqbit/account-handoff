@@ -49,7 +49,8 @@ export function AddressPicker({
   const [touched, setTouched] = useState(false);
   const [editing, setEditing] = useState(false);
   const [active, setActive] = useState(-1);
-  const query = value.trim().toLowerCase();
+  const [filtering, setFiltering] = useState(false);
+  const query = filtering ? value.trim().toLowerCase() : "";
   const matches = options.filter((option) =>
     `${option.label} ${option.detail} ${option.address}`
       .toLowerCase()
@@ -73,12 +74,18 @@ export function AddressPicker({
         ?.scrollIntoView({ block: "nearest" });
   }, [activeIndex, id, open]);
 
+  function openOptions() {
+    setEditing(true);
+    setFiltering(!!value.trim() && !addressKey(value, kind));
+    setOpen(true);
+  }
   function select(address: string) {
     onChange(address);
     onSelect?.(address);
     setOpen(false);
     setActive(-1);
     setTouched(false);
+    setFiltering(false);
     input.current?.focus();
   }
   function keyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -126,6 +133,11 @@ export function AddressPicker({
       </label>
       <div
         className={`address-picker__input ${error ? "address-picker__input--invalid" : ""}`}
+        onClick={(event) => {
+          if ((event.target as Element).closest("button")) return;
+          input.current?.focus();
+          openOptions();
+        }}
       >
         <Icon name={kind === "contract" ? "contract" : "search"} size={18} />
         <input
@@ -156,15 +168,13 @@ export function AddressPicker({
               ? "Select or paste a contract address (0x…)"
               : "Search accounts or paste a native address")
           }
-          onFocus={() => {
-            setEditing(true);
-            setOpen(true);
-          }}
+          onFocus={openOptions}
           onBlur={() => setEditing(false)}
           onPaste={onPaste}
           onKeyDown={keyDown}
           onChange={(event) => {
             onChange(event.target.value);
+            setFiltering(true);
             setActive(-1);
             setTouched(false);
             setOpen(true);
@@ -184,8 +194,10 @@ export function AddressPicker({
           aria-expanded={open}
           aria-controls={`${id}-options`}
           onClick={() => {
-            setOpen(!open);
+            const next = !open;
             input.current?.focus();
+            if (next && addressKey(value, kind)) setFiltering(false);
+            setOpen(next);
           }}
         >
           <Icon name="down" size={16} />

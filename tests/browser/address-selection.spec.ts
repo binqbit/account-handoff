@@ -160,3 +160,28 @@ test("completing a group keeps keyboard focus inside the selected accounts", asy
     }),
   ).toBeFocused();
 });
+
+test("clicking the address field reopens every account after each selection", async ({
+  page,
+}) => {
+  await page.goto(`${harness}#setup`);
+  const field = page.getByRole("combobox", {
+    name: "Funder account",
+    exact: true,
+  });
+  for (const name of ["Alice", "Bob", "Dave"]) {
+    await field.click();
+    await expect(field).toHaveAttribute("aria-expanded", "true");
+    const options = page.getByRole("listbox").getByRole("option");
+    await expect(options).toHaveCount(5);
+    await options.filter({ hasText: name }).click();
+    await expect(field).toHaveAttribute("aria-expanded", "false");
+  }
+  await field.click();
+  await field.fill("Ali");
+  await expect(page.getByRole("listbox").getByRole("option")).toHaveCount(1);
+  await page.getByLabel("Workspace name").click();
+  await field.click();
+  await expect(field).toHaveValue("Ali");
+  await expect(page.getByRole("listbox").getByRole("option")).toHaveCount(1);
+});

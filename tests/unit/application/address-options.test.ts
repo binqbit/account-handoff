@@ -52,7 +52,7 @@ describe("address selection", () => {
         address: encodeAddress(raw, 42),
         label: "Alice",
         detail:
-          "Connected wallet · SubWallet · Original group M0 · New group M1",
+          "Connected wallet · SubWallet · Current group · Replacement group",
       },
     ]);
   });

@@ -35,8 +35,14 @@ export function participantOptions(snapshot: AppSnapshot): AddressOption[] {
   const workspace = snapshot.workspace;
   if (workspace) {
     for (const [group, members] of [
-      ["Original group M0", workspace.oldController.members],
-      ["New group M1", workspace.newController?.members ?? []],
+      [
+        workspace.authority === "M1" ? "Previous group" : "Current group",
+        workspace.oldController.members,
+      ],
+      [
+        workspace.authority === "M1" ? "Current group" : "Replacement group",
+        workspace.newController?.members ?? [],
+      ],
       ["Grant funder", workspace.funder ? [workspace.funder] : []],
       ["Grant reviewer", workspace.reviewers],
     ] as const) {
