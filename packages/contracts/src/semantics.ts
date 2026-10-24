@@ -157,12 +157,12 @@ export async function validateRecordSemantics(
       record.participants.A,
       record.participants.B,
       record.participants.C,
-      record.participants.D,
+      ...(record.participants.D ? [record.participants.D] : []),
     ];
-    if (new Set(participants).size !== 4)
+    if (new Set(participants).size !== participants.length)
       add(
         "DuplicateParticipant",
-        "A, B, C and D must have distinct canonical identities",
+        "Assigned signer roles must have distinct canonical identities",
         "SG-07",
       );
     const newQuorum = [

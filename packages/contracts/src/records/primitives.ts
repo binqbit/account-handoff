@@ -55,7 +55,7 @@ export type ParticipantBindings = {
   A: AccountId32;
   B: AccountId32;
   C: AccountId32;
-  D: AccountId32;
+  D: AccountId32 | null;
   F: AccountId32;
   R1: AccountId32;
   R2: AccountId32;

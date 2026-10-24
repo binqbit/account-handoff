@@ -123,6 +123,34 @@ function context(value = "0"): PlanContext {
 }
 
 describe("closed operation grammar", () => {
+  it("creates the beneficiary before any replacement group is defined", async () => {
+    const e = await base();
+    const initial = {
+      ...context(),
+      M1: null,
+      participants: { ...participants, D: null },
+    };
+    const plan = planOperation(
+      {
+        ...e.intent,
+        operationId: "GRC-SETUP-CREATE-PURE",
+        parameters: amounts["GRC-SETUP-CREATE-PURE"] as Intent["parameters"],
+      },
+      initial,
+    );
+    expect(plan.controller).toEqual(M0);
+    expect(plan.requiredSigners).toEqual([participants.A, participants.B]);
+    expect(() =>
+      planOperation(
+        {
+          ...e.intent,
+          operationId: "GRC-ROTATION-ADD-M1",
+          parameters: amounts["GRC-ROTATION-ADD-M1"] as Intent["parameters"],
+        },
+        initial,
+      ),
+    ).toThrow("Plan the replacement");
+  });
   it("provides all fourteen selected intents with the intended signer paths", async () => {
     const e = await base();
     for (const operationId of OPERATION_IDS) {

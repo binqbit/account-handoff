@@ -21,7 +21,7 @@ export const HASH = `0x${"12".repeat(32)}`;
 export const DIGEST = "34".repeat(32);
 export const account = (byte: number): string =>
   `0x${byte.toString(16).padStart(2, "0").repeat(32)}`;
-export const participants: ParticipantBindings = {
+export const participants = {
   A: account(1),
   B: account(2),
   C: account(3),
@@ -30,7 +30,7 @@ export const participants: ParticipantBindings = {
   R1: account(6),
   R2: account(7),
   S: account(8),
-};
+} satisfies ParticipantBindings;
 export const M0: Controller = {
   account: account(9),
   members: [participants.A, participants.B, participants.C],

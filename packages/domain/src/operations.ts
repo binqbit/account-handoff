@@ -41,7 +41,7 @@ export type OperationId = (typeof OPERATION_IDS)[number];
 export interface PlanContext {
   participants: ParticipantBindings;
   M0: Controller;
-  M1: Controller;
+  M1: Controller | null;
   pure: AccountId32 | null;
   resources: ResourceBounds;
   sourceEvidence: EvidenceRef[];
@@ -202,14 +202,13 @@ export function planOperation(
   let requiredSigners: AccountId32[];
   let signingPath: OperationPlan["signingPath"] = "direct";
   const oldSigners = [context.participants.A, context.participants.B];
-  const newSigners = [context.participants.A, context.participants.D];
   if (
     new Set([
       context.participants.A,
       context.participants.B,
       context.participants.C,
-      context.participants.D,
-    ]).size !== 4
+      ...(context.participants.D ? [context.participants.D] : []),
+    ]).size !== (context.participants.D ? 4 : 3)
   )
     throw new DomainError(
       "DuplicateParticipant",
@@ -315,6 +314,11 @@ export function planOperation(
       break;
     case "GRC-ROTATION-ADD-M1":
     case "GRC-ROTATION-REMOVE-M0": {
+      if (!context.M1 || !context.participants.D)
+        throw new DomainError(
+          "MissingReplacement",
+          "Plan the replacement group first",
+        );
       const adding = intent.operationId === "GRC-ROTATION-ADD-M1";
       assertPure(readString("pure"));
       if (
@@ -334,7 +338,9 @@ export function planOperation(
         }),
       );
       controller = adding ? context.M0 : context.M1;
-      requiredSigners = adding ? oldSigners : newSigners;
+      requiredSigners = adding
+        ? oldSigners
+        : [context.participants.A, context.participants.D];
       signingPath = "multisig_proxy";
       break;
     }
@@ -407,8 +413,15 @@ export function planOperation(
         ),
       );
       const newGroup = intent.operationId === "GRC-GRANT-SUBMIT-M1";
+      if (newGroup && (!context.M1 || !context.participants.D))
+        throw new DomainError(
+          "MissingReplacement",
+          "Plan the replacement group first",
+        );
       controller = newGroup ? context.M1 : context.M0;
-      requiredSigners = newGroup ? newSigners : oldSigners;
+      requiredSigners = newGroup
+        ? [context.participants.A, context.participants.D!]
+        : oldSigners;
       signingPath = "multisig_proxy";
       break;
     }

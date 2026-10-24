@@ -62,7 +62,7 @@ export interface FreshOperationInput {
   pure: string | null;
   mappedPure: string | null;
   M0: string;
-  M1: string;
+  M1: string | null;
   existentialDepositNative: bigint;
   proposalDepositNative?: bigint;
   pureCreationDepositNative?: bigint;
@@ -256,6 +256,9 @@ export function validateFreshOperation(input: FreshOperationInput): Blocker[] {
       "Multisig operations require their explicit approval phase",
     );
 
+  const rotation = ["GRC-ROTATION-ADD-M1", "GRC-ROTATION-REMOVE-M0"].includes(
+    operationId,
+  );
   const tuples = input.authorityTuples;
   const expectedDelegates =
     operationId === "GRC-ROTATION-REMOVE-M0"
@@ -406,7 +409,7 @@ export function validateFreshOperation(input: FreshOperationInput): Blocker[] {
         ["SG-10", "SG-11"],
       );
     if (
-      !input.baselineVesting?.length ||
+      !input.baselineVesting ||
       !input.currentVesting ||
       !hasPreservedSchedule(input.baselineVesting, input.currentVesting)
     )
@@ -422,6 +425,7 @@ export function validateFreshOperation(input: FreshOperationInput): Blocker[] {
         ["SG-24"],
       );
     else if (
+      !rotation &&
       !input.baselineVesting?.some(
         (tuple) => vestingRemaining(tuple, input.vestingBlockNumber!) > 0n,
       )
@@ -439,7 +443,8 @@ export function validateFreshOperation(input: FreshOperationInput): Blocker[] {
   ) {
     if (
       !input.grantHistoryComplete ||
-      input.grantScope !== "EligibleSingleRound"
+      (input.grantScope !== "EligibleSingleRound" &&
+        !(rotation && input.grantScope === "Closed"))
     )
       add(
         "GrantScopeUnavailable",
@@ -495,6 +500,7 @@ export function validateFreshOperation(input: FreshOperationInput): Blocker[] {
       }
       if (
         continuityOperations.has(operationId) &&
+        !rotation &&
         (grant.milestones[0]?.state !== 2 ||
           grant.milestones[1]?.state !== 0 ||
           grant.milestones[1].deadline < input.timeUnixSeconds)

@@ -10,6 +10,22 @@ import type { ProxyTuple } from "@account-handoff/contracts";
 import { account, M0, M1, participants } from "../../fixtures/core.js";
 
 describe("native identity and authority", () => {
+  it("verifies the current controller without a planned replacement", () => {
+    expect(
+      classifyAuthority(
+        [{ delegate: M0.account, proxyType: "Any", delay: "0" }],
+        M0.account,
+        null,
+      ),
+    ).toBe("M0Only");
+    expect(
+      classifyAuthority(
+        [{ delegate: M1.account, proxyType: "Any", delay: "0" }],
+        M0.account,
+        null,
+      ),
+    ).toBe("UnexpectedSet");
+  });
   it("normalizes raw identity and excludes the unselected stateless class", () => {
     expect(
       normalizeIdentity(account(170).toUpperCase().replace("0X", "0x")),

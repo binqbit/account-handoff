@@ -4155,7 +4155,14 @@
           "$ref": "#/$defs/AccountId32"
         },
         "D": {
-          "$ref": "#/$defs/AccountId32"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AccountId32"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "F": {
           "$ref": "#/$defs/AccountId32"

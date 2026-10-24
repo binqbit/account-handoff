@@ -58,20 +58,21 @@ export function makeController(
 export function classifyAuthority(
   tuples: readonly ProxyTuple[] | null,
   m0: AccountId32,
-  m1: AccountId32,
+  m1: AccountId32 | null,
 ): AuthorityObservation["state"] {
   if (tuples === null) return "Unknown";
   const actual = tuples
     .map((t) => `${normalizeIdentity(t.delegate)}:${t.proxyType}:${t.delay}`)
     .sort();
   const a = `${normalizeIdentity(m0)}:Any:0`;
-  const b = `${normalizeIdentity(m1)}:Any:0`;
+  const b = m1 ? `${normalizeIdentity(m1)}:Any:0` : null;
   if (actual.length === 0) return "NotCreated";
   if (actual.length === 1 && actual[0] === a) return "M0Only";
   if (actual.length === 1 && actual[0] === b) return "M1Only";
   if (
     actual.length === 2 &&
     actual.includes(a) &&
+    b !== null &&
     actual.includes(b) &&
     a !== b
   )

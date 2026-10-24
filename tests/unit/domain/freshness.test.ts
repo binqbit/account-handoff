@@ -80,6 +80,43 @@ function rotation(input: FreshOperationInput): FreshOperationInput {
 }
 
 describe("fresh operation preconditions", () => {
+  it("permits rotation after grant completion without claiming a new continuity proof", async () => {
+    const input = rotation(await base());
+    input.baselineVesting = [];
+    input.currentVesting = [];
+    input.vestingBlockNumber = 100n;
+    input.grantScope = "Closed";
+    input.grantHistoryComplete = true;
+    const milestone = {
+      state: 2,
+      round: 0,
+      deadline: 1n,
+      vestingBlocks: 0,
+      metricTarget: `0x${"00".repeat(20)}`,
+      metricSelector: "0x00000000",
+      metricMin: 0n,
+    };
+    input.grant = {
+      grantee: input.mappedPure!,
+      funder: participants.F,
+      threshold: 2,
+      milestoneCount: 2,
+      token: `0x${"00".repeat(20)}`,
+      milestones: [milestone, milestone],
+    };
+    const codes = validateFreshOperation(input).map((value) => value.code);
+    expect(codes).not.toContain("GrantScopeUnavailable");
+    expect(codes).not.toContain("VestingContinuityUnknown");
+    expect(codes).not.toContain("BaselineVestingExpired");
+    expect(codes).not.toContain("ContinuationUnavailable");
+    expect(codes).toContain("AccountingUnreconciled");
+    input.envelope.intent.operationId = "GRC-GRANT-SUBMIT-M1";
+    const continuation = validateFreshOperation(input).map(
+      (value) => value.code,
+    );
+    expect(continuation).toContain("GrantScopeUnavailable");
+    expect(continuation).toContain("BaselineVestingExpired");
+  });
   it("requires exact current profile, review deadline and payer liquidity", async () => {
     const input = await base();
     expect(validateFreshOperation(input)).toEqual([]);
