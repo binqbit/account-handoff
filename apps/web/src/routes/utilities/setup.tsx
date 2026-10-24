@@ -1,4 +1,4 @@
-import { Button, Card, Icon, PageHeader } from "../../components/ui";
+import { Button, Card, Icon, Notice, PageHeader } from "../../components/ui";
 import { HelpDisclosure } from "../../components/help-disclosure";
 import { ReadinessCards } from "../../components/readiness";
 import type { ScreenProps } from "../screen-types";
@@ -15,6 +15,14 @@ export function Setup(props: ScreenProps) {
         title="Start with a stable beneficiary"
         description="Create a multisig configuration or connect your existing group."
       />
+      {!snapshot.network.connected && (
+        <Notice tone="neutral">
+          <span>Connect a network before saving your workspace. </span>
+          <button className="text-button" onClick={() => navigate("network")}>
+            Open network setup
+          </button>
+        </Notice>
+      )}
       <div className="setup-layout">
         <HelpDisclosure title="How setup works">
           <div

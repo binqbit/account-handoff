@@ -9,6 +9,9 @@
 @import "./addresses.css";
 @import "./identity.css";
 @import "./guidance.css";
+@import "./wallet.css";
+@import "./public.css";
+@import "./navigation.css";
 @import "./operations.css";
 @import "./feedback.css";
 @import "./responsive.css";

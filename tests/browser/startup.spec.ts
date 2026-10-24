@@ -22,11 +22,9 @@ test("actual application starts with an empty local workspace and no signing req
   await expect(page.getByText("TEST HARNESS", { exact: false })).toHaveCount(0);
   expect(errors).toEqual([]);
   expect(sockets.every((url) => new URL(url).port === "4173")).toBe(true);
-  await page
-    .getByRole("button", { name: "Grant and milestones", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Docs", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Open a workspace first" }),
+    page.getByRole("heading", { name: "A guide to Account Handoff" }),
   ).toBeVisible();
 });
 

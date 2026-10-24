@@ -1,3 +1,4 @@
+import { selectWalletAccount } from "./accounts";
 import { expect, type Page } from "@playwright/test";
 export const walletAccounts = [`0x${"1".repeat(64)}`, `0x${"2".repeat(64)}`];
 export interface WalletProbe {
@@ -83,7 +84,7 @@ export async function connectWallet(page: Page) {
     .click();
   const selected = page.getByLabel("Personal account", { exact: true });
   await expect(selected).toBeVisible();
-  await selected.selectOption(walletAccounts[1]!);
+  await selectWalletAccount(page, walletAccounts[1]!);
   await expect(selected).toBeEnabled();
 }
 export async function walletEvents(page: Page) {

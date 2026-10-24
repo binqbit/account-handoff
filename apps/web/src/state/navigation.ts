@@ -32,6 +32,8 @@ export const navigation: {
   },
 ];
 export const titles: Record<Destination, string> = {
+  home: "Home",
+  docs: "Docs",
   overview: "Overview",
   milestones: "Grant and milestones",
   team: "Team",

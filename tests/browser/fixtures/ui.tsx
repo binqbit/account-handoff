@@ -156,6 +156,12 @@ let snapshot: AppSnapshot = {
   busy: null,
 };
 const scenario = new URLSearchParams(location.search).get("scenario");
+if (!location.hash && scenario !== "public-home")
+  history.replaceState(
+    null,
+    "",
+    `${location.pathname}${location.search}#overview`,
+  );
 function reviewOperation(): OperationView {
   const action = snapshot.actions[0]!;
   return {
@@ -195,6 +201,21 @@ if (scenario === "same-names") {
         index < 2 ? { ...account, label: "Signer" } : account,
       ),
     },
+  };
+}
+if (scenario === "unselected-wallet") snapshot.wallet.selectedAddress = null;
+if (scenario === "wallet-menu") {
+  snapshot.wallet = {
+    ...snapshot.wallet,
+    selectedAddress: `0x${"01".repeat(32)}`,
+    accounts: Array.from({ length: 24 }, (_, index) => ({
+      address: `0x${(index + 1).toString(16).padStart(2, "0").repeat(32)}`,
+      source: "test-only",
+      label:
+        index === 0
+          ? "Research and Development Treasury Committee With A Long Name"
+          : `Account ${index + 1}`,
+    })),
   };
 }
 if (scenario === "current-only")

@@ -97,7 +97,7 @@ test("known contract input explains and checks the EVM address format", async ({
   await expect(page.getByRole("alert")).toHaveCount(0);
 });
 
-test("short desktop windows keep the sidebar settings reachable", async ({
+test("short desktop windows keep the header settings reachable", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 600 });

@@ -12,9 +12,10 @@ import type {
 } from "./ui-contract";
 import { Icon, Notice } from "./components/ui";
 import { InterfaceBoundary } from "./components/shell/interface-boundary";
-import { Sidebar } from "./components/shell/sidebar";
-import { Topbar } from "./components/shell/topbar";
+import { SiteNavigation } from "./components/shell/site-navigation";
 import { Footer } from "./components/shell/footer";
+import { Home } from "./routes/public/home";
+import { Docs } from "./routes/public/docs";
 import { titles } from "./state/navigation";
 import { useRoute } from "./state/router";
 import {
@@ -123,6 +124,10 @@ function Application({ application }: { application: ApplicationFacade }) {
       : null);
   function renderScreen() {
     switch (destination) {
+      case "home":
+        return <Home {...screenProps} />;
+      case "docs":
+        return <Docs {...screenProps} />;
       case "overview":
         return <Overview {...screenProps} />;
       case "milestones":
@@ -153,18 +158,13 @@ function Application({ application }: { application: ApplicationFacade }) {
         Skip to main content
       </a>
       <div className="app-shell">
-        <Sidebar
+        <SiteNavigation
           snapshot={snapshot}
           navigate={navigate}
+          run={run}
           destination={destination}
         />
         <div className="main-shell">
-          <Topbar
-            snapshot={snapshot}
-            navigate={navigate}
-            run={run}
-            destination={destination}
-          />
           {notice && (
             <div
               className={`notification ${notice.error ? "notification--error" : ""}`}

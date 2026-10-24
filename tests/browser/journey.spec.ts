@@ -1,3 +1,4 @@
+import { selectWalletAccount } from "./fixtures/accounts";
 import { expect, test } from "@playwright/test";
 import { resolve } from "node:path";
 const harness = `/@fs${resolve("tests/browser/fixtures/ui.html")}`;
@@ -71,7 +72,7 @@ test("changing the account invalidates review without prompting or sending", asy
   await page.goto(`${harness}#review?action=GRC-ROTATION-ADD-M1`);
   await page.getByRole("button", { name: "Prepare for review" }).click();
   await page.getByRole("checkbox").check();
-  await page.getByLabel("Personal account").selectOption(`0x${"2".repeat(64)}`);
+  await selectWalletAccount(page, `0x${"2".repeat(64)}`);
   await expect(page.getByRole("checkbox")).not.toBeChecked();
   await expect(
     page.getByRole("button", { name: "Request signature" }),

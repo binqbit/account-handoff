@@ -1,20 +1,6 @@
 .setup-layout {
   max-width: 880px;
 }
-.nav-copy {
-  flex: 1;
-  min-width: 0;
-}
-.nav-copy strong {
-  display: block;
-  font-weight: 550;
-}
-.primary-nav button {
-  align-items: flex-start;
-}
-.primary-nav button > svg {
-  margin-top: 2px;
-}
 .topbar {
   height: auto;
   min-height: 68px;
@@ -23,12 +9,7 @@
   min-width: 0;
   max-width: 220px;
 }
-.wallet-details select {
-  display: block;
-  max-width: 220px;
-  padding: 3px 18px 3px 0;
-  font-size: 0.83rem;
-}
+
 .wallet-details > .address-wrap {
   align-items: center;
 }

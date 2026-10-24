@@ -2,6 +2,17 @@ import type { ReactNode } from "react";
 
 export function Icon({ name, size = 20 }: { name: string; size?: number }) {
   const paths: Record<string, ReactNode> = {
+    home: (
+      <>
+        <path d="m3 10 9-7 9 7v11H3Z" />
+        <path d="M9 21v-8h6v8" />
+      </>
+    ),
+    book: (
+      <>
+        <path d="M12 5v16M3 3c4-1 6 0 9 2 3-2 5-3 9-2v16c-4-1-6 0-9 2-3-2-5-3-9-2Z" />
+      </>
+    ),
     search: (
       <>
         <circle cx="10.5" cy="10.5" r="6.5" />

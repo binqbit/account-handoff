@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Destination } from "../ui-contract";
 const destinations = new Set<Destination>([
+  "home",
+  "docs",
   "overview",
   "milestones",
   "team",
@@ -16,9 +18,9 @@ const destinations = new Set<Destination>([
 function readRoute(): { destination: Destination; actionId: string | null } {
   const hash = window.location.hash.slice(1);
   const [path, query] = hash.split("?");
-  const candidate = (path || "overview") as Destination;
+  const candidate = (path || "home") as Destination;
   return {
-    destination: destinations.has(candidate) ? candidate : "overview",
+    destination: destinations.has(candidate) ? candidate : "home",
     actionId: new URLSearchParams(query).get("action"),
   };
 }

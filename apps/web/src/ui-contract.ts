@@ -2,6 +2,8 @@
 export type RuntimeMode = "LOCAL" | "DEMO" | "LIVE";
 export type Tone = "positive" | "warning" | "negative" | "neutral";
 export type Destination =
+  | "home"
+  | "docs"
   | "overview"
   | "milestones"
   | "team"

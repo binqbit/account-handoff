@@ -1,3 +1,4 @@
+import { selectWalletAccount } from "./fixtures/accounts";
 import { expect, test } from "@playwright/test";
 import { resolve } from "node:path";
 const harness = `/@fs${resolve("tests/browser/fixtures/ui.html")}`;
@@ -61,7 +62,7 @@ test("copying a compact address uses its exact value and resets when the account
           .__copiedAddresses,
     ),
   ).toEqual([full]);
-  await page.getByLabel("Personal account").selectOption(`0x${"2".repeat(64)}`);
+  await selectWalletAccount(page, `0x${"2".repeat(64)}`);
   await expect(
     selected.getByRole("button", {
       name: "Copy signing account address",
@@ -172,10 +173,16 @@ test("accounts sharing a name remain distinguishable by address", async ({
 }) => {
   await page.goto(`${harness}?scenario=same-names`);
   const selector = page.getByLabel("Personal account", { exact: true });
-  await expect(
-    selector.locator("option").filter({ hasText: "Signer" }),
-  ).toHaveText(["Signer · 0x111111…111111", "Signer · 0x222222…222222"]);
-  await selector.selectOption(`0x${"2".repeat(64)}`);
+  await selector.click();
+  const options = page
+    .getByRole("listbox", { name: "Wallet accounts" })
+    .getByRole("option")
+    .filter({ hasText: "Signer" });
+  await expect(options).toHaveCount(2);
+  await expect(options.nth(0)).toContainText("0x111111…111111");
+  await expect(options.nth(1)).toContainText("0x222222…222222");
+  await selector.press("Escape");
+  await selectWalletAccount(page, `0x${"2".repeat(64)}`);
   const selected = page.locator(".wallet-details");
   await selected
     .getByRole("button", { name: "Show full signing account address" })
@@ -205,7 +212,7 @@ test("a late clipboard response never marks the replacement account as copied", 
   await selected
     .getByRole("button", { name: "Copy signing account address", exact: true })
     .click();
-  await page.getByLabel("Personal account").selectOption(`0x${"2".repeat(64)}`);
+  await selectWalletAccount(page, `0x${"2".repeat(64)}`);
   await page.evaluate(() =>
     (window as unknown as { finishCopy: () => void }).finishCopy(),
   );

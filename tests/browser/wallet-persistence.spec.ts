@@ -25,7 +25,7 @@ test("reload restores the exact source and account without contacting a new wall
   await page.reload();
   await expect(
     page.getByLabel("Personal account", { exact: true }),
-  ).toHaveValue(walletAccounts[1]!);
+  ).toHaveAttribute("data-selected-address", walletAccounts[1]!);
   await expect(
     page.getByLabel("Personal account", { exact: true }),
   ).toBeEnabled();
@@ -90,7 +90,7 @@ test("a missing account is not replaced with a different signer", async ({
   await page.reload();
   await expect(
     page.getByLabel("Personal account", { exact: true }),
-  ).toHaveValue("");
+  ).toHaveAttribute("data-selected-address", "");
   await expect(
     page.getByText(
       "The previous account is unavailable. Select an account to continue.",
@@ -107,7 +107,7 @@ test("delayed wallet injection still restores the selected account", async ({
   await page.reload();
   await expect(
     page.getByLabel("Personal account", { exact: true }),
-  ).toHaveValue(walletAccounts[1]!);
+  ).toHaveAttribute("data-selected-address", walletAccounts[1]!);
   expect(
     (await walletEvents(page)).filter((event) => event === "enable:saved"),
   ).toHaveLength(1);
@@ -144,7 +144,7 @@ test("account updates revoke the old selection and cannot undo a disconnect", as
   );
   await expect(
     page.getByLabel("Personal account", { exact: true }),
-  ).toHaveValue("");
+  ).toHaveAttribute("data-selected-address", "");
   await expect(
     page.getByText(/selected account is no longer available/),
   ).toBeVisible();

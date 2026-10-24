@@ -1,8 +1,7 @@
 import type { Destination } from "../../ui-contract";
 import type { ScreenProps } from "../../routes/screen-types";
-import { titles } from "../../state/navigation";
-import { Address, Button, Icon } from "../ui";
-import { compactAddress } from "../addresses/format";
+import { Button, Icon } from "../ui";
+import { WalletAccountPicker } from "./wallet-account-picker";
 
 export function Topbar({
   snapshot,
@@ -15,13 +14,32 @@ export function Topbar({
   const unresolved =
     snapshot.workspace?.history.filter((entry) => entry.unresolved).length ?? 0;
   return (
-    <header className="topbar">
-      <div className="breadcrumb">
-        <span>{snapshot.workspace?.name ?? "Account Handoff"}</span>
-        <Icon name="chevron" size={13} />
-        <strong>{titles[destination]}</strong>
-      </div>
+    <div className="topbar">
       <div className="topbar-actions">
+        <button
+          type="button"
+          className="header-network"
+          aria-label="Network and readiness"
+          aria-current={destination === "network" ? "page" : undefined}
+          onClick={() => navigate("network")}
+        >
+          <span
+            className={`connection-dot ${snapshot.network.connected ? "connected" : ""}`}
+          />
+          <span className="header-network__mode">{snapshot.network.mode}</span>
+          <span className="header-network__state">
+            {snapshot.network.connected ? "RPC online" : "Network disconnected"}
+          </span>
+        </button>
+        <button
+          type="button"
+          className="header-icon"
+          aria-label="Workspace data"
+          aria-current={destination === "data" ? "page" : undefined}
+          onClick={() => navigate("data")}
+        >
+          <Icon name="settings" size={18} />
+        </button>
         <button
           type="button"
           className="attention-button"
@@ -29,62 +47,20 @@ export function Topbar({
           aria-label={`Needs attention${unresolved ? `: ${unresolved}` : ""}`}
         >
           <Icon name="history" size={17} />
-          <span>Needs attention</span>
           {unresolved > 0 && <span className="count">{unresolved}</span>}
         </button>
-        <span className="topbar-divider" />
         {snapshot.wallet.connected ? (
           <div className="wallet-control">
             <span className="wallet-avatar">
               <Icon name="wallet" size={17} />
             </span>
-            <div className="wallet-details">
-              <label className="sr-only" htmlFor="selected-wallet-account">
-                Personal account
-              </label>
-              <select
-                id="selected-wallet-account"
-                value={snapshot.wallet.selectedAddress ?? ""}
-                onChange={(event) =>
-                  void run({
-                    type: "select-account",
-                    address: event.target.value,
-                  })
-                }
-                disabled={!!snapshot.busy}
-              >
-                {!snapshot.wallet.selectedAddress && (
-                  <option value="">Select an account</option>
-                )}
-                {snapshot.wallet.accounts.map((account) => {
-                  const name = account.label?.trim() || account.name?.trim();
-                  const duplicateName =
-                    name &&
-                    snapshot.wallet.accounts.filter(
-                      (other) =>
-                        (other.label?.trim() || other.name?.trim()) === name,
-                    ).length > 1;
-                  return (
-                    <option
-                      key={`${account.source}-${account.address}`}
-                      value={account.address}
-                      title={account.address}
-                    >
-                      {name ?? compactAddress(account.address)}
-                      {duplicateName
-                        ? ` · ${compactAddress(account.address)}`
-                        : ""}
-                      {account.role ? ` · ${account.role}` : ""}
-                    </option>
-                  );
-                })}
-              </select>
-              <Address
-                value={snapshot.wallet.selectedAddress}
-                compact
-                label="signing account address"
-              />
-            </div>
+            <WalletAccountPicker
+              wallet={snapshot.wallet}
+              disabled={!!snapshot.busy}
+              onSelect={(address) =>
+                void run({ type: "select-account", address })
+              }
+            />
             <button
               type="button"
               className="disconnect-button"
@@ -106,6 +82,6 @@ export function Topbar({
           </Button>
         )}
       </div>
-    </header>
+    </div>
   );
 }
