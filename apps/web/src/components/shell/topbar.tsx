@@ -1,0 +1,94 @@
+import type { Destination } from "../../ui-contract";
+import type { ScreenProps } from "../../routes/screen-types";
+import { titles } from "../../state/navigation";
+import { Button, Icon } from "../ui";
+
+export function Topbar({
+  snapshot,
+  navigate,
+  run,
+  destination,
+}: Pick<ScreenProps, "snapshot" | "navigate" | "run"> & {
+  destination: Destination;
+}) {
+  const unresolved =
+    snapshot.workspace?.history.filter((entry) => entry.unresolved).length ?? 0;
+  return (
+    <header className="topbar">
+      <div className="breadcrumb">
+        <span>{snapshot.workspace?.name ?? "Account Handoff"}</span>
+        <Icon name="chevron" size={13} />
+        <strong>{titles[destination]}</strong>
+      </div>
+      <div className="topbar-actions">
+        <button
+          type="button"
+          className="attention-button"
+          onClick={() => navigate("attention")}
+          aria-label={`Потребує уваги${unresolved ? `: ${unresolved}` : ""}`}
+        >
+          <Icon name="history" size={17} />
+          <span>Потребує уваги</span>
+          {unresolved > 0 && <span className="count">{unresolved}</span>}
+        </button>
+        <span className="topbar-divider" />
+        {snapshot.wallet.connected ? (
+          <div className="wallet-control">
+            <span className="wallet-avatar">
+              <Icon name="wallet" size={17} />
+            </span>
+            <label className="sr-only" htmlFor="selected-wallet-account">
+              Особистий акаунт
+            </label>
+            <select
+              id="selected-wallet-account"
+              value={snapshot.wallet.selectedAddress ?? ""}
+              onChange={(event) =>
+                void run({
+                  type: "select-account",
+                  address: event.target.value,
+                })
+              }
+              disabled={!!snapshot.busy}
+            >
+              {!snapshot.wallet.selectedAddress && (
+                <option value="">Оберіть акаунт</option>
+              )}
+              {snapshot.wallet.accounts.map((account) => (
+                <option
+                  key={`${account.source}-${account.address}`}
+                  value={account.address}
+                >
+                  {account.label ??
+                    account.name ??
+                    `${account.address.slice(0, 7)}…${account.address.slice(-5)}`}
+                  {account.role ? ` · ${account.role}` : ""}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="disconnect-button"
+              disabled={!!snapshot.busy}
+              onClick={() => void run({ type: "disconnect-wallet" })}
+              aria-label="Від’єднати гаманець"
+            >
+              <Icon name="close" size={15} />
+            </button>
+          </div>
+        ) : (
+          <Button
+            icon="wallet"
+            variant="primary"
+            disabled={snapshot.wallet.connecting || !!snapshot.busy}
+            onClick={() => void run({ type: "connect-wallet" })}
+          >
+            {snapshot.wallet.connecting
+              ? "Підключення…"
+              : "Підключити гаманець"}
+          </Button>
+        )}
+      </div>
+    </header>
+  );
+}

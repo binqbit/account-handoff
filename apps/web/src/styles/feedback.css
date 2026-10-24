@@ -1,0 +1,78 @@
+.notification {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 13px 35px;
+  background: #223c2b;
+  color: #cce3d1;
+  border-bottom: 1px solid #45634b;
+  font-size: 0.84rem;
+}
+.notification--error {
+  background: #412f29;
+  border-color: #81574b;
+  color: #f0c2b3;
+}
+.activity-indicator {
+  position: fixed;
+  bottom: 18px;
+  right: 22px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.79rem;
+  background: #2a3b2e;
+  border: 1px solid #587b5d;
+  color: #d7e8da;
+  border-radius: 9px;
+  padding: 12px 17px;
+  box-shadow: 0 5px 25px #0007;
+}
+.spinner {
+  height: 15px;
+  width: 15px;
+  border: 2px solid #759a7d;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+.page-footer {
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 24px 0;
+  margin-top: 42px;
+  color: #7e9b89;
+  font-size: 0.7rem;
+}
+.page-footer > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.footer-symbol {
+  font-size: 1.1rem;
+  color: #9ebda8;
+}
+.critical-error {
+  max-width: 700px;
+  margin: 15vh auto;
+  padding: 35px;
+}
+.critical-error h1 {
+  margin: 20px 0;
+}
+.critical-error p {
+  color: var(--muted);
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

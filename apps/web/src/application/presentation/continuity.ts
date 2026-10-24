@@ -1,0 +1,155 @@
+import { validateRecord, type Controller } from "@account-handoff/contracts";
+import type { WorkspaceView } from "../../ui-contract";
+import type { ChainView, WorkspaceHistory, WorkspaceRecord } from "../models";
+import { authority, eq, mapped, stateFor } from "./shared";
+
+function after(left: WorkspaceHistory, right: WorkspaceHistory): boolean {
+  return (
+    left.receipt.blockNumber > right.receipt.blockNumber ||
+    (left.receipt.blockNumber === right.receipt.blockNumber &&
+      left.receipt.txIndex > right.receipt.txIndex)
+  );
+}
+function sameController(left: Controller, right: Controller): boolean {
+  return (
+    eq(left.account, right.account) &&
+    left.role === right.role &&
+    left.threshold === right.threshold &&
+    left.members.length === right.members.length &&
+    left.members.every((member, index) => eq(member, right.members[index]))
+  );
+}
+/** The application supplies a certificate only after reconstructing its native evidence. */
+function hasBoundCertificate(
+  workspace: WorkspaceRecord,
+  chain: ChainView | null,
+): boolean {
+  const certificate = workspace.continuityCertificate;
+  const baseline = workspace.baseline;
+  if (!chain || !certificate || !baseline || !validateRecord(certificate).ok)
+    return false;
+  return (
+    ["verified", "historically_verified_current_drift"].includes(
+      certificate.verdict,
+    ) &&
+    Object.values(certificate.criteria).every(
+      (criterion) => criterion === "passed",
+    ) &&
+    certificate.removalReceiptId !== null &&
+    certificate.milestone1SubmissionReceiptId !== null &&
+    certificate.removalReceiptId !==
+      certificate.milestone1SubmissionReceiptId &&
+    certificate.removalParticipationEvidence.length > 0 &&
+    certificate.continuationParticipationEvidence.length > 0 &&
+    certificate.grantScopeAtSubmission === "EligibleSingleRound" &&
+    certificate.profileId === chain.profile.profileId &&
+    certificate.profileDigest === chain.profile.digest &&
+    sameController(certificate.M0, workspace.M0) &&
+    sameController(certificate.M1, workspace.M1) &&
+    eq(certificate.identity.P, workspace.pure) &&
+    eq(certificate.identity.reverseMappingAccount, workspace.pure) &&
+    eq(certificate.identity.originalAccountEntry, workspace.pure) &&
+    eq(certificate.identity.hP, baseline.account.mappedAddress) &&
+    eq(certificate.identity.grantee, baseline.grant.grantee) &&
+    eq(certificate.identity.contractAddress, workspace.contract) &&
+    certificate.identity.grantId === workspace.grantId &&
+    eq(certificate.before.blockHash, baseline.blockHash) &&
+    BigInt(certificate.after.blockNumber) <=
+      BigInt(chain.fingerprint.anchor.number) &&
+    [certificate.before, certificate.after].every((anchor) =>
+      Object.values(anchor.contextBindings).every(
+        (context) =>
+          eq(context.genesis, workspace.genesis) &&
+          eq(context.genesis, chain.fingerprint.genesis) &&
+          context.metadataSha256 === chain.profile.metadataSha256 &&
+          eq(context.runtimeCodeHash, chain.profile.runtimeCodeHash),
+      ),
+    )
+  );
+}
+export function proof(
+  workspace: WorkspaceRecord,
+  chain: ChainView | null,
+): { continuity: WorkspaceView["continuity"]; detail: string } {
+  const removals = workspace.history.filter(
+    (row) =>
+      row.operationId === "GRC-ROTATION-REMOVE-M0" &&
+      row.receipt.businessExecuted &&
+      row.receipt.outerSuccess &&
+      row.receipt.nestedSuccess &&
+      eq(row.grantId, workspace.grantId),
+  );
+  const submissions = workspace.history.filter(
+    (row) =>
+      row.operationId === "GRC-GRANT-SUBMIT-M1" &&
+      row.receipt.businessExecuted &&
+      row.receipt.outerSuccess &&
+      row.receipt.nestedSuccess &&
+      eq(row.grantId, workspace.grantId),
+  );
+  const baseline = workspace.baseline;
+  const identityPreserved =
+    !!baseline &&
+    eq(baseline.account.address, workspace.pure) &&
+    !!workspace.grantId;
+  const continued =
+    identityPreserved &&
+    hasBoundCertificate(workspace, chain) &&
+    submissions.some((submission) =>
+      removals.some(
+        (removal) =>
+          submission.attemptId !== removal.attemptId &&
+          submission.receipt.txHash !== removal.receipt.txHash &&
+          after(submission, removal),
+      ),
+    );
+  if (continued) {
+    const state = authority(workspace, chain);
+    const grantMatches =
+      !!chain?.grant &&
+      eq(chain.grant.grantee, baseline.grant.grantee) &&
+      eq(chain.grant.funder, baseline.grant.funder) &&
+      chain.grant.milestones.every((milestone) => milestone.round === 0);
+    const current = chain?.currentContinuity;
+    const currentMatched =
+      current?.status === "matched" &&
+      current.blockHash === chain?.fingerprint.anchor.hash &&
+      current.profileDigest === chain?.profile.digest &&
+      current.certificateDigest === workspace.continuityCertificate?.digest;
+    if (
+      state !== "M1" ||
+      !mapped(stateFor(chain, workspace.pure)) ||
+      !grantMatches ||
+      !currentMatched ||
+      workspace.continuityCertificate?.verdict ===
+        "historically_verified_current_drift"
+    )
+      return {
+        continuity: "drift",
+        detail:
+          "Збережено окремі фіналізовані квитанції вилучення M0 і подання M1 після нього для того самого гранту. Поточний стан відрізняється або потребує повторної перевірки; історичні квитанції залишаються доступними.",
+      };
+    return {
+      continuity: "continued",
+      detail:
+        "Збережено початковий стан, окрему квитанцію вилучення M0 та пізніше подання M1 на тому самому гранті. Поточний бенефіціар і контролер узгоджені. Це не означає схвалення чи виплату наступного траншу.",
+    };
+  }
+  if (removals.length && identityPreserved)
+    return {
+      continuity: "rotated",
+      detail:
+        "Вилучення M0 має окрему фіналізовану квитанцію. Для завершення потрібно подати наступний етап через M1 та перевірити його результат.",
+    };
+  if (!chain && workspace.history.length)
+    return {
+      continuity: "unknown",
+      detail:
+        "Локальна історія доступна. Поточна мережа та повнота доказів ще не перевірені.",
+    };
+  return {
+    continuity: "not-started",
+    detail:
+      "Початковий стан, вилучення M0 і наступне подання M1 ще не утворюють повного ланцюжка доказів.",
+  };
+}

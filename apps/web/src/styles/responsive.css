@@ -1,0 +1,456 @@
+@media (min-width: 1450px) {
+  :root {
+    --sidebar: 248px;
+  }
+  .main-content {
+    padding-top: 44px;
+  }
+  .sidebar {
+    padding: 31px 20px;
+  }
+}
+@media (max-width: 1120px) {
+  :root {
+    --sidebar: 204px;
+  }
+  .sidebar {
+    padding: 24px 12px;
+  }
+  .brand {
+    font-size: 0.98rem;
+    gap: 8px;
+  }
+  .brand-symbol {
+    width: 29px;
+    height: 29px;
+  }
+  .main-content {
+    padding: 30px 25px 0;
+  }
+  .topbar {
+    padding: 15px 25px;
+  }
+  .topbar-actions {
+    gap: 12px;
+  }
+  .breadcrumb > span {
+    max-width: 110px;
+  }
+  .overview-grid {
+    grid-template-columns: minmax(0, 1.35fr) minmax(250px, 1fr);
+  }
+  .card {
+    padding: 19px;
+  }
+  .next-task {
+    padding: 24px;
+  }
+  .next-task h2 {
+    font-size: 1.4rem;
+  }
+  .attention-button > span:not(.count) {
+    display: none;
+  }
+  .mode-picker small {
+    font-size: 0.64rem;
+  }
+}
+@media (max-width: 900px) {
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+  .next-task {
+    min-height: 0;
+  }
+  .summary-grid {
+    gap: 10px;
+  }
+  .summary-grid .card {
+    padding: 16px;
+  }
+  .metric {
+    font-size: 1.6rem;
+  }
+  .equal-grid {
+    gap: 14px;
+  }
+  .page-heading {
+    display: block;
+  }
+  .page-heading > .actions {
+    padding-top: 16px;
+  }
+  .receipt-layers {
+    grid-template-columns: 1fr;
+  }
+  .proof-chain {
+    gap: 9px;
+  }
+  .proof-chain > svg {
+    display: none;
+  }
+  .stepper > li {
+    padding: 12px 9px;
+    font-size: 0.75rem;
+    gap: 7px;
+  }
+  .step-number {
+    height: 22px;
+    width: 22px;
+  }
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 680px) {
+  :root {
+    font-size: 14px;
+    --sidebar: 0px;
+  }
+  .app-shell {
+    display: block;
+  }
+  .sidebar {
+    position: relative;
+    height: auto;
+    padding: 17px 14px 0;
+    gap: 17px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    width: fit-content;
+    padding: 0;
+    font-size: 1.02rem;
+  }
+  .brand-symbol {
+    width: 30px;
+    height: 30px;
+  }
+  .workspace-switcher {
+    position: absolute;
+    right: 13px;
+    top: 16px;
+    max-width: 160px;
+    padding: 7px 8px;
+    gap: 7px;
+  }
+  .workspace-avatar {
+    height: 26px;
+    width: 26px;
+  }
+  .workspace-switcher strong {
+    font-size: 0.74rem;
+  }
+  .workspace-switcher small {
+    display: none;
+  }
+  .workspace-switcher svg {
+    width: 12px;
+  }
+  .navigation-label,
+  .sidebar-bottom {
+    display: none;
+  }
+  .primary-nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    margin: 0 -6px;
+  }
+  .primary-nav button {
+    border-radius: 7px 7px 0 0;
+    padding: 12px 4px;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.71rem;
+    text-align: center;
+  }
+  .nav-active-mark {
+    display: none;
+  }
+  .primary-nav button[aria-current="page"] {
+    border-bottom-color: transparent;
+  }
+  .topbar {
+    height: auto;
+    min-height: 66px;
+    padding: 12px 15px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .breadcrumb {
+    font-size: 0.71rem;
+    gap: 7px;
+  }
+  .breadcrumb > span {
+    max-width: 130px;
+  }
+  .topbar-actions {
+    margin-left: auto;
+    gap: 10px;
+  }
+  .topbar-actions > .button {
+    font-size: 0.72rem;
+    padding: 8px 10px;
+    min-height: 34px;
+  }
+  .attention-button {
+    padding: 7px;
+  }
+  .wallet-control {
+    gap: 5px;
+  }
+  .wallet-control select {
+    max-width: 120px;
+    font-size: 0.72rem;
+  }
+  .wallet-avatar {
+    height: 25px;
+    width: 25px;
+  }
+  .topbar-divider {
+    display: none;
+  }
+  .main-content {
+    padding: 26px 15px 0;
+    min-height: 70vh;
+  }
+  .page-heading {
+    margin-bottom: 24px;
+  }
+  .page-heading h1 {
+    font-size: 1.8rem;
+  }
+  .eyebrow {
+    font-size: 0.65rem;
+  }
+  .lede {
+    font-size: 0.86rem;
+    margin-top: 11px;
+  }
+  .card {
+    padding: 18px;
+    border-radius: 11px;
+    margin-bottom: 16px;
+  }
+  .card__heading {
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .card__heading h2 {
+    font-size: 1.09rem;
+  }
+  .card__heading > .badge {
+    font-size: 0.63rem;
+    max-width: 125px;
+  }
+  .overview-grid,
+  .equal-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .summary-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin: 0 0 24px;
+  }
+  .summary-grid .card {
+    min-height: 0;
+    padding: 16px 18px;
+  }
+  .summary-grid .metric {
+    font-size: 1.7rem;
+    margin-bottom: 6px;
+  }
+  .summary-grid .card__heading {
+    margin-bottom: 7px;
+  }
+  .next-task {
+    padding: 22px;
+  }
+  .next-task h2 {
+    font-size: 1.42rem;
+  }
+  .next-task__description {
+    font-size: 0.86rem;
+  }
+  .next-task__footer {
+    font-size: 0.68rem;
+    margin-top: 22px;
+  }
+  .row {
+    gap: 8px;
+  }
+  .activity-content h3 {
+    font-size: 0.82rem;
+  }
+  .activity-content p {
+    font-size: 0.76rem;
+  }
+  .activity-row {
+    gap: 10px;
+  }
+  .activity-marker {
+    height: 27px;
+    width: 27px;
+  }
+  .activity-content .badge {
+    font-size: 0.6rem;
+    max-width: 95px;
+  }
+  .section-heading {
+    margin: 25px 0 15px;
+  }
+  .section-heading h2 {
+    font-size: 1.07rem;
+  }
+  .notice {
+    font-size: 0.79rem;
+    padding: 13px;
+  }
+  .notice strong {
+    font-size: 0.83rem;
+  }
+  .stepper {
+    gap: 6px;
+    margin-bottom: 22px;
+  }
+  .stepper > li {
+    padding: 11px 7px;
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 0.68rem;
+    gap: 9px;
+  }
+  .step-number {
+    height: 21px;
+    width: 21px;
+  }
+  .key-values > div {
+    gap: 12px;
+    font-size: 0.76rem;
+  }
+  .key-values dt {
+    max-width: 40%;
+  }
+  .key-values dd {
+    max-width: 67%;
+  }
+  .address {
+    font-size: 0.71rem;
+  }
+  .proof-chain {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+  }
+  .proof-chain > span {
+    font-size: 0.76rem;
+  }
+  .workspace-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .workspace-toolbar input {
+    max-width: 100%;
+  }
+  .workspace-toolbar > .button {
+    align-self: flex-start;
+  }
+  .mode-picker {
+    gap: 6px;
+  }
+  .mode-picker > button {
+    padding: 11px 8px;
+  }
+  .mode-picker small {
+    font-size: 0.67rem;
+  }
+  .operation-grid {
+    grid-template-columns: 1fr;
+  }
+  .page-footer {
+    margin-top: 30px;
+    padding: 20px 0;
+    flex-wrap: wrap;
+    font-size: 0.64rem;
+  }
+  .page-footer > .badge {
+    font-size: 0.58rem;
+  }
+  .notification {
+    padding: 12px 15px;
+    font-size: 0.79rem;
+  }
+  .activity-indicator {
+    bottom: 12px;
+    right: 12px;
+    font-size: 0.72rem;
+    max-width: calc(100vw - 24px);
+  }
+  .empty-state {
+    padding: 40px 18px;
+  }
+  .empty-state h2 {
+    font-size: 1.25rem;
+  }
+  .empty-state p {
+    font-size: 0.83rem;
+  }
+  .empty-state .actions {
+    flex-direction: column;
+  }
+  .critical-error {
+    margin: 10vh 15px;
+    padding: 20px;
+  }
+  .button {
+    font-size: 0.79rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition: none !important;
+  }
+}
+@media (max-width: 680px) {
+  .sidebar-bottom {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 0 10px;
+    margin: -7px 0 0;
+  }
+  .sidebar-bottom .network-status,
+  .sidebar-bottom .key-assurance {
+    display: none;
+  }
+  .sidebar-bottom .secondary-nav {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .sidebar-bottom .secondary-nav button {
+    padding: 5px 6px;
+    font-size: 0.7rem;
+  }
+}
+/* Route headings receive focus for assistive navigation, but are not controls. */
+#page-heading:focus {
+  outline: none;
+}
+/* Provider and validation messages can contain uninterrupted hashes or URLs. */
+.notification > span,
+.notice > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
