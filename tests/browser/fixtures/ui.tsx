@@ -150,7 +150,32 @@ let snapshot: AppSnapshot = {
   operation: null,
   busy: null,
 };
-if (new URLSearchParams(location.search).get("scenario") === "empty")
+const scenario = new URLSearchParams(location.search).get("scenario");
+function reviewOperation(): OperationView {
+  const action = snapshot.actions[0]!;
+  return {
+    id: "test-operation",
+    actionId: action.id,
+    title: action.title,
+    description: action.description,
+    stage: "Prepared",
+    tone: "neutral",
+    actor: action.actor,
+    signer: { address: snapshot.wallet.selectedAddress! },
+    route: ["Alice", "Multisig M0", "Proxy P", "addProxy M1"],
+    consequences: ["M0 залишається авторизованою."],
+    terms: [{ label: "Дозвіл", value: "Any / 0" }],
+    resources: [{ label: "Тестова оцінка", amount: "1 UNIT", payer: "Alice" }],
+    blockers: [],
+    canSign: true,
+    canSend: false,
+    canReconcile: false,
+    canDiscard: true,
+    callHex: "0x0102",
+    callHash: `0x${"c".repeat(64)}`,
+  };
+}
+if (scenario === "empty")
   snapshot = {
     ...snapshot,
     workspace: null,
@@ -161,6 +186,52 @@ if (new URLSearchParams(location.search).get("scenario") === "empty")
       accounts: [],
       selectedAddress: null,
     },
+  };
+if (scenario === "unknown")
+  snapshot = {
+    ...snapshot,
+    operation: {
+      ...reviewOperation(),
+      stage: "unknown",
+      tone: "warning",
+      canSign: false,
+      canSend: false,
+      canReconcile: true,
+      canDiscard: false,
+      blockers: ["Спочатку звірте результат наявної спроби."],
+    },
+  };
+if (scenario === "read-only")
+  snapshot = {
+    ...snapshot,
+    network: { ...snapshot.network, connected: false },
+    wallet: {
+      connected: false,
+      connecting: false,
+      selectedAddress: null,
+      accounts: [],
+    },
+    workspace: {
+      ...snapshot.workspace!,
+      authority: "Unknown",
+      continuity: "unknown",
+      continuityDetail: "Імпортовані докази потребують перевірки мережі.",
+      history: [
+        {
+          id: "imported-evidence",
+          title: "Імпортований запис",
+          state: "Історичний доказ",
+          tone: "neutral",
+          detail: "Імпорт не встановлює поточні права керування.",
+          evidence: { blockNumber: "50", recordedAmount: 123n },
+        },
+      ],
+    },
+    actions: snapshot.actions.map((action) => ({
+      ...action,
+      enabled: false,
+      blockers: ["Підключіть мережу й гаманець для нового перегляду."],
+    })),
   };
 const listeners = new Set<() => void>();
 const commands: AppCommand[] = [];
@@ -193,27 +264,11 @@ const facade: ApplicationFacade = {
         (item) => item.id === command.actionId,
       )!;
       const operation: OperationView = {
-        id: "test-operation",
+        ...reviewOperation(),
         actionId: action.id,
         title: action.title,
         description: action.description,
-        stage: "Prepared",
-        tone: "neutral",
         actor: action.actor,
-        signer: { address: snapshot.wallet.selectedAddress! },
-        route: ["Alice", "Multisig M0", "Proxy P", "addProxy M1"],
-        consequences: ["M0 залишається авторизованою."],
-        terms: [{ label: "Дозвіл", value: "Any / 0" }],
-        resources: [
-          { label: "Тестова оцінка", amount: "1 UNIT", payer: "Alice" },
-        ],
-        blockers: [],
-        canSign: true,
-        canSend: false,
-        canReconcile: false,
-        canDiscard: true,
-        callHex: "0x0102",
-        callHash: `0x${"c".repeat(64)}`,
       };
       publish({ ...snapshot, operation });
     }

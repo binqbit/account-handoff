@@ -7,6 +7,7 @@ import {
   NativeConnection,
   account,
   contractAddress,
+  type NativeMetadataBinding,
 } from "@account-handoff/native-adapter";
 import { readGrant } from "@account-handoff/grant-adapter";
 import { injectLocalWallet, type LocalRole } from "./browser-wallet";
@@ -29,7 +30,11 @@ interface FixtureManifest {
 }
 const runId = process.env["AH_LOCAL_BROWSER_RUN"] ?? "browser";
 const directory = resolve(".local-state", runId);
-function readFixture(): { contents: string; fixture: FixtureManifest } {
+function readFixture(): {
+  contents: string;
+  fixture: FixtureManifest;
+  binding: NativeMetadataBinding;
+} {
   if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(runId))
     throw new Error("Invalid LOCAL browser runId");
   const contents = readFileSync(resolve(directory, "workspace.json"), "utf8");
@@ -42,7 +47,14 @@ function readFixture(): { contents: string; fixture: FixtureManifest } {
     !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)
   )
     throw new Error("Browser integration refuses nonlocal RPC");
-  return { contents, fixture };
+  const binding = JSON.parse(
+    readFileSync(resolve(directory, "native-metadata-binding.json"), "utf8"),
+  ) as NativeMetadataBinding;
+  if (binding.genesis !== fixture.genesisHash)
+    throw new Error(
+      "Browser test decoder binding differs from its LOCAL workspace",
+    );
+  return { contents, fixture, binding };
 }
 async function connectAndImport(
   page: Page,
@@ -128,10 +140,11 @@ test.describe("real LOCAL website and native wallet boundary", () => {
   test("loads the real baseline across accessible task routes without signing", async ({
     page,
   }, testInfo) => {
-    const { contents, fixture } = readFixture();
+    const { contents, fixture, binding } = readFixture();
     const connection = await NativeConnection.connect(
       fixture.endpoint,
       "LOCAL",
+      binding,
     );
     try {
       const wallet = await injectLocalWallet(
@@ -175,10 +188,11 @@ test.describe("real LOCAL website and native wallet boundary", () => {
   test("explicit wallet rejection leaves the real native state unchanged", async ({
     page,
   }) => {
-    const { contents, fixture } = readFixture();
+    const { contents, fixture, binding } = readFixture();
     const connection = await NativeConnection.connect(
       fixture.endpoint,
       "LOCAL",
+      binding,
     );
     try {
       const wallet = await injectLocalWallet(
@@ -218,10 +232,11 @@ test.describe("real LOCAL website and native wallet boundary", () => {
   test("loads the actual workspace, then A/B add, A/D remove and A/D continue through the website", async ({
     page,
   }, testInfo) => {
-    const { contents, fixture } = readFixture();
+    const { contents, fixture, binding } = readFixture();
     const connection = await NativeConnection.connect(
       fixture.endpoint,
       "LOCAL",
+      binding,
     );
     try {
       const fingerprint = await connection.fingerprint();
