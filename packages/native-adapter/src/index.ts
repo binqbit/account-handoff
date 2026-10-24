@@ -8,6 +8,7 @@ import { AccountId32, $Metadata } from "dedot/codecs";
 import { blake2AsHex, hexToU8a, u8aToHex } from "dedot/utils";
 import { keccak256 } from "viem";
 import { sha256 } from "@account-handoff/contracts";
+import type { KitchensinkRuntimeRuntimeCallLike as LocalRuntimeCallLike } from "../generated/account-handoff-local/index.js";
 
 export type Hex = `0x${string}`;
 export type NativeTx = ReturnType<DedotClient["toTx"]>;
@@ -171,16 +172,22 @@ export function decodeContractEstimate(value: unknown): {
     typeof flags === "object" && flags !== null ? object(flags)["bits"] : flags;
   if ((integer(flagBits) & 1n) !== 0n)
     throw new Error(`Contract reverted: ${String(output["data"])}`);
-  const gas = weight(result["gasRequired"]);
+  const gas = weight(result["weightRequired"]);
   const storage = object(result["storageDeposit"]);
   if (storage["type"] !== "Charge" && storage["type"] !== "Refund")
     throw new Error("Unrecognized contract storage deposit result");
+  const maximum = object(result["maxStorageDeposit"]);
+  if (maximum["type"] !== "Charge")
+    throw new Error("Unrecognized maximum contract storage deposit result");
+  const peakCharge = integer(maximum["value"]);
+  if (storage["type"] === "Charge" && peakCharge < integer(storage["value"]))
+    throw new Error("Maximum storage deposit is below its final charge");
   return {
     weight: {
       refTime: gas.refTime + gas.refTime / 5n + 1n,
       proofSize: gas.proofSize + gas.proofSize / 5n + 1024n,
     },
-    storage: storage["type"] === "Charge" ? integer(storage["value"]) : 0n,
+    storage: peakCharge,
     data: hex(output["data"]),
   };
 }
@@ -207,7 +214,7 @@ export function safeEndpoint(
 }
 
 /** Every branch is an application-approved native call; no free-form pallet route is exported. */
-function actionCall(action: NativeAction): IRuntimeTxCall {
+function actionCall(action: NativeAction): LocalRuntimeCallLike {
   switch (action.kind) {
     case "transfer":
       if (action.amount <= 0n)
