@@ -30,7 +30,7 @@ import {
   encodeCreateGrant,
   encodeSubmission,
 } from "@account-handoff/grant-adapter";
-import { account, hex, integer, number } from "@account-handoff/native-adapter";
+import { account, hex, number } from "@account-handoff/native-adapter";
 import type {
   Hex,
   NativeAction,

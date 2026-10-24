@@ -234,7 +234,7 @@ export async function envelope(
   return sealRecord(value);
 }
 export async function signingContext(
-  e: FrozenEnvelope,
+  _e: FrozenEnvelope,
 ): Promise<ReviewedSigningContext> {
   const payload = canonicalJson({
     address: participants.S,

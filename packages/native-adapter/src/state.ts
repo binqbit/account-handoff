@@ -11,7 +11,6 @@ import {
   contractAddress,
   hex,
   integer,
-  number,
   object,
   plain,
   weight,
