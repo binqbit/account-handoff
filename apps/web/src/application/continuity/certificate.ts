@@ -33,6 +33,7 @@ import {
   tupleIdentity,
 } from "./observations";
 import { proveReceipt } from "./receipt-proof";
+import { releasedVestingSchedule } from "./vesting";
 import type { WorkspaceCertificateInput } from "./types";
 
 /** Builds a new certificate only after rereading both actual native approval/execution sequences. */
@@ -135,11 +136,13 @@ export async function buildWorkspaceCertificate(
       return null;
     const oldSchedules = schedules(baselineAccount.vesting),
       newSchedules = schedules(current.vesting);
-    const tuple = oldSchedules.find(
-      (entry) => vestingRemaining(entry, BigInt(before.anchor.number)) > 0n,
+    const tuple = releasedVestingSchedule(
+      oldSchedules,
+      history.firstVestingRelease,
     );
     if (
       !tuple ||
+      vestingRemaining(tuple, BigInt(before.anchor.number)) === 0n ||
       vestingRemaining(tuple, BigInt(after.anchor.number)) === 0n ||
       !hasPreservedSchedule(oldSchedules, newSchedules)
     )
