@@ -122,7 +122,9 @@ export function AddressList({
             (option) => !keys.includes(addressKey(option.address)),
           )}
           onSelect={(value) => add([value])}
-          help="Select an account, or paste an address and press Enter. You can paste a whole list separated by commas or new lines."
+          compact
+          placeholder="Choose or paste an address"
+          help="Choose an account or paste a native address and press Enter. Lists can be separated by commas or new lines."
           onPaste={(event) => {
             const pasted = event.clipboardData
               .getData("text")
@@ -135,12 +137,6 @@ export function AddressList({
             }
           }}
         />
-      )}
-      {values.length === count && (
-        <p className="selection-complete">
-          <Icon name="check" size={14} />
-          All {count} accounts selected. Remove one to change it.
-        </p>
       )}
       {error && (
         <p className="field__error" role="alert">

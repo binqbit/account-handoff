@@ -42,7 +42,7 @@ export function Overview(props: ScreenProps) {
         icon="overview"
         eyebrow="Workspace / overview"
         title={workspace.name}
-        description="Stable beneficiary. Visible authority. Each next action has a verified outcome."
+        description="Current authority, grant progress and next action."
         actions={
           <Button
             icon="refresh"

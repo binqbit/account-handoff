@@ -53,7 +53,6 @@ export function Sidebar({
             <Icon name={item.icon} size={19} />
             <span className="nav-copy">
               <strong>{item.label}</strong>
-              <small>{item.description}</small>
             </span>
             {activeDestination === item.id && (
               <span className="nav-active-mark" />

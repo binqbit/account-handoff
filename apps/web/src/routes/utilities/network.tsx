@@ -48,7 +48,7 @@ export function Network(props: ScreenProps) {
         icon="network"
         eyebrow="Network and readiness"
         title="Check the environment before acting"
-        description="A node connection and readiness for an operation are separate checks. Each environment has its own data and evidence."
+        description="Connect a node and check readiness before signing."
       />
       <div className="overview-grid">
         <Card title="Native node connection">

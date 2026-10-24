@@ -101,3 +101,31 @@ test("short desktop windows keep the sidebar settings reachable", async ({
     .click();
   await expect(page).toHaveURL(/#network$/);
 });
+
+test("setup keeps essential rules visible and preserves input when opening optional help", async ({
+  page,
+}) => {
+  await page.goto(`${harness}#setup`);
+  await page.getByLabel("Workspace name").fill("Compact workspace");
+  await expect(
+    page.getByText("2 of 3 signatures required. Replace one member."),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Both reviewers must approve.", { exact: true }),
+  ).toBeVisible();
+  const details = page.getByText(
+    "The funder creates a grant for h(P) and funds its milestones.",
+  );
+  await expect(details).toBeHidden();
+  await page.locator("summary").filter({ hasText: "How setup works" }).click();
+  await expect(details).toBeVisible();
+  await expect(page.getByLabel("Workspace name")).toHaveValue(
+    "Compact workspace",
+  );
+  const commands = await page.evaluate(
+    () =>
+      (window as unknown as { __uiTest: { commands: unknown[] } }).__uiTest
+        .commands,
+  );
+  expect(commands).toEqual([]);
+});

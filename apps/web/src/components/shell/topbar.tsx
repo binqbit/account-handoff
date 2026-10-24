@@ -39,10 +39,7 @@ export function Topbar({
               <Icon name="wallet" size={17} />
             </span>
             <div className="wallet-details">
-              <label
-                className="wallet-details__label"
-                htmlFor="selected-wallet-account"
-              >
+              <label className="sr-only" htmlFor="selected-wallet-account">
                 Personal account
               </label>
               <select

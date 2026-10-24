@@ -26,6 +26,7 @@ export function AddressPicker({
   onSelect,
   onPaste,
   placeholder,
+  compact = false,
 }: {
   label: string;
   value: string;
@@ -38,6 +39,7 @@ export function AddressPicker({
   onSelect?: (value: string) => void;
   onPaste?: (event: ClipboardEvent<HTMLInputElement>) => void;
   placeholder?: string;
+  compact?: boolean;
 }) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
@@ -100,7 +102,7 @@ export function AddressPicker({
   }
   return (
     <div
-      className="field address-picker"
+      className={`field address-picker ${compact ? "address-picker--compact" : ""}`}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
           setOpen(false);
@@ -109,7 +111,7 @@ export function AddressPicker({
         }
       }}
     >
-      <label htmlFor={id}>
+      <label htmlFor={id} className={compact ? "sr-only" : undefined}>
         {label}
         {required && <span aria-hidden="true"> *</span>}
       </label>
@@ -220,7 +222,7 @@ export function AddressPicker({
           {chosen.label} <span>· {chosen.detail}</span>
         </p>
       )}
-      <p className="field__help" id={`${id}-help`}>
+      <p className={compact ? "sr-only" : "field__help"} id={`${id}-help`}>
         {help}
       </p>
       {error && (

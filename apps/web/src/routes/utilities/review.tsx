@@ -83,10 +83,7 @@ function ActionForm({
           />
         ))}
         {!action.fields.length && (
-          <p className="muted">
-            Parameters come from the verified workspace state. The next step
-            shows the exact action.
-          </p>
+          <p className="muted">Uses the verified workspace parameters.</p>
         )}
         {action.blockers.length > 0 && (
           <Notice tone="warning" title="Complete the prerequisites first">

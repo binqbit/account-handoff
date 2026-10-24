@@ -53,7 +53,7 @@ export function Handoff(props: ScreenProps) {
         icon="handoff"
         eyebrow="Control handoff"
         title="Three actions. One stable beneficiary."
-        description="Transfer authority to the new group and verify its work on the same grant."
+        description="Replace the controller, then continue the same grant."
       />
       <ol className="stepper">
         {titles.map((title, index) => (

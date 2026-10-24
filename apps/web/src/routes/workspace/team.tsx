@@ -19,7 +19,7 @@ export function Team(props: ScreenProps) {
         icon="team"
         eyebrow="Team and authority"
         title="People change. The beneficiary stays."
-        description="Each group has its own controller address. A personal wallet signs only actions allowed for its owner."
+        description="Manage signing groups, authority and balances."
         actions={
           workspace && (
             <Button

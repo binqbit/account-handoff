@@ -95,21 +95,13 @@ export function TeamForm(props: ScreenProps) {
             maxLength={80}
             required
             disabled={busy}
-            aria-describedby="workspace-name-help"
           />
-          <p className="field__help" id="workspace-name-help">
-            A name for this team's local workspace. You can review every
-            on-chain action separately.
-          </p>
         </div>
         <div className="form-section-heading">
           <Icon name="team" size={20} />
           <div>
-            <h3>Choose the people who can sign</h3>
-            <p>
-              Each group needs 2 of its 3 members to approve. Keep two members
-              and replace one.
-            </p>
+            <h3>Signing groups</h3>
+            <p>2 of 3 signatures required. Replace one member.</p>
           </div>
         </div>
         <div className="equal-grid signer-groups">
@@ -120,7 +112,7 @@ export function TeamForm(props: ScreenProps) {
             count={3}
             options={options}
             disabled={busy}
-            help="The three people who control the beneficiary before the handoff."
+            help="Three current signers."
           />
           <AddressList
             label="New group M1"
@@ -129,17 +121,13 @@ export function TeamForm(props: ScreenProps) {
             count={3}
             options={options}
             disabled={busy}
-            help="Two continuing members and one new member. M1 gets its own controller address."
+            help="Two members from M0 and one replacement."
           />
         </div>
         <div className="form-section-heading">
           <Icon name="grant" size={20} />
           <div>
-            <h3>Assign the grant roles</h3>
-            <p>
-              The funder deposits the grant. Two reviewers approve completed
-              milestones.
-            </p>
+            <h3>Grant roles</h3>
           </div>
         </div>
         <AddressPicker
@@ -149,7 +137,7 @@ export function TeamForm(props: ScreenProps) {
           options={options}
           required
           disabled={busy}
-          help="A native account that will create and fund the grant. Choose a public address; never enter a seed phrase or private key."
+          help="Native account that funds the grant."
         />
         <AddressList
           label="Two reviewer accounts"
@@ -158,7 +146,7 @@ export function TeamForm(props: ScreenProps) {
           options={options}
           count={2}
           disabled={busy}
-          help="Both reviewers must approve. Each signs with their own personal wallet."
+          help="Both reviewers must approve."
         />
         <button
           type="button"
@@ -174,10 +162,6 @@ export function TeamForm(props: ScreenProps) {
         </button>
         {advanced && (
           <div className="advanced-fields" id="known-workspace-addresses">
-            <p className="muted">
-              These values require provenance and current-state verification.
-              Entering an address does not establish authority.
-            </p>
             <AddressPicker
               label="Known native beneficiary P"
               value={beneficiary}
@@ -194,7 +178,7 @@ export function TeamForm(props: ScreenProps) {
                     ]
                   : []
               }
-              help="Optional. The existing Pure beneficiary's native address, not a personal wallet or an EVM address."
+              help="Optional. The Pure beneficiary's native address, not a personal account."
             />
             <AddressPicker
               label="Known grant contract"
@@ -213,7 +197,7 @@ export function TeamForm(props: ScreenProps) {
                     ]
                   : []
               }
-              help="Optional. The deployed Vestry contract's 20-byte EVM address (0x + 40 hex characters)."
+              help="Optional. Vestry contract: 0x + 40 hex characters."
             />
             <div className="field">
               <label htmlFor="known-grant">Grant ID</label>
@@ -227,8 +211,7 @@ export function TeamForm(props: ScreenProps) {
                 aria-describedby="known-grant-help"
               />
               <p className="field__help" id="known-grant-help">
-                Optional. The numeric ID of the grant in that contract, not a
-                transaction hash.
+                Optional. Grant number in that contract.
               </p>
             </div>
           </div>
@@ -259,8 +242,7 @@ export function TeamForm(props: ScreenProps) {
         </div>
         <p className="form-reassurance">
           <Icon name="shield" size={15} />
-          Saving the team creates a local draft. It does not sign or send a
-          transaction.
+          Saved locally. No transaction is sent.
         </p>
       </form>
     </Card>
