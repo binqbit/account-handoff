@@ -89,8 +89,12 @@ export function Overview(props: ScreenProps) {
           </div>
           <Identity identity={workspace.beneficiary} />
           <div className="identity-secondary">
-            <span>Application address</span>
-            <Address value={workspace.beneficiary?.mappedAddress} compact />
+            <span>Contract recipient (H160)</span>
+            <Address
+              value={workspace.beneficiary?.mappedAddress}
+              format="hex"
+              compact
+            />
           </div>
         </Card>
       </div>

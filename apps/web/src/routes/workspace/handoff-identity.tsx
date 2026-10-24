@@ -54,12 +54,17 @@ export function HandoffIdentity({ workspace }: { workspace: WorkspaceView }) {
             value: <Address value={workspace.beneficiary?.address} />,
           },
           {
-            label: "Grant recipient",
-            value: <Address value={workspace.beneficiary?.mappedAddress} />,
+            label: "Contract recipient (H160)",
+            value: (
+              <Address
+                value={workspace.beneficiary?.mappedAddress}
+                format="hex"
+              />
+            ),
           },
           {
-            label: "Grant contract",
-            value: <Address value={workspace.contract} />,
+            label: "Grant contract (H160)",
+            value: <Address value={workspace.contract} format="hex" />,
           },
           {
             label: "Grant",

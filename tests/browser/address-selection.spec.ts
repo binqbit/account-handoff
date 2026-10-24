@@ -94,14 +94,17 @@ test("keyboard account selection and mobile suggestions retain labels, addresses
   await input.focus();
   await expect(
     page.getByRole("listbox").getByRole("option").filter({ hasText: "Alice" }),
-  ).toContainText("0x111111…111111");
+  ).toContainText("5CT5jwBE…Qyn3Kd");
   await expect(
     page
       .getByRole("listbox")
       .getByRole("option")
       .filter({ hasText: "Alice" })
       .locator("code"),
-  ).toHaveAttribute("title", address(1));
+  ).toHaveAttribute(
+    "title",
+    "5CT5jwBEAhveEjgiSCQbkaKcKcUyF3VJ8qNXM9rXsuQyn3Kd",
+  );
   await expect(
     page.getByRole("listbox").getByRole("option").filter({ hasText: "Alice" }),
   ).toContainText("Connected wallet");
@@ -116,7 +119,9 @@ test("keyboard account selection and mobile suggestions retain labels, addresses
   ).toEqual([]);
   await input.press("ArrowDown");
   await input.press("Enter");
-  await expect(input).toHaveValue(address(1));
+  await expect(input).toHaveValue(
+    "5CT5jwBEAhveEjgiSCQbkaKcKcUyF3VJ8qNXM9rXsuQyn3Kd",
+  );
   await expect(input).toHaveAttribute("aria-expanded", "false");
   await input.fill(`0x${"b".repeat(40)}`);
   await page.getByLabel("Workspace name").focus();

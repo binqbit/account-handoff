@@ -22,7 +22,7 @@ test("replacement membership is requested only when starting a handoff", async (
     }),
   });
   await expect(
-    beneficiary.locator("code").filter({ hasText: "0x555555" }).first(),
+    beneficiary.locator("code").filter({ hasText: "5DzbGzvQ" }).first(),
   ).toBeVisible();
   const field = page.getByRole("combobox", {
     name: "Add account to Replacement signers",

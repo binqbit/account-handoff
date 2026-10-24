@@ -80,7 +80,7 @@ test("keyboard navigation and disclosures never request a signature", async ({
   expect(types).toEqual(["prepare-operation"]);
 });
 
-test("native payer hashes and exact fee amounts stay inside the review card", async ({
+test("native payer addresses and exact fee amounts stay inside the review card", async ({
   page,
 }, testInfo) => {
   await page.goto(`${harness}#review?action=GRC-ROTATION-ADD-M1`);
@@ -90,7 +90,9 @@ test("native payer hashes and exact fee amounts stay inside the review card", as
   for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const resources = page.locator(".resource-list");
-    await expect(resources).toContainText(`0x${"1".repeat(64)}`);
+    await expect(resources).toContainText(
+      "5CT5jwBEAhveEjgiSCQbkaKcKcUyF3VJ8qNXM9rXsuQyn3Kd",
+    );
     await expect(resources).toContainText("0.00000008132674 UNIT");
     expect(
       await page.evaluate(

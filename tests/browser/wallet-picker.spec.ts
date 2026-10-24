@@ -15,7 +15,7 @@ test("wallet accounts use a dark compact list with names and bounded addresses",
   });
   await expect(picker).toHaveAttribute("data-selected-address", first);
   await expect(picker.locator("strong")).toHaveText("Alice");
-  await expect(picker.locator("code")).toHaveText("0x111111…111111");
+  await expect(picker.locator("code")).toHaveText("5CT5jwBE…Qyn3Kd");
   await expect(
     page.getByRole("button", {
       name: "Show full signing account address",
@@ -31,7 +31,7 @@ test("wallet accounts use a dark compact list with names and bounded addresses",
   await expect(list.getByRole("option")).toHaveCount(4);
   await expect(list.getByRole("option").first()).toContainText("Alice");
   await expect(list.getByRole("option").first()).toContainText(
-    "0x111111…111111",
+    "5CT5jwBE…Qyn3Kd",
   );
   expect(
     await list.evaluate((element) => getComputedStyle(element).backgroundColor),
@@ -153,7 +153,9 @@ test("failed wallet-address copying gives one plain recovery message", async ({
     .getByRole("button", { name: "Copy signing account address", exact: true })
     .click();
   await expect(page.getByRole("alert")).toContainText("Copy failed");
-  await expect(page.getByRole("alert").locator("code")).toHaveText(first);
+  await expect(page.getByRole("alert").locator("code")).toHaveText(
+    "5CT5jwBEAhveEjgiSCQbkaKcKcUyF3VJ8qNXM9rXsuQyn3Kd",
+  );
   await page
     .getByRole("combobox", { name: "Personal account", exact: true })
     .click();

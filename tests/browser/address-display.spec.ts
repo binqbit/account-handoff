@@ -2,7 +2,71 @@ import { selectWalletAccount } from "./fixtures/accounts";
 import { expect, test } from "@playwright/test";
 import { resolve } from "node:path";
 const harness = `/@fs${resolve("tests/browser/fixtures/ui.html")}`;
-const full = `0x${"1".repeat(64)}`;
+const full = "5CT5jwBEAhveEjgiSCQbkaKcKcUyF3VJ8qNXM9rXsuQyn3Kd";
+
+test("native account search accepts the displayed SS58 address", async ({
+  page,
+}) => {
+  await page.goto(`${harness}#setup`);
+  const input = page.getByRole("combobox", {
+    name: "Funder account",
+    exact: true,
+  });
+  await input.fill(full.slice(0, 12));
+  const option = page.getByRole("listbox").getByRole("option");
+  await expect(option).toHaveCount(1);
+  await expect(option).toContainText("Alice");
+  await option.click();
+  await expect(input).toHaveValue(full);
+});
+
+test("network hashes remain hexadecimal when native accounts use SS58", async ({
+  page,
+}) => {
+  await page.goto(`${harness}#network`);
+  const profile = page.locator(".card").filter({
+    has: page.getByRole("heading", { name: "Current profile", exact: true }),
+  });
+  const genesis = profile
+    .locator(".key-values > div")
+    .filter({ has: page.getByText("Genesis", { exact: true }) });
+  await genesis
+    .getByRole("button", { name: "Show full address", exact: true })
+    .click();
+  await expect(genesis.locator(".address-full code")).toHaveText(
+    `0x${"a".repeat(64)}`,
+  );
+});
+
+test("native beneficiary and H160 contract recipients remain distinct", async ({
+  page,
+}) => {
+  await page.goto(`${harness}#handoff`);
+  const identity = page.locator(".card").filter({
+    has: page.getByRole("heading", {
+      name: "The grant stays with the beneficiary",
+      exact: true,
+    }),
+  });
+  const native = identity
+    .locator(".key-values > div")
+    .filter({ has: page.getByText("Native beneficiary", { exact: true }) });
+  await native
+    .getByRole("button", { name: "Show full address", exact: true })
+    .click();
+  await expect(native.locator(".address-full code")).toHaveText(
+    "5DzbGzvQGeh6wpTe1YF1KUvf2YPSzRf2z9nZNwE5bsAyakax",
+  );
+  const recipient = identity.locator(".key-values > div").filter({
+    has: page.getByText("Contract recipient (H160)", { exact: true }),
+  });
+  await recipient
+    .getByRole("button", { name: "Show full address", exact: true })
+    .click();
+  await expect(recipient.locator(".address-full code")).toHaveText(
+    `0x${"a".repeat(40)}`,
+  );
+});
 
 test("account addresses expand and collapse with the keyboard", async ({
   page,
@@ -13,7 +77,7 @@ test("account addresses expand and collapse with the keyboard", async ({
     .filter({ hasText: "Alice" })
     .first();
   await expect(account.locator(".address-value code")).toHaveText(
-    "0x111111…111111",
+    "5CT5jwBE…Qyn3Kd",
   );
   await expect(account.locator(".address-full")).toBeHidden();
   const reveal = account.getByRole("button", {
@@ -70,7 +134,7 @@ test("copying a compact address uses its exact value and resets when the account
     }),
   ).toBeVisible();
   await expect(selected.locator(".wallet-account-trigger code")).toHaveText(
-    "0x222222…222222",
+    "5CqTdCcX…rUiyPP",
   );
 });
 
@@ -179,8 +243,8 @@ test("accounts sharing a name remain distinguishable by address", async ({
     .getByRole("option")
     .filter({ hasText: "Signer" });
   await expect(options).toHaveCount(2);
-  await expect(options.nth(0)).toContainText("0x111111…111111");
-  await expect(options.nth(1)).toContainText("0x222222…222222");
+  await expect(options.nth(0)).toContainText("5CT5jwBE…Qyn3Kd");
+  await expect(options.nth(1)).toContainText("5CqTdCcX…rUiyPP");
   await selector.press("Escape");
   await selectWalletAccount(page, `0x${"2".repeat(64)}`);
   const selected = page.locator(".wallet-details");
@@ -188,10 +252,10 @@ test("accounts sharing a name remain distinguishable by address", async ({
     selected.getByRole("button", { name: "Show full signing account address" }),
   ).toHaveCount(0);
   await expect(selected.locator(".wallet-account-trigger code")).toHaveText(
-    "0x222222…222222",
+    "5CqTdCcX…rUiyPP",
   );
   await expect(selector).toHaveAccessibleDescription(
-    new RegExp(`0x${"2".repeat(64)}`),
+    "Signer: 5CqTdCcXCC7kv1Nwq2sCeJUNVqxbBPXjMAUXrbhRJtrUiyPP",
   );
 });
 

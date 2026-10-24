@@ -104,7 +104,7 @@ export function History(props: ScreenProps) {
                     rows={[
                       {
                         label: "Transaction",
-                        value: <Address value={entry.txHash} />,
+                        value: <Address value={entry.txHash} format="hex" />,
                       },
                     ]}
                   />

@@ -169,11 +169,13 @@ export function Network(props: ScreenProps) {
               },
               {
                 label: "Genesis",
-                value: <Address value={network.genesis} compact />,
+                value: <Address value={network.genesis} format="hex" compact />,
               },
               {
                 label: "Block",
-                value: <Address value={network.blockHash} compact />,
+                value: (
+                  <Address value={network.blockHash} format="hex" compact />
+                ),
               },
             ]}
           />

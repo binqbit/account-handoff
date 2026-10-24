@@ -8,7 +8,7 @@ import {
 } from "react";
 import { Icon } from "../icon";
 import { Address } from "./address";
-import { compactAddress } from "./format";
+import { compactAddress, displayAddress } from "./format";
 import {
   addressError,
   addressKey,
@@ -50,9 +50,10 @@ export function AddressPicker({
   const [editing, setEditing] = useState(false);
   const [active, setActive] = useState(-1);
   const [filtering, setFiltering] = useState(false);
+  const addressFormat = kind === "native" ? "native" : "hex";
   const query = filtering ? value.trim().toLowerCase() : "";
   const matches = options.filter((option) =>
-    `${option.label} ${option.detail} ${option.address}`
+    `${option.label} ${option.detail} ${option.address} ${displayAddress(option.address, addressFormat)}`
       .toLowerCase()
       .includes(query),
   );
@@ -145,7 +146,7 @@ export function AddressPicker({
           id={id}
           type="text"
           role="combobox"
-          value={value}
+          value={displayAddress(value, addressFormat)}
           className={
             hasSelection && !editing ? "address-picker__named" : undefined
           }
@@ -230,11 +231,14 @@ export function AddressPicker({
                 <span className="address-option__body">
                   <strong>{option.label}</strong>
                   <small title={option.detail}>{option.detail}</small>
-                  <code title={option.address}>
-                    {compactAddress(option.address)}
+                  <code title={displayAddress(option.address, addressFormat)}>
+                    {compactAddress(
+                      displayAddress(option.address, addressFormat),
+                    )}
                   </code>
                   <span className="sr-only">
-                    Full address: {option.address}
+                    Full address:{" "}
+                    {displayAddress(option.address, addressFormat)}
                   </span>
                 </span>
                 {chosen?.address === option.address && (
@@ -256,12 +260,16 @@ export function AddressPicker({
       )}
       {hasSelection && (
         <span id={`${id}-selected`} className="sr-only">
-          Selected address: {value}
+          Selected address: {displayAddress(value, addressFormat)}
         </span>
       )}
       {hasSelection && !editing && !open && (
         <div className="address-picker__selected">
-          <Address value={value} label={`${label} address`} />
+          <Address
+            value={value}
+            format={addressFormat}
+            label={`${label} address`}
+          />
         </div>
       )}
       <p className={compact ? "sr-only" : "field__help"} id={`${id}-help`}>

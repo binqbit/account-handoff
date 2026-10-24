@@ -113,11 +113,13 @@ export function registerSetupScenarios() {
         .locator(".identity")
         .getByRole("button", { name: "Show full address", exact: true })
         .click();
-      const pure = (
-        await beneficiaryCard
-          .locator(".identity .address-full code")
-          .innerText()
-      ).trim();
+      const pure = account(
+        (
+          await beneficiaryCard
+            .locator(".identity .address-full code")
+            .innerText()
+        ).trim(),
+      );
       expect(pure).toMatch(/^0x[0-9a-f]{64}$/);
       expect(pure).not.toBe(fixture.input.beneficiary);
       console.info(`[LOCAL] Created isolated Pure ${pure}`);

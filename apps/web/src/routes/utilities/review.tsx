@@ -15,6 +15,7 @@ import {
 import type { ActionView } from "../../ui-contract";
 import type { ScreenProps } from "../screen-types";
 import { addressError } from "../../components/addresses/options";
+import { displayAddress } from "../../components/addresses/format";
 
 function ActionForm({
   action,
@@ -335,7 +336,7 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                 {active.route.map((step, index) => (
                   <li key={`${index}-${step}`}>
                     <span>{index + 1}</span>
-                    <code>{step}</code>
+                    <code>{displayAddress(step)}</code>
                   </li>
                 ))}
               </ol>
@@ -362,7 +363,7 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                     <div key={`${resource.label}-${index}`}>
                       <span>
                         {resource.label}
-                        <small>Paid by: {resource.payer}</small>
+                        <small>Paid by: {displayAddress(resource.payer)}</small>
                       </span>
                       <strong>{resource.amount}</strong>
                     </div>

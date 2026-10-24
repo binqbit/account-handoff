@@ -49,7 +49,7 @@ export function Attention(props: ScreenProps) {
           action={<Badge tone="warning">{entry.state}</Badge>}
         >
           <p>{entry.detail}</p>
-          {entry.txHash && <Address value={entry.txHash} />}
+          {entry.txHash && <Address value={entry.txHash} format="hex" />}
           {entry.operationId && operation?.id === entry.operationId && (
             <Button
               icon="refresh"

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import type { AppSnapshot } from "../../ui-contract";
 import { useWalletCopy } from "./use-wallet-copy";
-import { compactAddress } from "../addresses/format";
+import { compactAddress, displayAddress } from "../addresses/format";
 import { Icon } from "../icon";
 
 export function WalletAccountPicker({
@@ -130,7 +130,9 @@ export function WalletAccountPicker({
         >
           <span className="wallet-account-identity">
             <strong>{selected ? name(selected) : "Select an account"}</strong>
-            {selected && <code>{compactAddress(selected.address)}</code>}
+            {selected && (
+              <code>{compactAddress(displayAddress(selected.address))}</code>
+            )}
           </span>
           <Icon name="down" size={14} />
         </button>
@@ -158,7 +160,7 @@ export function WalletAccountPicker({
       </div>
       {selected && (
         <span className="sr-only" id={`${id}-selection`}>
-          {name(selected)}: {selected.address}
+          {name(selected)}: {displayAddress(selected.address)}
         </span>
       )}
       <span className="sr-only" role="status">
@@ -167,7 +169,7 @@ export function WalletAccountPicker({
       {selected && clipboard.state === "failed" && !open && (
         <div className="wallet-copy-error" role="alert">
           Copy failed. Select this address to copy it manually.
-          <code>{selected.address}</code>
+          <code>{displayAddress(selected.address)}</code>
         </div>
       )}
       {open && (
@@ -185,7 +187,7 @@ export function WalletAccountPicker({
                 id={`${id}-account-${index}`}
                 role="option"
                 aria-selected={selectedIndex === index}
-                aria-label={`${name(account)}: ${account.address}`}
+                aria-label={`${name(account)}: ${displayAddress(account.address)}`}
                 data-address={account.address}
                 onMouseDown={(event) => event.preventDefault()}
                 onMouseMove={() => setActive(index)}
@@ -193,7 +195,7 @@ export function WalletAccountPicker({
               >
                 <span>
                   <strong>{name(account)}</strong>
-                  <code>{compactAddress(account.address)}</code>
+                  <code>{compactAddress(displayAddress(account.address))}</code>
                 </span>
                 {selectedIndex === index && <Icon name="check" size={16} />}
               </div>

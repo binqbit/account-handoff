@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { displayAddress } from "../addresses/format";
 
 export function useWalletCopy(address: string | null) {
   const current = useRef(address);
@@ -11,7 +12,7 @@ export function useWalletCopy(address: string | null) {
   const copy = useCallback(async () => {
     if (!address) return;
     try {
-      await navigator.clipboard.writeText(address);
+      await navigator.clipboard.writeText(displayAddress(address));
       if (current.current === address) setResult({ address, state: "copied" });
     } catch {
       if (current.current === address) setResult({ address, state: "failed" });

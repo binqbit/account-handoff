@@ -1,16 +1,18 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Icon } from "../icon";
-import { compactAddress } from "./format";
+import { compactAddress, displayAddress, type AddressFormat } from "./format";
 
-/** Display formatting never changes the value used for copying or signing. */
+/** Copy the displayed address; canonical account bytes remain unchanged. */
 export function Address({
   value,
   label = "address",
   compact = true,
+  format = "native",
 }: {
   value: string | null | undefined;
   label?: string;
   compact?: boolean;
+  format?: AddressFormat;
 }) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
@@ -30,10 +32,11 @@ export function Address({
     return () => window.clearTimeout(timer);
   }, [copyState]);
   if (!value) return <span className="unknown-value">Not set yet</span>;
-  const shortened = compact && compactAddress(value) !== value;
+  const displayed = displayAddress(value, format);
+  const shortened = compact && compactAddress(displayed) !== displayed;
   async function copy() {
     try {
-      await navigator.clipboard.writeText(value!);
+      await navigator.clipboard.writeText(displayed);
       if (latestValue.current === value) setCopyState("copied");
     } catch {
       if (latestValue.current === value) {
@@ -63,11 +66,11 @@ export function Address({
           aria-controls={id}
           onClick={() => setExpanded(!expanded)}
         >
-          <code className="address">{compactAddress(value)}</code>
+          <code className="address">{compactAddress(displayed)}</code>
           <Icon name="down" size={12} />
         </button>
       ) : (
-        <code className="address">{value}</code>
+        <code className="address">{displayed}</code>
       )}
       <button
         type="button"
@@ -90,7 +93,7 @@ export function Address({
       </button>
       {shortened && (
         <span id={id} className="address-full" hidden={!expanded}>
-          <code className="address">{value}</code>
+          <code className="address">{displayed}</code>
         </span>
       )}
       {copyState === "failed" && (

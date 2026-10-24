@@ -10,6 +10,8 @@ Only the current group is required. Choose a replacement later, from Control han
 
 The team agrees on its signing group and threshold. That group creates a dedicated Pure beneficiary. The application verifies its native identity and the application address that resolves back to it. This identity relationship must be established before grant creation and before a native vesting payout.
 
+Wallets, multisigs and Pure accounts are displayed and copied as native SS58 addresses. The contract recipient and grant contract use a separate 20-byte H160 representation, labelled in the interface. Address formatting does not change the underlying account or its signing authority.
+
 The funder then creates a compatible grant for that beneficiary. The funder and reviewers retain their existing roles. The team must separately confirm any grant terms or consent requirements; a valid blockchain operation does not answer those legal or organizational questions.
 
 ## 2. Submit and review the first milestone

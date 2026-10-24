@@ -35,13 +35,16 @@ export function Milestones(props: ScreenProps) {
                       : "Not created yet",
                   },
                   {
-                    label: "Contract",
-                    value: <Address value={workspace.contract} />,
+                    label: "Contract (H160)",
+                    value: <Address value={workspace.contract} format="hex" />,
                   },
                   {
-                    label: "Beneficiary",
+                    label: "Contract recipient (H160)",
                     value: (
-                      <Address value={workspace.beneficiary?.mappedAddress} />
+                      <Address
+                        value={workspace.beneficiary?.mappedAddress}
+                        format="hex"
+                      />
                     ),
                   },
                 ]}
