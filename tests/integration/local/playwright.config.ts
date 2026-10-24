@@ -1,5 +1,6 @@
 import { defineConfig } from "@playwright/test";
 import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 const explicitBrowser = process.env["CHROME_PATH"];
 if (explicitBrowser && !existsSync(explicitBrowser))
   throw new Error("CHROME_PATH must name an existing browser executable");
@@ -28,7 +29,12 @@ export default defineConfig({
     },
     trace: "retain-on-failure",
   },
-  outputDir: "artifacts/local-browser",
+  outputDir: fileURLToPath(
+    new URL(
+      "../../../.agent-workspace/verification/local-browser/current/",
+      import.meta.url,
+    ),
+  ),
   webServer: {
     command: "npm run dev -- --port 4175",
     url: "http://127.0.0.1:4175",

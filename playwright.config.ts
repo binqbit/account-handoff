@@ -1,5 +1,6 @@
 import { defineConfig } from "@playwright/test";
 import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const explicitBrowser = process.env["CHROME_PATH"];
 if (explicitBrowser && !existsSync(explicitBrowser)) {
@@ -27,7 +28,9 @@ export default defineConfig({
     },
     trace: "retain-on-failure",
   },
-  outputDir: "artifacts/browser",
+  outputDir: fileURLToPath(
+    new URL(".agent-workspace/verification/browser/", import.meta.url),
+  ),
   webServer: {
     command: "npm run dev -- --port 4173",
     url: "http://127.0.0.1:4173",

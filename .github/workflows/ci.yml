@@ -80,6 +80,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: browser-failure-traces
-          path: artifacts/browser/
+          path: .agent-workspace/verification/browser/
+          include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 7

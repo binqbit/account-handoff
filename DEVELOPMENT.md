@@ -78,7 +78,7 @@ npm run doctor -- --local
 npm run local:build
 ```
 
-The build fetches only the locked source revision, verifies the Cargo lock and reviewed patch, then builds `substrate-node` and `eth-rpc`. It records executable/runtime hashes in `artifacts/local/build.json`. Source/build caches and compiler logs remain in `.agent-workspace/local-runtime/`; changing the patch or lock requires another verified build.
+The build fetches only the locked source revision, verifies the Cargo lock and reviewed patch, then builds `substrate-node` and `eth-rpc`. It records executable/runtime hashes in `.agent-workspace/local-runtime/build.json`. Source/build caches and compiler logs remain in `.agent-workspace/local-runtime/`; changing the patch or lock requires another verified build.
 
 Create a dedicated run, start the two real processes, and qualify their identity:
 
@@ -156,4 +156,4 @@ CI regenerates both outputs and rejects an unexplained Git diff. It also loads t
 
 The [verification workflow](.github/workflows/ci.yml) installs the exact Node release and npm lock without lifecycle scripts, checks formatting and generated artifacts, runs TypeScript/offline tests, and builds the static client. A separate job installs the pinned Playwright Chromium and runs browser/accessibility checks. GitHub actions are pinned to immutable commits and receive read-only repository permissions.
 
-CI does not substitute an offline fixture result for native execution. Complete LOCAL integration is an explicit operator run with its own source/runtime/deployment identity and receipts. `artifacts/` contains regenerable test output; `.local-state/` contains retained local process state. Neither directory belongs in source commits.
+CI does not substitute an offline fixture result for native execution. Complete LOCAL integration is an explicit operator run with its own source/runtime/deployment identity and receipts. Temporary fixtures, browser traces, screenshots, logs and build support artifacts belong in `.agent-workspace/`; `.local-state/` contains retained native runtime state. Neither directory belongs in source commits. Reusable test sources and their deterministic CI fixtures remain versioned under `tests/`.

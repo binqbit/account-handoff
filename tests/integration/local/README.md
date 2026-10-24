@@ -33,6 +33,6 @@ The suite verifies:
 2. Explicit wallet rejection, no signed result and unchanged native proxy state.
 3. Six deliberate signatures: A/B add M1, A/D remove M0, then separate A/D milestone-1 submission. The test reads actual proxy inventory, persistent mapping and grant state after those operations, checks the website's history, and verifies that reload does not sign again.
 
-Results and failure traces are written to `artifacts/local-browser/`. Screenshots show the actual LOCAL interface. Test-only signer results do not qualify the behavior of a separately installed SubWallet extension or another network.
+Results and failure traces are written to `.agent-workspace/verification/local-browser/current/`. Screenshots show the actual LOCAL interface. Test-only signer results do not qualify the behavior of a separately installed SubWallet extension or another network.
 
 If interrupted, inspect retained application/native attempts and reconcile them before any new run. Do not rerun the full mutation test as an automatic retry: it requires M0-only authority and an unsubmitted milestone 1. Ordinary stop/start preserves state. A new isolated run is preferable for another independent full scenario.

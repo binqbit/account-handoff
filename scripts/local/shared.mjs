@@ -25,7 +25,10 @@ export const sourcePath = join(
   ROOT,
   ".agent-workspace/local-runtime/polkadot-sdk",
 );
-export const artifactPath = join(ROOT, "artifacts/local/build.json");
+export const artifactPath = join(
+  ROOT,
+  ".agent-workspace/local-runtime/build.json",
+);
 export const delay = (ms) =>
   new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
 export const hash = (data) => createHash("sha256").update(data).digest("hex");
