@@ -106,11 +106,10 @@ export interface PreparedSigning {
 }
 
 export function plain(value: unknown): unknown {
-  return JSON.parse(
-    JSON.stringify(value, (_key, item: unknown) =>
-      typeof item === "bigint" ? item.toString() : item,
-    ),
+  const serialized = JSON.stringify(value, (_key, item: unknown) =>
+    typeof item === "bigint" ? item.toString() : item,
   );
+  return serialized === undefined ? null : JSON.parse(serialized);
 }
 export function object(value: unknown): Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value))
@@ -534,7 +533,7 @@ export class NativeConnection {
       mappedAddress: contractAddress(raw),
       mappedTo: mapping ? account(mapping.raw) : null,
       holds: plain(holds),
-      vesting: plain(vesting),
+      vesting: plain(vesting ?? []),
       namedReserves: plain(namedReserves),
     };
   }
