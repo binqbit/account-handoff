@@ -1,4 +1,8 @@
 import type { SignerPayloadJSON } from "dedot/types";
+import type { WalletAccount, WalletSession } from "./types";
+export type { WalletAccount, WalletSession } from "./types";
+export { connectWallets } from "./connection";
+export type { ConnectWalletOptions } from "./connection";
 import { hexToU8a, blake2AsU8a } from "dedot/utils";
 import { AccountId32 } from "dedot/codecs";
 import {
@@ -8,95 +12,12 @@ import {
   secp256k1Verify,
 } from "@polkadot/util-crypto";
 
-export interface WalletAccount {
-  address: string;
-  name?: string;
-  type?: string;
-  source: string;
-}
-export interface WalletSession {
-  source: string;
-  version: string;
-  accounts: WalletAccount[];
-  signPayload: (payload: SignerPayloadJSON) => Promise<unknown>;
-  subscribe: (
-    callback: (accounts: WalletAccount[]) => void,
-  ) => Promise<() => void>;
-}
 export class WalletRejectedError extends Error {
   override name = "WalletRejectedError";
 }
 export class WalletGuardError extends Error {
   override name = "WalletGuardError";
 }
-interface InjectedAccount {
-  address: string;
-  name?: string;
-  type?: string;
-}
-interface EnabledWallet {
-  accounts: {
-    get: () => Promise<InjectedAccount[]>;
-    subscribe?: (
-      cb: (accounts: InjectedAccount[]) => void,
-    ) => Promise<() => void>;
-  };
-  signer: { signPayload?: (payload: SignerPayloadJSON) => Promise<unknown> };
-}
-interface Injection {
-  version?: string;
-  enable: (name: string) => Promise<EnabledWallet>;
-}
-declare global {
-  interface Window {
-    injectedWeb3?: Record<string, Injection>;
-  }
-}
-
-export async function connectWallets(): Promise<WalletSession[]> {
-  const providers = window.injectedWeb3;
-  if (!providers || Object.keys(providers).length === 0)
-    throw new Error(
-      "Install a supported native wallet such as SubWallet, then allow Account Handoff to access the signer accounts.",
-    );
-  const sessions: WalletSession[] = [];
-  const errors: string[] = [];
-  for (const [source, provider] of Object.entries(providers)) {
-    try {
-      const enabled = await provider.enable("Account Handoff");
-      if (!enabled.signer.signPayload)
-        throw new Error("Signature-only native payload signing is unavailable");
-      const signPayload = enabled.signer.signPayload.bind(enabled.signer);
-      const normalize = (items: InjectedAccount[]) =>
-        items.map((item) => ({
-          ...item,
-          address: new AccountId32(item.address).raw,
-          source,
-        }));
-      const accounts = normalize(await enabled.accounts.get());
-      sessions.push({
-        source,
-        version: provider.version ?? "unknown",
-        accounts,
-        signPayload,
-        subscribe: async (callback) =>
-          enabled.accounts.subscribe
-            ? enabled.accounts.subscribe((items) => callback(normalize(items)))
-            : () => {},
-      });
-    } catch (error) {
-      errors.push(
-        `${source}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-  if (!sessions.length)
-    throw new Error(
-      errors.join("; ") || "No native signing accounts were authorized",
-    );
-  return sessions;
-}
-
 export async function verifyNativeSignature(
   rawPayload: string,
   signature: string,
