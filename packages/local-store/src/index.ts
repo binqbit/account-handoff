@@ -397,23 +397,29 @@ export async function openJournal(
         "readwrite",
         { durability: "strict" },
       );
-      assertCurrentLease(
-        await tx.objectStore("leases").get(lease.scope),
-        lease,
-      );
+      try {
+        assertCurrentLease(
+          await tx.objectStore("leases").get(lease.scope),
+          lease,
+        );
+      } catch (error) {
+        return abortWith(
+          tx,
+          error instanceof Error ? error : new Error(String(error)),
+        );
+      }
       const progress = await tx
         .objectStore("localProgress")
         .index("envelopeDigest")
         .getAll(attempt.envelopeDigest);
-      if (
-        !progress.some(
-          (p) =>
-            p.phase === "WalletRequested" &&
-            p.requestedSigner === attempt.signer &&
-            canonicalJson(p.reviewedSigningContext) ===
-              canonicalJson(attempt.reviewedSigningContext),
-        )
-      ) {
+      const requested = progress.find(
+        (p) =>
+          p.phase === "WalletRequested" &&
+          p.requestedSigner === attempt.signer &&
+          canonicalJson(p.reviewedSigningContext) ===
+            canonicalJson(attempt.reviewedSigningContext),
+      );
+      if (!requested) {
         return abortWith(
           tx,
           new ContractError(
@@ -433,6 +439,28 @@ export async function openJournal(
         );
       }
       if (!existing) await tx.objectStore("records").add(attempt);
+      const accepted: LocalOperationProgress = {
+        ...requested,
+        journalId: `signed:${attempt.digest}`,
+        phase: "SignedAttemptRecorded",
+        acceptedSignedAttemptId: attempt.recordId,
+      };
+      const previousAcceptance = await tx
+        .objectStore("localProgress")
+        .get(accepted.journalId);
+      if (
+        previousAcceptance &&
+        canonicalJson(previousAcceptance) !== canonicalJson(accepted)
+      )
+        return abortWith(
+          tx,
+          new ContractError(
+            "RequestContextConflict",
+            "Signed request acceptance already identifies another result",
+          ),
+        );
+      if (!previousAcceptance)
+        await tx.objectStore("localProgress").add(accepted);
       await tx.done;
     },
     listRecords(kind) {

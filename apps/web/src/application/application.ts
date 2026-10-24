@@ -101,6 +101,7 @@ import {
   buildSigningContext,
   nativeActionFromTree,
   buildReceipt,
+  cancellationMatches,
 } from "./record-builders";
 import {
   assessCurrentContinuity,
@@ -2082,6 +2083,15 @@ export class Application implements ApplicationFacade {
       p.phase,
       {
         postconditions: check,
+        ...(p.phase === "cancel"
+          ? {
+              targetProposalAfter:
+                check.find((item) => item.id === "cancel-target")?.result ===
+                "passed"
+                  ? ("cancelled" as const)
+                  : ("unknown" as const),
+            }
+          : {}),
         ...(round !== null ? { roundAtIntendedEvent: String(round) } : {}),
         orderedHistoryComplete: history?.complete ?? false,
       },
@@ -2190,6 +2200,48 @@ export class Application implements ApplicationFacade {
           observations: [],
           explanation:
             "Перше схвалення та його поточну пропозицію звірено; внутрішня дія ще не виконана.",
+        },
+      ];
+    }
+    if (p.phase === "cancel") {
+      const params = p.envelope.intent.parameters;
+      const target = object(params.targetController);
+      const remaining = await this.connection!.proposal(
+        String(target.account),
+        hex(String(params.targetCallHash), 32),
+        receipt.blockHash,
+      );
+      const eventMatched = cancellationMatches(p.envelope, receipt);
+      const unreserved = receipt.events.some((event) => {
+        if (event.pallet !== "Balances" || event.name !== "Unreserved")
+          return false;
+        try {
+          return (
+            account(String(event.data["who"])) === p.signer &&
+            BigInt(String(event.data["amount"])) > 0n
+          );
+        } catch {
+          return false;
+        }
+      });
+      const cancelled =
+        receipt.nestedSuccess &&
+        eventMatched &&
+        remaining === null &&
+        unreserved;
+      return [
+        {
+          id: "cancel-target",
+          result: cancelled
+            ? "passed"
+            : receipt.nestedSuccess
+              ? "unknown"
+              : "failed",
+          anchor,
+          observations: [],
+          explanation: cancelled
+            ? "Точну пропозицію скасовано; подія, її відсутність і повернення резерву depositor підтверджені."
+            : "Подію скасування, відсутність точної пропозиції або повернення резерву не підтверджено.",
         },
       ];
     }
@@ -2323,6 +2375,14 @@ export class Application implements ApplicationFacade {
       throw new Error("Підключіть ту саму мережу.");
     const p = this.pending;
     if (p?.id === idValue && p.signedAttempt) {
+      if (
+        !this.chain ||
+        this.workspace()?.id !== p.workspaceId ||
+        p.envelope.intent.profileDigest !== this.chain.profile.digest
+      )
+        throw new Error(
+          "Потрібен початковий простір та точний профіль runtime.",
+        );
       const receipt = await this.connection.findReceipt(
         hex(p.signedAttempt.signedExtrinsicHash, 32),
       );
@@ -2334,21 +2394,48 @@ export class Application implements ApplicationFacade {
       return;
     }
     const r = this.recovery;
-    if (!r || r.id !== idValue || !r.attemptId)
+    if (!r || r.id !== idValue)
       throw new Error(
         "Відповідь гаманця невідома; точні підписані байти не були збережені. Потрібне ручне звіряння.",
       );
-    const attempt = await this.journal.getRecord(r.attemptId);
-    if (attempt?.kind !== "SignedAttempt")
-      throw new Error("Збережену спробу не знайдено");
-    const receipt = await this.connection.findReceipt(
-      hex(attempt.signedExtrinsicHash, 32),
-    );
-    if (!receipt)
-      throw new Error(
-        "Точну транзакцію не знайдено; стан залишається невідомим.",
-      );
     const envelope = await this.journal.getRecord(r.envelopeId);
+    if (
+      envelope?.kind !== "FrozenEnvelope" ||
+      !this.chain ||
+      this.workspace()?.id !== r.workspaceId ||
+      envelope.intent.profileDigest !== this.chain.profile.digest
+    )
+      throw new Error("Потрібен початковий простір та точний профіль runtime.");
+    let attempt = r.attemptId
+      ? await this.journal.getRecord(r.attemptId)
+      : undefined;
+    if (!r.attemptId) {
+      const accepted = (
+        await this.journal.listProgress(r.context.requestId)
+      ).filter(
+        (progress) =>
+          progress.phase === "SignedAttemptRecorded" &&
+          progress.envelopeDigest === envelope.digest &&
+          canonicalJson(progress.reviewedSigningContext) ===
+            canonicalJson(r.context),
+      );
+      const ids = [
+        ...new Set(
+          accepted
+            .map((progress) => progress.acceptedSignedAttemptId)
+            .filter((value): value is string => value !== null),
+        ),
+      ];
+      if (ids.length === 1) attempt = await this.journal.getRecord(ids[0]!);
+    }
+    if (
+      attempt?.kind !== "SignedAttempt" ||
+      attempt.recordScope !== "local_journal" ||
+      !attempt.signedExtrinsicBytes
+    )
+      throw new Error(
+        "Точні підписані байти не були збережені. Потрібне ручне звіряння.",
+      );
     if (
       envelope?.kind !== "FrozenEnvelope" ||
       envelope.digest !== attempt.envelopeDigest ||
@@ -2357,12 +2444,13 @@ export class Application implements ApplicationFacade {
       throw new Error(
         "Збережений контекст підпису не узгоджується зі спробою.",
       );
-    if (
-      !this.chain ||
-      this.workspace()?.id !== r.workspaceId ||
-      envelope.intent.profileDigest !== this.chain.profile.digest
-    )
-      throw new Error("Потрібен початковий простір та точний профіль runtime.");
+    const receipt = await this.connection.findReceipt(
+      hex(attempt.signedExtrinsicHash, 32),
+    );
+    if (!receipt)
+      throw new Error(
+        "Точну транзакцію не знайдено; стан залишається невідомим.",
+      );
     const payload = JSON.parse(r.context.originalSignPayloadJcsUtf8);
     const action = nativeActionFromTree(envelope.callTree);
     const lease = await this.journal.acquireLease(

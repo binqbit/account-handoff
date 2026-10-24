@@ -275,6 +275,43 @@ export interface ReceiptContext {
   /** Must come from complete ordered chain history, not only the current getter or submitted intent. */
   roundAtIntendedEvent?: string;
   orderedHistoryComplete?: boolean;
+  targetProposalAfter?: ReceiptBundle["targetProposalAfter"];
+}
+
+/** One exact cancellation event binds the original depositor, controller, call hash and incarnation. */
+export function cancellationMatches(
+  envelope: FrozenEnvelope,
+  native: NativeReceipt,
+): boolean {
+  if (envelope.intent.operationId !== "GRC-MULTISIG-CANCEL") return false;
+  try {
+    const parameters = envelope.intent.parameters;
+    const target = object(parameters.targetController);
+    const when = object(parameters.targetTimepoint);
+    const matches = native.events.filter(
+      (entry) =>
+        entry.pallet === "Multisig" && entry.name === "MultisigCancelled",
+    );
+    if (matches.length !== 1) return false;
+    const event = matches[0]!.data;
+    const timepoint = object(event.timepoint);
+    const address = (value: unknown): string => {
+      if (typeof value === "string") return account(value);
+      const decoded = object(value);
+      return address(
+        decoded.raw ?? (decoded.type === "Id" ? decoded.value : null),
+      );
+    };
+    return (
+      address(event.cancelling) === parameters.originalDepositor &&
+      address(event.multisig) === target.account &&
+      (event.callHash ?? event.call_hash) === parameters.targetCallHash &&
+      String(timepoint.height) === when.height &&
+      String(timepoint.index) === when.index
+    );
+  } catch {
+    return false;
+  }
 }
 
 export async function buildReceipt(
@@ -414,6 +451,15 @@ export async function buildReceipt(
   };
   let status = assessment.status;
   let businessEffect = assessment.businessEffect;
+  if (phase === "cancel" && status !== "finalized_failure") {
+    if (!cancellationMatches(envelope, native)) {
+      status = "unresolved";
+      businessEffect = "context_mismatch";
+    } else if (context.targetProposalAfter !== "cancelled") {
+      status = "unresolved";
+      businessEffect = "unknown";
+    }
+  }
   if (
     grantAction &&
     phase !== "multisig_first" &&
@@ -450,6 +496,8 @@ export async function buildReceipt(
         : assessment.proposalConsumed === false
           ? "present"
           : null,
+    targetProposalAfter:
+      phase === "cancel" ? (context.targetProposalAfter ?? "unknown") : null,
     evidence: [evidence],
   });
 }

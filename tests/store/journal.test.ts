@@ -70,6 +70,15 @@ describe("durable journal and fenced ownership", () => {
     await j.appendProgress(await progress(e), lease);
     await j.recordSignedAttempt(a, lease);
     expect((await j.getRecord(a.recordId))?.kind).toBe("SignedAttempt");
+    expect(
+      (await j.listProgress()).find(
+        (entry) => entry.phase === "SignedAttemptRecorded",
+      ),
+    ).toMatchObject({
+      acceptedSignedAttemptId: a.recordId,
+      envelopeDigest: e.digest,
+      reviewedSigningContext: a.reviewedSigningContext,
+    });
     await expect(j.appendRecord(a)).rejects.toThrow(/fenced/);
   });
   it("AH-OPS-05: expired tab cannot regain effects when another owner takes over", async () => {
