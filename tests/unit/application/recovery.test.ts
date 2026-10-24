@@ -282,20 +282,18 @@ describe("recovery from durable canonical progress", () => {
     access.journal.getRecord = vi.fn(async (id) =>
       id === e.recordId ? e : id === retained.recordId ? retained : undefined,
     );
-    access.journal.getRecordByDigest = vi
-      .fn()
-      .mockResolvedValue({
-        kind: "NativeProposal",
-        digest: DIGEST,
-        profileDigest: p.digest,
-        multisig: M0.account,
-        innerCallHash: e.innerRuntimeCallHash,
-        timepoint: {
-          height: "5",
-          index: "3",
-          clockDomain: "native-block-number",
-        },
-      });
+    access.journal.getRecordByDigest = vi.fn().mockResolvedValue({
+      kind: "NativeProposal",
+      digest: DIGEST,
+      profileDigest: p.digest,
+      multisig: M0.account,
+      innerCallHash: e.innerRuntimeCallHash,
+      timepoint: {
+        height: "5",
+        index: "3",
+        clockDomain: "native-block-number",
+      },
+    });
     access.journal.setPreference = vi.fn().mockResolvedValue(undefined);
     const current = access as unknown as typeof access & {
       connection: { transaction: ReturnType<typeof vi.fn> };
@@ -331,15 +329,13 @@ describe("recovery from durable canonical progress", () => {
   it("does not infer a signed attempt from a wallet-requested record alone", async () => {
     const { access } = await harness();
     vi.mocked(access.journal.listProgress!).mockResolvedValue([]);
-    await expect(access.reconcile("request")).rejects.toThrow(
-      /підписані байти/,
-    );
+    await expect(access.reconcile("request")).rejects.toThrow(/signed bytes/);
     expect(access.connection.findReceipt).not.toHaveBeenCalled();
   });
   it("keeps unknown or broadcast outcomes reconcile-only even when their signed packet is retained", async () => {
     const { access } = await harness();
     access.connection.findReceipt.mockResolvedValue(null);
-    await expect(access.reconcile("request")).rejects.toThrow(/не знайдено/);
+    await expect(access.reconcile("request")).rejects.toThrow(/not found/);
     expect(access.pending).toBeNull();
     expect(access.journal.acquireLease).not.toHaveBeenCalled();
   });
@@ -352,7 +348,7 @@ describe("recovery from durable canonical progress", () => {
       signedAttempt: a,
     };
     access.chain = { profile: { digest: "other-profile" } };
-    await expect(access.reconcile("request")).rejects.toThrow(/профіль/);
+    await expect(access.reconcile("request")).rejects.toThrow(/profile/);
     expect(access.connection.findReceipt).not.toHaveBeenCalled();
   });
 });

@@ -121,7 +121,7 @@ describe("coordinator native mortality guard", () => {
     async (stage) => {
       const { pending, access } = await harness(74, stage);
       await expect(access.checkPending(pending.id)).rejects.toThrow(
-        /сплив у блоці 74/,
+        /expired at block 74/,
       );
       expect(pending.stage).toBe("stale");
       expect(access.recovery).toBeNull();
@@ -136,14 +136,14 @@ describe("coordinator native mortality guard", () => {
   it("does not declare expiry one native block early", async () => {
     const { pending, access } = await harness(73, "signed");
     await expect(access.checkPending(pending.id)).rejects.toThrow(
-      "Підписант змінився",
+      "Signer changed",
     );
     expect(pending.stage).toBe("signed");
     expect(access.journal.setPreference).not.toHaveBeenCalled();
   });
   it("preserves unknown execution outcomes after outer era expires", async () => {
     const { pending, access } = await harness(138, "unknown");
-    await expect(access.checkPending(pending.id)).rejects.toThrow(/сплив/);
+    await expect(access.checkPending(pending.id)).rejects.toThrow(/expired/);
     expect(pending.stage).toBe("unknown");
     expect(access.recovery).toEqual({ stage: "unknown" });
     expect(access.journal.setPreference).not.toHaveBeenCalled();

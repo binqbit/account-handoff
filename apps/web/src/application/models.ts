@@ -144,3 +144,15 @@ export interface PendingOperation {
   resources: { label: string; amount: string; payer: string }[];
   runScope: string | null;
 }
+
+export interface OperationRecovery {
+  id: string;
+  workspaceId: string;
+  actionId: string;
+  title: string;
+  stage: string;
+  envelopeId: string;
+  context: PendingOperation["context"];
+  attemptId: string | null;
+  signer: string;
+}
