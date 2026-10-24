@@ -650,6 +650,9 @@ export class Application implements ApplicationFacade {
       p,
       receipt,
     );
+    // Persist the observed outcome before clearing recovery or deriving a certificate.
+    // Certificate verification can outlive the page that submitted this operation.
+    await this.save();
     if (p.stage === "unknown") {
       await this.saveRecovery(p);
     } else {
@@ -657,6 +660,7 @@ export class Application implements ApplicationFacade {
       this.recovery = null;
       await this.journal!.releaseLease(p.lease);
     }
+    this.render();
     await this.updateCertificate();
     await this.save();
     this.render();
