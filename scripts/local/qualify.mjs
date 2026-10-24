@@ -19,6 +19,7 @@ import {
   atomicJSON,
   output,
   rpc,
+  until,
   hash,
   main,
   emitDescriptor,
@@ -51,7 +52,12 @@ await main(async (args) => {
       );
     const sourceAnchor =
       args["metadata-anchor"] ??
-      (await rpc(run.nativeRpc, "chain_getFinalizedHead"));
+      (await until("Finalized metadata source block 1", async () => {
+        const finalized = await rpc(run.nativeRpc, "chain_getFinalizedHead");
+        const header = await rpc(run.nativeRpc, "chain_getHeader", [finalized]);
+        if (BigInt(header.number) < 1n) return null;
+        return rpc(run.nativeRpc, "chain_getBlockHash", [1]);
+      }));
     const captured = await promisify(execFile)(
       process.execPath,
       [

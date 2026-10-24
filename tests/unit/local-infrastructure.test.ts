@@ -8,6 +8,7 @@ import {
   symlinkSync,
   existsSync,
   writeFileSync,
+  cpSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -22,6 +23,106 @@ function cli(name: string, args: string[]) {
 }
 
 describe("LOCAL infrastructure boundaries", () => {
+  test("reset archives every generation binding while leaving another active descriptor untouched", () => {
+    const auxiliary = join(root, ".agent-workspace");
+    mkdirSync(auxiliary, { recursive: true });
+    const fixture = mkdtempSync(join(auxiliary, "reset-fixture-"));
+    const id = "reset-isolation";
+    const directory = join(fixture, ".local-state", id);
+    const artifacts = [
+      "deployment.json",
+      "seed.json",
+      "workspace.json",
+      "qualification.json",
+      "runtime-artifacts.json",
+      "native-metadata-binding.json",
+      "capabilities.json",
+      ".candidate-metadata-binding.json",
+      "qualification-before-metadata-binding.json",
+      "runtime-artifacts-before-metadata-binding.json",
+      "native.log",
+      "gateway.log",
+    ];
+    try {
+      mkdirSync(join(fixture, "scripts/local"), { recursive: true });
+      mkdirSync(join(fixture, "scripts/dev"), { recursive: true });
+      mkdirSync(join(fixture, "infra/local"), { recursive: true });
+      mkdirSync(join(fixture, "apps/web/public"), { recursive: true });
+      for (const name of ["shared", "plan", "stop", "reset"])
+        cpSync(
+          join(root, `scripts/local/${name}.mjs`),
+          join(fixture, `scripts/local/${name}.mjs`),
+        );
+      cpSync(
+        join(root, "scripts/dev/native-artifacts.mjs"),
+        join(fixture, "scripts/dev/native-artifacts.mjs"),
+      );
+      cpSync(
+        join(root, "infra/local/runtime.lock.json"),
+        join(fixture, "infra/local/runtime.lock.json"),
+      );
+      const invoke = (name: string, args: string[]) =>
+        spawnSync(process.execPath, [`scripts/local/${name}.mjs`, ...args], {
+          cwd: fixture,
+          encoding: "utf8",
+        });
+      expect(invoke("plan", ["--run", id]).status).toBe(0);
+      const descriptor = join(fixture, "apps/web/public/local-run.json");
+      const otherDescriptor =
+        '{"runId":"other-active-run","sentinel":"retain-exactly"}\n';
+      writeFileSync(descriptor, otherDescriptor);
+      const manifestPath = join(directory, "manifest.json");
+      const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+      Object.assign(manifest, {
+        qualification: { status: "IDENTITY_VERIFIED" },
+        capabilities: { runId: id },
+        genesisHash: "old-genesis",
+        buildHash: "old-build",
+      });
+      writeFileSync(manifestPath, JSON.stringify(manifest));
+      for (const artifact of artifacts)
+        writeFileSync(join(directory, artifact), `generation-one:${artifact}`);
+      mkdirSync(join(directory, "probes"));
+      writeFileSync(
+        join(directory, "probes/release.json"),
+        "retained-release-proof",
+      );
+      mkdirSync(join(directory, "native"));
+      mkdirSync(join(directory, "gateway"));
+      const result = invoke("reset", ["--run", id, "--generation", "1"]);
+      expect(result.status, result.stdout + result.stderr).toBe(0);
+      const reset = JSON.parse(readFileSync(manifestPath, "utf8"));
+      expect(reset.generation).toBe(2);
+      expect(reset.status).toBe("planned");
+      for (const field of [
+        "qualification",
+        "capabilities",
+        "genesisHash",
+        "buildHash",
+      ])
+        expect(reset[field]).toBeUndefined();
+      for (const artifact of artifacts) {
+        expect(existsSync(join(directory, artifact))).toBe(false);
+        expect(
+          readFileSync(
+            join(directory, "history/generation-1", artifact),
+            "utf8",
+          ),
+        ).toBe(`generation-one:${artifact}`);
+      }
+      expect(
+        readFileSync(
+          join(directory, "history/generation-1/probes/release.json"),
+          "utf8",
+        ),
+      ).toBe("retained-release-proof");
+      expect(existsSync(join(directory, "native"))).toBe(false);
+      expect(existsSync(join(directory, "gateway"))).toBe(false);
+      expect(readFileSync(descriptor, "utf8")).toBe(otherDescriptor);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
   test("rejects traversal and colliding ports before creating state", () => {
     for (const args of [
       ["--run", "../outside"],
