@@ -229,18 +229,26 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                 }))}
               />
               <div className="field">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={acknowledged}
-                    onChange={(event) => setAcknowledged(event.target.checked)}
-                    disabled={!active.canSign && !active.canSend}
-                  />
-                  <span>
-                    I have checked the account, route, terms and consequences of
-                    this individual action.
-                  </span>
-                </label>
+                {active.stage.toLowerCase() === "finalized" ? (
+                  <div className="checkbox-label" role="status">
+                    Transaction confirmed. This review can be closed.
+                  </div>
+                ) : (
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={acknowledged}
+                      onChange={(event) =>
+                        setAcknowledged(event.target.checked)
+                      }
+                      disabled={!active.canSign && !active.canSend}
+                    />
+                    <span>
+                      I have checked the account, route, terms and consequences
+                      of this individual action.
+                    </span>
+                  </label>
+                )}
               </div>
               {active.blockers.length > 0 && (
                 <Notice tone="warning" title="This action is currently blocked">

@@ -236,6 +236,16 @@ if (scenario === "same-names") {
   };
 }
 if (scenario === "unselected-wallet") snapshot.wallet.selectedAddress = null;
+if (scenario === "completed-review")
+  snapshot.operation = {
+    ...reviewOperation(),
+    stage: "finalized",
+    tone: "positive",
+    canSign: false,
+    canSend: false,
+    canReconcile: false,
+    canDiscard: true,
+  };
 if (scenario === "wallet-menu") {
   snapshot.wallet = {
     ...snapshot.wallet,
