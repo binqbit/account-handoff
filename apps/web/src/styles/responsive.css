@@ -1,9 +1,9 @@
 @media (min-width: 1450px) {
   :root {
-    --sidebar: 272px;
+    --sidebar: 248px;
   }
   .main-content {
-    padding-top: 44px;
+    padding-top: 28px;
   }
   .sidebar {
     padding: 31px 20px;
@@ -214,21 +214,21 @@
     display: none;
   }
   .main-content {
-    padding: 26px 15px 0;
+    padding: 20px 15px 0;
     min-height: 70vh;
   }
   .page-heading {
-    margin-bottom: 24px;
+    margin-bottom: 18px;
   }
   .page-heading h1 {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
   }
   .eyebrow {
     font-size: 0.65rem;
   }
   .lede {
     font-size: 0.86rem;
-    margin-top: 11px;
+    margin-top: 8px;
   }
   .card {
     padding: 18px;
@@ -268,7 +268,7 @@
     margin-bottom: 7px;
   }
   .next-task {
-    padding: 22px;
+    padding: 18px;
   }
   .next-task h2 {
     font-size: 1.42rem;
@@ -315,7 +315,7 @@
   }
   .stepper {
     gap: 6px;
-    margin-bottom: 22px;
+    margin-bottom: 16px;
   }
   .stepper > li {
     padding: 11px 7px;
@@ -457,9 +457,6 @@
 }
 
 @media (max-width: 680px) {
-  .nav-copy small {
-    display: none;
-  }
   .primary-nav button {
     font-size: 0.63rem;
     line-height: 1.4;
@@ -470,9 +467,6 @@
   }
   .wallet-details {
     max-width: 165px;
-  }
-  .wallet-details__label {
-    font-size: 0.64rem;
   }
   .wallet-details > .address-wrap .address {
     font-size: 0.62rem;

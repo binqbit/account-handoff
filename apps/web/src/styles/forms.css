@@ -1,12 +1,12 @@
 .field {
-  margin: 0 0 19px;
+  margin: 0 0 14px;
   min-width: 0;
 }
 .field > label:not(.checkbox-label) {
   display: block;
   font-size: 0.83rem;
   color: #d1e0d5;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-weight: 550;
 }
 input,
@@ -69,12 +69,12 @@ input[type="checkbox"] {
   align-items: flex-start;
   font-size: 0.82rem;
   line-height: 1.7;
-  padding: 17px 0 0;
+  padding: 10px 0 0;
 }
 .advanced-fields {
   border-top: 1px solid var(--border);
-  padding-top: 18px;
-  margin-top: 16px;
+  padding-top: 12px;
+  margin-top: 12px;
 }
 .advanced-fields > p {
   font-size: 0.8rem;
@@ -171,7 +171,7 @@ input[type="checkbox"] {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 .mode-picker > button {
   background: #17231c;

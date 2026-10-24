@@ -1,6 +1,6 @@
 .actions {
   display: flex;
-  gap: 9px;
+  gap: 8px;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -8,11 +8,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 7px;
   border: 1px solid #43564f;
   border-radius: 7px;
-  padding: 10px 14px;
-  min-height: 39px;
+  padding: 8px 12px;
+  min-height: 40px;
   font-size: 0.82rem;
   font-weight: 550;
   line-height: 1.4;
@@ -110,7 +110,7 @@
   justify-content: space-between;
   gap: 15px;
   align-items: center;
-  margin: 28px 0 16px;
+  margin: 20px 0 12px;
 }
 .section-heading h2 {
   font-size: 1.16rem;
@@ -139,7 +139,7 @@
   display: flex;
   justify-content: space-between;
   gap: 18px;
-  padding: 11px 0;
+  padding: 9px 0;
   border-top: 1px solid #2f3e40;
   font-size: 0.81rem;
 }
@@ -165,7 +165,7 @@
   text-align: right;
 }
 .card > .actions {
-  margin-top: 20px;
+  margin-top: 14px;
 }
 .submitted-evidence {
   border-top: 1px solid var(--border);

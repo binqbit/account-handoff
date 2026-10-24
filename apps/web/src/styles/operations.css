@@ -1,7 +1,7 @@
 .workspace-toolbar {
   display: flex;
-  gap: 16px;
-  margin-bottom: 27px;
+  gap: 12px;
+  margin-bottom: 18px;
 }
 .workspace-toolbar input {
   max-width: 410px;
@@ -19,22 +19,22 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 60px 25px;
+  padding: 36px 20px;
   border: 1px dashed #4a6355;
   border-radius: 13px;
   background: #17231b;
-  margin: 10px 0 25px;
+  margin: 8px 0 18px;
 }
 .empty-state__icon {
-  height: 60px;
-  width: 60px;
+  height: 44px;
+  width: 44px;
   border: 1px solid #4c6855;
   background: #21362a;
-  border-radius: 17px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   color: #bfe2ca;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 .empty-state h2 {
   font-size: 1.4rem;
@@ -44,7 +44,7 @@
   font-size: 0.89rem;
   color: #a7bcad;
   max-width: 540px;
-  margin: 12px 0 24px;
+  margin: 10px 0 16px;
 }
 .empty-state .actions {
   justify-content: center;
@@ -55,19 +55,19 @@
   gap: 16px;
 }
 .operation-tile {
-  padding: 18px;
+  padding: 14px;
   border: 1px solid var(--border);
   border-radius: 9px;
 }
 .operation-tile p {
   color: var(--muted);
   font-size: 0.8rem;
-  margin: 10px 0 17px;
+  margin: 8px 0 12px;
 }
 .consequence-list {
   padding: 0;
   list-style: none;
-  margin: 0 0 25px;
+  margin: 0 0 16px;
 }
 .consequence-list li {
   display: flex;
