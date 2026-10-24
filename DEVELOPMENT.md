@@ -67,6 +67,57 @@ Browser checks cover explicit prepare/sign/send boundaries, account changes, inp
 
 The application coordinator owns side effects. View components do not call native RPC, a wallet signer, or the journal directly. A reviewed call remains immutable while the coordinator records approvals, attempts, and evidence separately. A local record cannot establish chain authority.
 
+### Native adapter
+
+The public entry point is [packages/native-adapter/src/index.ts](packages/native-adapter/src/index.ts). Its implementation is organized by the boundary being checked:
+
+| Files                   | Responsibility                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| `connection.ts`         | Public connection lifecycle and delegation to the focused native services                              |
+| `metadata.ts`           | Exact metadata capture, qualified decoder binding, finalized fingerprint and runtime code verification |
+| `calls.ts`              | Allowed native call construction and byte-for-byte codec round trips                                   |
+| `signing.ts`            | Plain wallet payloads, signed extensions, signature attachment and signed-extrinsic checks             |
+| `state.ts`              | Anchored account/proposal reads, dispatch weight, Revive estimates and chain time                      |
+| `receipts.ts`           | Sending retained bytes, finalized receipt correlation, nested results and historical lookup            |
+| `types.ts`, `values.ts` | Shared native shapes and exact identity, integer and codec-value conversion                            |
+
+`connection.ts` keeps the existing `NativeConnection` API. Splitting its implementation does not introduce another provider, signing path or transaction format. Read services verify the selected runtime and keep live state anchors separate from the pinned decoder metadata source.
+
+### Application workflow
+
+[apps/web/src/application/application.ts](apps/web/src/application/application.ts) owns command serialization, selected workspace/wallet state and the current journal connection. Focused modules receive the dependencies needed for their stage:
+
+| Files                                                                         | Responsibility                                                                                                       |
+| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `network-profile.ts`, `network-state.ts`                                      | LOCAL descriptor/profile qualification, anchored account and grant reads, baseline discovery and network projections |
+| `prepare-operation.ts`, `operation-parameters.ts`                             | Allowed user inputs, exact call plan, reviewed resource limits, frozen envelope and initial signing context          |
+| `operation-inputs.ts`, `accounting.ts`, `resources.ts`                        | Fresh preconditions, named reserve/hold accounting and user-facing resource review                                   |
+| `check-pending.ts`, `sign-operation.ts`                                       | Current signer/runtime/era/nonce/lease checks, explicit wallet request and durable signed-attempt recording          |
+| `finalize-operation.ts`, `operation-postconditions.ts`, `contract-events.ts`  | Receipt-bound state and event checks, business outcome, evidence records and history projection                      |
+| `recover-operation.ts`                                                        | Exact retained attempt reconstruction and historical receipt lookup; resending remains a separate command            |
+| `certificate-state.ts`, `continuity/`                                         | Historical continuity certificate reconstruction and an independent current-state assessment                         |
+| `workspace-state.ts`, `local-import.ts`, `operation-view.ts`, `presentation/` | Workspace creation/import, bounded projections and display state                                                     |
+| `models.ts`, `values.ts`, `record-builders.ts`, `qualification/`              | Internal shapes, canonical record construction and capability-specific qualification                                 |
+
+The application supplies callbacks for operations whose owner can change during an asynchronous stage, including the active journal after a refresh. Historical receipt anchors remain distinct from the latest network view. UI components consume the facade and projections; they do not acquire native, wallet or storage authority.
+
+### LOCAL operator
+
+[scripts/local/native-tools.ts](scripts/local/native-tools.ts) is the CLI entry point. [scripts/local/runtime/operator.ts](scripts/local/runtime/operator.ts) validates the run/deployment/metadata binding, opens the connection, owns the per-run lock and selects the requested scenario.
+
+| Files under `scripts/local/runtime/` | Responsibility                                                                                           |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `actors.ts`, `config.ts`, `types.ts` | Explicit development identities, LOCAL units and retained session shapes                                 |
+| `journal.ts`                         | Durable atomic session writes and exclusive per-run ownership                                            |
+| `calls.ts`, `guards.ts`              | Retained native action reconstruction and shared assertions                                              |
+| `execution.ts`                       | Prepare/sign/persist/send ordering, exact multisig incarnation checks and receipt reconciliation         |
+| `queries.ts`                         | Proxy inventory, contract estimates and attributed contract events                                       |
+| `seed.ts`, `seed-probes.ts`          | Initial vested grant, rejected unauthorized route and original-depositor cancellation probe              |
+| `handoff.ts`, `negative.ts`          | Separate controller rotation/continuation, old-route rejection and post-proof maintenance/mapping probes |
+| `evidence.ts`                        | Public-address-only workspace export and command result summary                                          |
+
+These modules are development tooling and are never imported by the browser. A completed journal stage is reused, an unresolved attempt blocks replacement, and historical rotation/continuation records remain unchanged during replay.
+
 ## Build the real LOCAL runtime
 
 The [runtime lock](infra/local/runtime.lock.json) pins upstream source, patch, Cargo lock, native toolchains, and unchanged contract source. The integrated host launcher supports Linux; process ownership checks use `/proc`.
