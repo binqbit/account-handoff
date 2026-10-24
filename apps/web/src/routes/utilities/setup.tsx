@@ -78,16 +78,16 @@ export function Setup(props: ScreenProps) {
     const judges = parse(reviewers);
     if (old.length !== 3 || next.length !== 3) {
       setFormError(
-        "Потрібні три різні акаунти в кожній групі. Підтримується поріг 2 із 3.",
+        "Each group needs three distinct accounts. The supported threshold is 2 of 3.",
       );
       return;
     }
     if (new Set(old).size !== 3 || new Set(next).size !== 3) {
-      setFormError("У межах групи акаунти не можуть повторюватися.");
+      setFormError("Accounts within a group must be distinct.");
       return;
     }
     if (judges.length !== 2 || new Set(judges).size !== 2) {
-      setFormError("Вкажіть двох різних рецензентів.");
+      setFormError("Enter two distinct reviewers.");
       return;
     }
     const input: WorkspaceInput = {
@@ -110,51 +110,49 @@ export function Setup(props: ScreenProps) {
   return (
     <>
       <PageHeader
-        eyebrow="Налаштування команди"
-        title="Почніть зі сталого бенефіціара"
-        description="Спочатку визначте команду. Кожна дія створення, фінансування та mapping проходить окремий перегляд."
+        eyebrow="Team setup"
+        title="Start with a stable beneficiary"
+        description="Define the team first. Every creation, funding and mapping action has a separate review."
       />
       <div className="overview-grid">
         <Card
-          title={
-            workspace ? "Відомості про новий простір" : "Назва, команда та ролі"
-          }
+          title={workspace ? "New workspace details" : "Name, team and roles"}
         >
           <form onSubmit={(event) => void submit(event)}>
             <AddressField
-              label="Назва простору"
+              label="Workspace name"
               value={name}
               onChange={setName}
-              help="Зрозуміла команді назва, до 80 символів."
+              help="A recognizable team name, up to 80 characters."
             />
             <div className="equal-grid">
               <AddressField
-                label="Початкова група M0 — три адреси"
+                label="Original group M0 — three addresses"
                 value={oldMembers}
                 onChange={setOldMembers}
                 multiline
-                help="Одна native-адреса або AccountId32 на рядок. Поріг: 2 із 3."
+                help="One native address or AccountId32 per line. Threshold: 2 of 3."
               />
               <AddressField
-                label="Нова група M1 — три адреси"
+                label="New group M1 — three addresses"
                 value={newMembers}
                 onChange={setNewMembers}
                 multiline
-                help="Замініть одного учасника. Група отримує окрему адресу контролера."
+                help="Replace one member. The group receives a separate controller address."
               />
             </div>
             <AddressField
-              label="Акаунт фонду F"
+              label="Funder account F"
               value={funder}
               onChange={setFunder}
-              help="Прямий відправник, який створює й фінансує грант."
+              help="The direct sender who creates and funds the grant."
             />
             <AddressField
-              label="Два акаунти рецензентів"
+              label="Two reviewer accounts"
               value={reviewers}
               onChange={setReviewers}
               multiline
-              help="Підтримується два рецензенти з порогом два. Вони схвалюють від власних акаунтів."
+              help="Two reviewers with a threshold of two are supported. Each approves from their own account."
             />
             <button
               type="button"
@@ -163,20 +161,19 @@ export function Setup(props: ScreenProps) {
               onClick={() => setAdvanced(!advanced)}
             >
               {advanced
-                ? "Приховати відомі адреси"
-                : "Маю відомі адреси P та гранту"}
+                ? "Hide known addresses"
+                : "I know the P and grant addresses"}
               <Icon name="chevron" size={14} />
             </button>
             {advanced && (
               <div className="advanced-fields">
                 <p className="muted">
-                  Ці значення потребують перевірки походження та актуального
-                  стану. Введення адреси не підтверджує повноваження.
+                  These values require provenance and current-state
+                  verification. Entering an address does not establish
+                  authority.
                 </p>
                 <div className="field">
-                  <label htmlFor="known-pure">
-                    Відомий native-бенефіціар P
-                  </label>
+                  <label htmlFor="known-pure">Known native beneficiary P</label>
                   <input
                     id="known-pure"
                     value={beneficiary}
@@ -184,9 +181,7 @@ export function Setup(props: ScreenProps) {
                   />
                 </div>
                 <div className="field">
-                  <label htmlFor="known-contract">
-                    Відомий контракт гранту
-                  </label>
+                  <label htmlFor="known-contract">Known grant contract</label>
                   <input
                     id="known-contract"
                     value={contract}
@@ -194,7 +189,7 @@ export function Setup(props: ScreenProps) {
                   />
                 </div>
                 <div className="field">
-                  <label htmlFor="known-grant">Ідентифікатор гранту</label>
+                  <label htmlFor="known-grant">Grant ID</label>
                   <input
                     id="known-grant"
                     value={grantId}
@@ -218,60 +213,61 @@ export function Setup(props: ScreenProps) {
                   !!snapshot.busy || !name.trim() || name.trim().length > 80
                 }
               >
-                Зберегти команду
+                Save team
               </Button>
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => navigate("workspaces")}
               >
-                Назад
+                Back
               </Button>
             </div>
           </form>
         </Card>
         <div>
-          <Card eyebrow="Послідовність" title="Один простір, окремі дії">
+          <Card eyebrow="Sequence" title="One workspace, separate actions">
             <ol className="setup-steps">
               <li>
                 <span>1</span>
                 <div>
-                  <strong>Визначте команду</strong>
-                  <p>Початкова та наступна групи, фонд і рецензенти.</p>
+                  <strong>Define the team</strong>
+                  <p>The original and next groups, funder and reviewers.</p>
                 </div>
               </li>
               <li>
                 <span>2</span>
                 <div>
-                  <strong>Створіть бенефіціара P</strong>
-                  <p>Резерв, створення через M0, ліквідність і mapping.</p>
+                  <strong>Create beneficiary P</strong>
+                  <p>Reserve, creation through M0, liquidity and mapping.</p>
                 </div>
               </li>
               <li>
                 <span>3</span>
                 <div>
-                  <strong>Прив’яжіть грант</strong>
-                  <p>Фонд створює грант для h(P) та фінансує етапи.</p>
+                  <strong>Link the grant</strong>
+                  <p>
+                    The funder creates a grant for h(P) and funds its
+                    milestones.
+                  </p>
                 </div>
               </li>
             </ol>
           </Card>
-          <Notice title="Бенефіціар від початку">
-            Цей сценарій створює грант для сталого P. Він не змінює бенефіціара
-            вже створеного персонального гранту.
+          <Notice title="Beneficiary from the start">
+            This flow creates a grant for the stable P. It does not change the
+            beneficiary of an existing personal grant.
           </Notice>
         </div>
       </div>
       {workspace && (
         <>
           <div className="section-heading">
-            <h2>Налаштування: {workspace.name}</h2>
-            <Button onClick={() => navigate("overview")}>
-              Відкрити простір
-            </Button>
+            <h2>Setup: {workspace.name}</h2>
+            <Button onClick={() => navigate("overview")}>Open workspace</Button>
           </div>
           <ReadinessCards rows={workspace.setupProgress} />
-          <Card title="Наступні операції">
+          <Card title="Next operations">
             <div className="operation-grid">
               {snapshot.actions
                 .filter(
@@ -284,7 +280,7 @@ export function Setup(props: ScreenProps) {
                     <h3>{action.title}</h3>
                     <p>{action.description}</p>
                     <Button onClick={() => openAction(action.id)}>
-                      Перевірити дію
+                      Review action
                     </Button>
                   </div>
                 ))}

@@ -18,9 +18,9 @@ export function Handoff(props: ScreenProps) {
     return (
       <>
         <PageHeader
-          eyebrow="Передача керування"
-          title="Оберіть робочий простір"
-          description="Для передачі потрібні відомий бенефіціар, поточний контролер і його доступний кворум."
+          eyebrow="Control handoff"
+          title="Select a workspace"
+          description="A handoff requires a known beneficiary, the current controller and an available quorum."
         />
         <NoWorkspace {...props} />
       </>
@@ -39,19 +39,19 @@ export function Handoff(props: ScreenProps) {
     "GRC-GRANT-SUBMIT-M1",
   ];
   const titles = [
-    "Додати нову групу M1",
-    "Вилучити лише M0",
-    "Продовжити грант",
+    "Add the new controller M1",
+    "Remove M0 only",
+    "Continue the grant",
   ];
   return (
     <>
       <Button variant="ghost" icon="back" onClick={() => navigate("team")}>
-        До команди
+        Back to team
       </Button>
       <PageHeader
-        eyebrow="Передача керування"
-        title="Три дії. Один сталий бенефіціар."
-        description="Передайте повноваження новій групі та підтвердьте її роботу на тому самому гранті."
+        eyebrow="Control handoff"
+        title="Three actions. One stable beneficiary."
+        description="Transfer authority to the new group and verify its work on the same grant."
       />
       <ol className="stepper">
         {titles.map((title, index) => (
@@ -71,41 +71,41 @@ export function Handoff(props: ScreenProps) {
         <Card
           title={
             stage < 3
-              ? (titles[stage] ?? "Передати керування")
-              : "Передачу та продовження перевірено"
+              ? (titles[stage] ?? "Hand off control")
+              : "Handoff and continuation verified"
           }
         >
           <p className="lede">
             {stage === 0
-              ? "Початкова група додає M1. До наступного кроку обидві групи матимуть повну владу."
+              ? "The original group adds M1. Both groups retain full authority until the next step."
               : stage === 1
-                ? "Нова група вилучає точний дозвіл M0 / Any / 0. Після цього перевіряється весь список делегатів."
+                ? "The new group removes the exact M0 / Any / 0 permission. The full delegate inventory is then checked."
                 : stage === 2
-                  ? "Нова група окремо подає наступний етап. Саме ця дія підтверджує продовження гранту."
+                  ? "The new group submits the next milestone separately. That action proves grant continuation."
                   : workspace.continuityDetail}
           </p>
           <KeyValues
             rows={[
               {
-                label: "Було",
+                label: "Before",
                 value: <Address value={workspace.oldController.address} />,
               },
               {
-                label: "Нова група",
+                label: "New group",
                 value: <Address value={workspace.newController.address} />,
               },
               {
-                label: "Бенефіціар",
+                label: "Beneficiary",
                 value: <Identity identity={workspace.beneficiary} />,
               },
             ]}
           />
           <Notice tone={stage === 1 ? "warning" : "neutral"}>
             {stage === 0
-              ? "M0 не заморожується під час переходу. Поточний кворум має залишатися доступним."
+              ? "M0 is not frozen during the transition. Its quorum must remain available."
               : stage === 1
-                ? "M0 і M1 зараз можуть діяти. Видалення M0 не скасовує старі native-пропозиції."
-                : "Окремі підписи A та D потрібні і для вилучення M0, і для подання наступного етапу."}
+                ? "M0 and M1 can both act now. Removing M0 does not cancel existing native proposals."
+                : "Separate A and D signatures are required for both M0 removal and the next milestone submission."}
           </Notice>
           {stage < 3 ? (
             <ActionButton
@@ -113,7 +113,7 @@ export function Handoff(props: ScreenProps) {
                 (action) => action.id === actionIds[stage],
               )}
               openAction={openAction}
-              label="Перевірити наступну дію"
+              label="Review the next action"
             />
           ) : (
             <Button
@@ -121,39 +121,39 @@ export function Handoff(props: ScreenProps) {
               icon="arrow"
               onClick={() => navigate("history")}
             >
-              Відкрити доказ
+              Open evidence
             </Button>
           )}
         </Card>
-        <Card eyebrow="Перед кожною дією" title="Що перевіряємо">
+        <Card eyebrow="Before each action" title="What we verify">
           <ul className="check-list">
             <li>
               <Icon name="shield" />
-              Точний список повноважень
+              Exact authority inventory
             </li>
             <li>
               <Icon name="shield" />
-              Той самий P та h(P)
+              The same P and h(P)
             </li>
             <li>
               <Icon name="shield" />
-              Грант, строки й поточний раунд
+              Grant, deadlines and current round
             </li>
             <li>
               <Icon name="shield" />
-              Резерви, mapping і vesting
+              Reserves, mapping and vesting
             </li>
             <li>
               <Icon name="shield" />
-              Окреме схвалення підписанта
+              Separate signer approval
             </li>
           </ul>
           <p className="footnote">
-            Перевірка перед підписом не блокує паралельні дії інших
-            уповноважених учасників.
+            Pre-signing verification does not block concurrent actions by other
+            authorized participants.
           </p>
           <Button icon="network" onClick={() => navigate("network")}>
-            Стан мережі та перевірок
+            Network and verification status
           </Button>
         </Card>
       </div>

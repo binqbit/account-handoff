@@ -11,10 +11,10 @@ export function historyEntry(row: WorkspaceHistory): HistoryEntryView {
     block: String(receipt.blockNumber),
     txHash: receipt.txHash,
     state: !success
-      ? "Помилка виконання"
+      ? "Execution failed"
       : receipt.businessExecuted
-        ? "Виконано"
-        : "Схвалення зафіксовано",
+        ? "Executed"
+        : "Approval recorded",
     tone: !success
       ? "negative"
       : receipt.businessExecuted
@@ -23,22 +23,22 @@ export function historyEntry(row: WorkspaceHistory): HistoryEntryView {
     detail:
       receipt.failure ??
       (receipt.businessExecuted
-        ? "Бізнес-дію виконано у фіналізованому блоці. Її окремі післяумови доступні в доказах."
-        : "Зовнішню транзакцію фіналізовано. Це ще не виконання бізнес-дії."),
+        ? "The business action executed in a finalized block. Its separate postconditions are available in the evidence."
+        : "The outer transaction finalized. The business action has not executed yet."),
     layers: [
       {
-        label: "Зовнішня транзакція",
-        value: receipt.outerSuccess ? "Успішна" : "Помилка",
+        label: "Outer transaction",
+        value: receipt.outerSuccess ? "Successful" : "Failed",
         tone: receipt.outerSuccess ? "positive" : "negative",
       },
       {
-        label: "Вкладене виконання",
-        value: receipt.nestedSuccess ? "Успішне" : "Помилка",
+        label: "Nested execution",
+        value: receipt.nestedSuccess ? "Successful" : "Failed",
         tone: receipt.nestedSuccess ? "positive" : "negative",
       },
       {
-        label: "Бізнес-дія",
-        value: receipt.businessExecuted ? "Виконана" : "Не виконана",
+        label: "Business action",
+        value: receipt.businessExecuted ? "Executed" : "Not executed",
         tone: receipt.businessExecuted ? "positive" : "neutral",
       },
     ],

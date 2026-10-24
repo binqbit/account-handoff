@@ -10,6 +10,6 @@ createApplication()
   .catch((error) => {
     root.replaceChildren();
     const message = document.createElement("p");
-    message.textContent = `Не вдалося відкрити локальний журнал: ${error instanceof Error ? error.message : String(error)}`;
+    message.textContent = `Could not open the local journal: ${error instanceof Error ? error.message : String(error)}`;
     root.append(message);
   });

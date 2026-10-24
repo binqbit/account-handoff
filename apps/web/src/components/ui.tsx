@@ -229,7 +229,7 @@ export function Address({
   compact?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
-  if (!value) return <span className="unknown-value">Ще не встановлено</span>;
+  if (!value) return <span className="unknown-value">Not set yet</span>;
   const display =
     compact && value.length > 24
       ? `${value.slice(0, 10)}…${value.slice(-8)}`
@@ -251,19 +251,21 @@ export function Address({
         className="icon-button"
         type="button"
         onClick={() => void copy()}
-        aria-label={copied ? "Скопійовано" : `Копіювати ${label ?? "адресу"}`}
+        aria-label={copied ? "Copied" : `Copy ${label ?? "address"}`}
       >
         <Icon name={copied ? "check" : "copy"} size={14} />
       </button>
       <span className="sr-only" role="status">
-        {copied ? "Адресу скопійовано" : ""}
+        {copied ? "Address copied" : ""}
       </span>
     </span>
   );
 }
 export function Identity({ identity }: { identity: IdentityView | null }) {
   if (!identity)
-    return <span className="unknown-value">Потрібна підтверджена адреса</span>;
+    return (
+      <span className="unknown-value">A verified address is required</span>
+    );
   return (
     <div className="identity">
       {identity.label && (
@@ -382,8 +384,8 @@ export function OperationInput({
           {field.help}
           {field.maxBytes && (
             <span className="byte-count">
-              {count.toLocaleString("uk-UA")} /{" "}
-              {field.maxBytes.toLocaleString("uk-UA")} байт
+              {count.toLocaleString("en-US")} /{" "}
+              {field.maxBytes.toLocaleString("en-US")} bytes
             </span>
           )}
         </p>
@@ -393,7 +395,7 @@ export function OperationInput({
 }
 export function Evidence({
   value,
-  title = "Технічні деталі",
+  title = "Technical details",
 }: {
   value: unknown;
   title?: string;

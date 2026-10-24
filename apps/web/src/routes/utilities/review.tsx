@@ -37,7 +37,7 @@ function ActionForm({
     for (const field of action.fields) {
       const value = values[field.name] ?? "";
       if (field.required && !value.trim()) {
-        setError(`Заповніть поле «${field.label}».`);
+        setError(`Complete the “${field.label}” field.`);
         return;
       }
       if (
@@ -45,7 +45,7 @@ function ActionForm({
         new TextEncoder().encode(value).length > field.maxBytes
       ) {
         setError(
-          `Поле «${field.label}» перевищує ${field.maxBytes} UTF-8 байт.`,
+          `The “${field.label}” field exceeds ${field.maxBytes} UTF-8 bytes.`,
         );
         return;
       }
@@ -62,7 +62,7 @@ function ActionForm({
     }
   }
   return (
-    <Card title="Параметри дії">
+    <Card title="Action parameters">
       <form onSubmit={(event) => void prepare(event)}>
         {action.fields.map((field) => (
           <OperationInput
@@ -76,12 +76,12 @@ function ActionForm({
         ))}
         {!action.fields.length && (
           <p className="muted">
-            Параметри беруться з перевіреного стану простору. На наступному
-            кроці ви побачите точну дію.
+            Parameters come from the verified workspace state. The next step
+            shows the exact action.
           </p>
         )}
         {action.blockers.length > 0 && (
-          <Notice tone="warning" title="Спочатку виконайте передумови">
+          <Notice tone="warning" title="Complete the prerequisites first">
             <ul>
               {action.blockers.map((blocker) => (
                 <li key={blocker}>{blocker}</li>
@@ -100,7 +100,7 @@ function ActionForm({
           type="submit"
           disabled={!action.enabled || !!props.snapshot.busy}
         >
-          Підготувати до перегляду
+          Prepare for review
         </Button>
       </form>
     </Card>
@@ -128,55 +128,55 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
           navigate(action?.category === "handoff" ? "handoff" : "overview")
         }
       >
-        Повернутися до задачі
+        Back to task
       </Button>
       <PageHeader
-        eyebrow="Окремий перегляд операції"
-        title={active?.title ?? action?.title ?? "Перевірте заплановану дію"}
+        eyebrow="Separate operation review"
+        title={active?.title ?? action?.title ?? "Review the planned action"}
         description={
           active?.description ??
           action?.description ??
-          "Оберіть дію в просторі, щоб переглянути її параметри й наслідки."
+          "Choose a workspace action to review its parameters and consequences."
         }
       />
       {!active ? (
         action ? (
           <div className="overview-grid">
             <ActionForm key={action.id} action={action} props={props} />
-            <Card title="Хто виконує дію">
+            <Card title="Who performs the action">
               <KeyValues
                 rows={[
-                  { label: "Роль", value: action.actor },
+                  { label: "Role", value: action.actor },
                   {
-                    label: "Особистий акаунт",
+                    label: "Personal account",
                     value: <Address value={snapshot.wallet.selectedAddress} />,
                   },
-                  { label: "Середовище", value: snapshot.network.mode },
+                  { label: "Environment", value: snapshot.network.mode },
                 ]}
               />
-              <Notice title="Спочатку точний план">
-                Підготовка не відкриває гаманець. Наступний крок покаже маршрут,
-                ресурси та точні дані для підпису.
+              <Notice title="Review the exact plan first">
+                Preparation does not open the wallet. The next step shows the
+                route, resources and exact signing data.
               </Notice>
             </Card>
           </div>
         ) : (
           <EmptyState
-            title="Немає обраної дії"
+            title="No action selected"
             action={
               <Button variant="primary" onClick={() => navigate("overview")}>
-                До огляду
+                Go to overview
               </Button>
             }
           >
-            Відкрийте задачу з огляду, команди або етапів гранту.
+            Open a task from the overview, team or grant milestones.
           </EmptyState>
         )
       ) : (
         <div className="overview-grid">
           <div>
             <Card
-              title="Наслідки та точні умови"
+              title="Consequences and exact terms"
               action={<Badge tone={active.tone}>{active.stage}</Badge>}
             >
               <ul className="consequence-list">
@@ -197,13 +197,13 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                     disabled={!active.canSign && !active.canSend}
                   />
                   <span>
-                    Я перевірив акаунт, маршрут, умови й наслідки цієї окремої
-                    дії.
+                    I have checked the account, route, terms and consequences of
+                    this individual action.
                   </span>
                 </label>
               </div>
               {active.blockers.length > 0 && (
-                <Notice tone="warning" title="Дію зараз заблоковано">
+                <Notice tone="warning" title="This action is currently blocked">
                   <ul>
                     {active.blockers.map((blocker) => (
                       <li key={blocker}>{blocker}</li>
@@ -221,7 +221,7 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                       void props.run({ type: "sign-operation", id: active.id })
                     }
                   >
-                    Запросити підпис
+                    Request signature
                   </Button>
                 )}
                 {active.canSend && (
@@ -233,7 +233,7 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                       void props.run({ type: "send-operation", id: active.id })
                     }
                   >
-                    Надіслати підписану операцію
+                    Send signed operation
                   </Button>
                 )}
                 {active.canReconcile && (
@@ -248,8 +248,8 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                     }
                   >
                     {active.stage === "signed"
-                      ? "Відновити підписану операцію"
-                      : "Звірити результат"}
+                      ? "Restore the signed operation"
+                      : "Reconcile outcome"}
                   </Button>
                 )}
                 {active.canDiscard && (
@@ -263,27 +263,27 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                       })
                     }
                   >
-                    Відкласти перегляд
+                    Set review aside
                   </Button>
                 )}
               </div>
               {active.canSend && (
                 <p className="footnote">
-                  Підписані байти збережені локально. Надсилання виконується
-                  лише цією окремою командою.
+                  Signed bytes are saved locally. Only this separate command
+                  sends them.
                 </p>
               )}
               {active.canReconcile && (
                 <p className="footnote">
                   {active.stage === "signed"
-                    ? "Відновлення відкриває збережений підписаний пакет. Надсилання залишається окремою дією; новий підпис не запитується."
-                    : "Звіряння читає результат наявної спроби. Воно не створює новий nonce або новий підпис."}
+                    ? "Recovery opens the saved signed payload. Sending remains a separate action; no new signature is requested."
+                    : "Reconciliation reads the existing attempt's outcome. It does not create a new nonce or signature."}
                 </p>
               )}
             </Card>
             {active.callHex && (
               <Evidence
-                title="Точний RuntimeCall і підтверджені ідентифікатори"
+                title="Exact RuntimeCall and verified identifiers"
                 value={{
                   call: active.callHex,
                   callHash: active.callHash,
@@ -292,11 +292,11 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
               />
             )}
             {active.evidence && (
-              <Evidence title="Доказ результату" value={active.evidence} />
+              <Evidence title="Outcome evidence" value={active.evidence} />
             )}
           </div>
           <div>
-            <Card title="Маршрут виконання">
+            <Card title="Execution route">
               <ol className="execution-route">
                 {active.route.map((step, index) => (
                   <li key={`${index}-${step}`}>
@@ -308,21 +308,21 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
               <KeyValues
                 rows={[
                   {
-                    label: "Підписант",
+                    label: "Signer",
                     value: <Address value={active.signer?.address} />,
                   },
-                  { label: "Роль", value: active.actor },
+                  { label: "Role", value: active.actor },
                 ]}
               />
             </Card>
-            <Card title="Комісії та резерви">
+            <Card title="Fees and reserves">
               {active.resources.length ? (
                 <div className="resource-list">
                   {active.resources.map((resource, index) => (
                     <div key={`${resource.label}-${index}`}>
                       <span>
                         {resource.label}
-                        <small>Сплачує: {resource.payer}</small>
+                        <small>Paid by: {resource.payer}</small>
                       </span>
                       <strong>{resource.amount}</strong>
                     </div>
@@ -330,34 +330,34 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                 </div>
               ) : (
                 <p className="muted">
-                  Оцінка ресурсів ще не отримана. Підпис дозволяється після
-                  перевірки потрібних меж.
+                  Resource estimates are not available yet. Signing is enabled
+                  after the required limits are verified.
                 </p>
               )}
             </Card>
             {active.approvals && (
-              <Card title="Поточна native-пропозиція">
+              <Card title="Current native proposal">
                 <KeyValues
                   rows={[
                     {
-                      label: "Схвалення",
-                      value: `${active.approvals.approved.length} із ${active.approvals.required}`,
+                      label: "Approvals",
+                      value: `${active.approvals.approved.length} of ${active.approvals.required}`,
                     },
                     {
-                      label: "Депозитор",
+                      label: "Depositor",
                       value: (
                         <Address value={active.approvals.depositor} compact />
                       ),
                     },
                     {
                       label: "Timepoint",
-                      value: active.approvals.timepoint ?? "Ще не створено",
+                      value: active.approvals.timepoint ?? "Not created yet",
                     },
                   ]}
                 />
                 <p className="footnote">
-                  Перше схвалення не виконує бізнес-дію. Фінальне схвалення
-                  потребує власного перегляду та підпису.
+                  The first approval does not execute the business action. Final
+                  approval requires its own review and signature.
                 </p>
               </Card>
             )}

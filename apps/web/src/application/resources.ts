@@ -15,18 +15,18 @@ export type ResourceReviewRow = OperationView["resources"][number] & {
 };
 
 const labels: Record<OperationResourceRequirement["kind"], string> = {
-  outer_fee: "Локальний бюджет комісії · фактична комісія не повертається",
-  value: "Переказ або фінансування · сума списується",
+  outer_fee: "Local fee budget · actual fees are nonrefundable",
+  value: "Transfer or funding · the amount is spent",
   proposal_deposit:
-    "Резерв пропозиції за параметрами runtime · повертається depositor після виконання або скасування",
+    "Proposal reserve from runtime parameters · refunded to the depositor after execution or cancellation",
   pure_deposit:
-    "Резерв створення Pure за параметрами runtime · залишається у M0 після передачі контролю",
+    "Pure creation reserve from runtime parameters · remains with M0 after the control handoff",
   mapping_hold:
-    "Hold mapping за параметрами runtime · залишається заблокованим під mapping",
+    "Mapping hold from runtime parameters · remains locked for the mapping",
   proxy_increment:
-    "Додатковий резерв делегата за параметрами runtime · повертається при вилученні зайвого делегата",
+    "Additional delegate reserve from runtime parameters · refunded when the extra delegate is removed",
   storage_limit:
-    "Верхня межа депозиту storage · фактичний внесок може бути меншим; повернення залежить від звільнення storage",
+    "Storage deposit upper bound · the actual deposit may be smaller; refunds depend on releasing storage",
 };
 const innerRequirements = new Set<OperationResourceRequirement["kind"]>([
   "pure_deposit",
@@ -45,23 +45,23 @@ export function buildResourceReview(
     .map((requirement) => {
       let amount =
         requirement.amountNative === undefined
-          ? "Невідомо"
+          ? "Unknown"
           : `${formatUnits(requirement.amountNative, token.decimals)} ${token.symbol}`;
       if (
         requirement.kind === "outer_fee" &&
         input.envelope.resources.outerFeeEstimateNative !== null
       )
-        amount += ` (оцінка ${formatUnits(BigInt(input.envelope.resources.outerFeeEstimateNative), token.decimals)} ${token.symbol}; бюджет не є лімітом runtime)`;
+        amount += ` (estimate ${formatUnits(BigInt(input.envelope.resources.outerFeeEstimateNative), token.decimals)} ${token.symbol}; the budget is not a runtime limit)`;
       const deferred =
         input.phase === "multisig_first" &&
         innerRequirements.has(requirement.kind)
-          ? " · для виконання після другого підпису"
+          ? " · for execution after the second signature"
           : "";
       return {
         kind: requirement.kind,
         source: requirement.source,
         amountNative: requirement.amountNative?.toString() ?? null,
-        payer: requirement.payer ?? "Не встановлено",
+        payer: requirement.payer ?? "Not set",
         label: labels[requirement.kind] + deferred,
         amount,
       };

@@ -10,20 +10,20 @@ test("unknown outcome requires an explicit reconciliation without another signat
   await page.goto(`${harness}?scenario=unknown#attention`);
   await expect(
     page.getByRole("heading", {
-      name: "З’ясуйте результат перед наступною дією",
+      name: "Resolve the outcome before acting again",
     }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Відкрити спробу" }).click();
+  await page.getByRole("button", { name: "Open attempt" }).click();
   await expect(page.getByText("unknown", { exact: true })).toBeVisible();
   await expect(page.getByRole("checkbox")).toBeDisabled();
   await expect(
-    page.getByRole("button", { name: "Запросити підпис" }),
+    page.getByRole("button", { name: "Request signature" }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Надіслати підписану операцію" }),
+    page.getByRole("button", { name: "Send signed operation" }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Відкласти перегляд" }),
+    page.getByRole("button", { name: "Set review aside" }),
   ).toHaveCount(0);
   const before = await page.evaluate(
     () =>
@@ -36,7 +36,7 @@ test("unknown outcome requires an explicit reconciliation without another signat
     .analyze();
   expect(axe.violations).toEqual([]);
   await page
-    .getByRole("button", { name: "Звірити результат", exact: true })
+    .getByRole("button", { name: "Reconcile outcome", exact: true })
     .click();
   await expect(page.getByText("Finalized", { exact: true })).toBeVisible();
   const commands = await page.evaluate(
@@ -57,32 +57,32 @@ test("read-only imported evidence is inspectable while preparation remains disab
 }) => {
   await page.goto(`${harness}?scenario=read-only#history`);
   await expect(
-    page.getByText("Імпортований запис", { exact: true }),
+    page.getByText("Imported record", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("Імпорт не встановлює поточні права керування."),
+    page.getByText("Importing does not establish current control authority."),
   ).toBeVisible();
   await page
-    .getByText("Доказ і технічні деталі запису", { exact: true })
+    .getByText("Record evidence and technical details", { exact: true })
     .click();
   await expect(page.locator("pre")).toContainText('"recordedAmount": "123"');
   await page
-    .getByRole("button", { name: "Дані простору", exact: true })
+    .getByRole("button", { name: "Workspace data", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Завантажити пакет", exact: true }),
+    page.getByRole("button", { name: "Download package", exact: true }),
   ).toBeEnabled();
   await page.evaluate(() => {
     window.location.hash = "review?action=GRC-ROTATION-ADD-M1";
   });
   await expect(
-    page.getByText("Підключіть мережу й гаманець для нового перегляду."),
+    page.getByText("Connect the network and wallet for a new review."),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Підготувати до перегляду" }),
+    page.getByRole("button", { name: "Prepare for review" }),
   ).toBeDisabled();
   await expect(
-    page.getByRole("button", { name: "Запросити підпис" }),
+    page.getByRole("button", { name: "Request signature" }),
   ).toHaveCount(0);
   expect(
     await page.evaluate(

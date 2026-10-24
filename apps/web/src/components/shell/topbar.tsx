@@ -25,10 +25,10 @@ export function Topbar({
           type="button"
           className="attention-button"
           onClick={() => navigate("attention")}
-          aria-label={`Потребує уваги${unresolved ? `: ${unresolved}` : ""}`}
+          aria-label={`Needs attention${unresolved ? `: ${unresolved}` : ""}`}
         >
           <Icon name="history" size={17} />
-          <span>Потребує уваги</span>
+          <span>Needs attention</span>
           {unresolved > 0 && <span className="count">{unresolved}</span>}
         </button>
         <span className="topbar-divider" />
@@ -38,7 +38,7 @@ export function Topbar({
               <Icon name="wallet" size={17} />
             </span>
             <label className="sr-only" htmlFor="selected-wallet-account">
-              Особистий акаунт
+              Personal account
             </label>
             <select
               id="selected-wallet-account"
@@ -52,7 +52,7 @@ export function Topbar({
               disabled={!!snapshot.busy}
             >
               {!snapshot.wallet.selectedAddress && (
-                <option value="">Оберіть акаунт</option>
+                <option value="">Select an account</option>
               )}
               {snapshot.wallet.accounts.map((account) => (
                 <option
@@ -71,7 +71,7 @@ export function Topbar({
               className="disconnect-button"
               disabled={!!snapshot.busy}
               onClick={() => void run({ type: "disconnect-wallet" })}
-              aria-label="Від’єднати гаманець"
+              aria-label="Disconnect wallet"
             >
               <Icon name="close" size={15} />
             </button>
@@ -83,9 +83,7 @@ export function Topbar({
             disabled={snapshot.wallet.connecting || !!snapshot.busy}
             onClick={() => void run({ type: "connect-wallet" })}
           >
-            {snapshot.wallet.connecting
-              ? "Підключення…"
-              : "Підключити гаманець"}
+            {snapshot.wallet.connecting ? "Connecting…" : "Connect wallet"}
           </Button>
         )}
       </div>

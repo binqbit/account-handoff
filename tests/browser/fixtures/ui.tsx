@@ -27,9 +27,9 @@ let snapshot: AppSnapshot = {
     readiness: [
       {
         id: "runtime",
-        label: "Ідентичність runtime",
+        label: "Runtime identity",
         status: "ready",
-        detail: "Синтетичний контекст ізольованого тесту",
+        detail: "Synthetic context for an isolated test",
       },
     ],
   },
@@ -39,7 +39,7 @@ let snapshot: AppSnapshot = {
     selectedAddress: addresses[0]!,
     accounts: addresses.slice(0, 4).map((address, index) => ({
       address,
-      label: ["Аліса", "Богдан", "Катерина", "Данило"][index]!,
+      label: ["Alice", "Bob", "Charlie", "Dave"][index]!,
       source: "test-only",
     })),
   },
@@ -50,7 +50,7 @@ let snapshot: AppSnapshot = {
     beneficiary: {
       address: addresses[4]!,
       mappedAddress: `0x${"a".repeat(40)}`,
-      label: "Сталий P",
+      label: "Stable P",
     },
     oldController: {
       address: addresses[5]!,
@@ -58,7 +58,7 @@ let snapshot: AppSnapshot = {
       threshold: 2,
       members: addresses.slice(0, 3).map((address, index) => ({
         address,
-        label: ["Аліса", "Богдан", "Катерина"][index]!,
+        label: ["Alice", "Bob", "Charlie"][index]!,
       })),
       active: true,
     },
@@ -68,7 +68,7 @@ let snapshot: AppSnapshot = {
       threshold: 2,
       members: [0, 1, 3].map((index) => ({
         address: addresses[index]!,
-        label: ["Аліса", "Богдан", "Катерина", "Данило"][index]!,
+        label: ["Alice", "Bob", "Charlie", "Dave"][index]!,
       })),
       active: false,
     },
@@ -76,28 +76,28 @@ let snapshot: AppSnapshot = {
     grantId: "42",
     authority: "M0",
     continuity: "not-started",
-    continuityDetail: "Тест очікує окреме вилучення та подання.",
+    continuityDetail: "The test awaits separate removal and submission.",
     symbol: "UNIT",
     grantTotal: "30",
-    funder: { address: addresses[7]!, label: "Фонд" },
+    funder: { address: addresses[7]!, label: "Funder" },
     reviewers: [],
     balances: [],
     setupProgress: [],
     currentTask: {
-      title: "Підготуйте нову групу керування",
-      detail: "Тестова проєкція для перевірки інтерфейсу.",
+      title: "Prepare the new controller group",
+      detail: "Test projection for interface verification.",
       actionId,
     },
     milestones: [
       {
         id: "m0",
         index: 0,
-        title: "Дослідження",
+        title: "Research",
         amount: "18",
         symbol: "UNIT",
         state: "Released",
         round: "0",
-        vesting: "1 800 блоків",
+        vesting: "1,800 blocks",
         approvals: [addresses[0]!, addresses[1]!],
         requiredApprovals: 2,
         actions: [],
@@ -105,7 +105,7 @@ let snapshot: AppSnapshot = {
       {
         id: "m1",
         index: 1,
-        title: "Наступний результат",
+        title: "Next deliverable",
         amount: "12",
         symbol: "UNIT",
         state: "Open",
@@ -120,8 +120,8 @@ let snapshot: AppSnapshot = {
   actions: [
     {
       id: actionId,
-      title: "Додати нову групу M1",
-      description: "M0 і M1 тимчасово матимуть повну владу.",
+      title: "Add the new controller M1",
+      description: "M0 and M1 temporarily have full authority.",
       category: "handoff",
       actor: "M0",
       enabled: true,
@@ -130,8 +130,8 @@ let snapshot: AppSnapshot = {
     },
     {
       id: "GRC-GRANT-SUBMIT-M1",
-      title: "Подати наступний етап",
-      description: "Доказ буде публічним.",
+      title: "Submit the next milestone",
+      description: "The evidence will be public.",
       category: "grant",
       actor: "M1",
       enabled: true,
@@ -139,7 +139,7 @@ let snapshot: AppSnapshot = {
       fields: [
         {
           name: "evidence",
-          label: "Публічний доказ",
+          label: "Public evidence",
           type: "textarea",
           required: true,
           maxBytes: 1024,
@@ -163,9 +163,9 @@ function reviewOperation(): OperationView {
     actor: action.actor,
     signer: { address: snapshot.wallet.selectedAddress! },
     route: ["Alice", "Multisig M0", "Proxy P", "addProxy M1"],
-    consequences: ["M0 залишається авторизованою."],
-    terms: [{ label: "Дозвіл", value: "Any / 0" }],
-    resources: [{ label: "Тестова оцінка", amount: "1 UNIT", payer: "Alice" }],
+    consequences: ["M0 remains authorized."],
+    terms: [{ label: "Permission", value: "Any / 0" }],
+    resources: [{ label: "Test estimate", amount: "1 UNIT", payer: "Alice" }],
     blockers: [],
     canSign: true,
     canSend: false,
@@ -198,7 +198,7 @@ if (scenario === "unknown")
       canSend: false,
       canReconcile: true,
       canDiscard: false,
-      blockers: ["Спочатку звірте результат наявної спроби."],
+      blockers: ["Reconcile the existing attempt's outcome first."],
     },
   };
 if (scenario === "read-only")
@@ -215,14 +215,14 @@ if (scenario === "read-only")
       ...snapshot.workspace!,
       authority: "Unknown",
       continuity: "unknown",
-      continuityDetail: "Імпортовані докази потребують перевірки мережі.",
+      continuityDetail: "Imported evidence requires network verification.",
       history: [
         {
           id: "imported-evidence",
-          title: "Імпортований запис",
-          state: "Історичний доказ",
+          title: "Imported record",
+          state: "Historical evidence",
           tone: "neutral",
-          detail: "Імпорт не встановлює поточні права керування.",
+          detail: "Importing does not establish current control authority.",
           evidence: { blockNumber: "50", recordedAmount: 123n },
         },
       ],
@@ -230,7 +230,7 @@ if (scenario === "read-only")
     actions: snapshot.actions.map((action) => ({
       ...action,
       enabled: false,
-      blockers: ["Підключіть мережу й гаманець для нового перегляду."],
+      blockers: ["Connect the network and wallet for a new review."],
     })),
   };
 const listeners = new Set<() => void>();
@@ -255,7 +255,7 @@ const facade: ApplicationFacade = {
           ? {
               ...snapshot.operation,
               canSign: false,
-              blockers: ["Змінено акаунт. Потрібен новий перегляд."],
+              blockers: ["Account changed. A new review is required."],
             }
           : null,
       });

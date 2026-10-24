@@ -15,9 +15,9 @@ export function Team(props: ScreenProps) {
   return (
     <>
       <PageHeader
-        eyebrow="Команда і повноваження"
-        title="Люди змінюються. Бенефіціар — той самий."
-        description="Кожна група має свою адресу контролера. Особистий гаманець підписує лише дозволені для його власника дії."
+        eyebrow="Team and authority"
+        title="People change. The beneficiary stays."
+        description="Each group has its own controller address. A personal wallet signs only actions allowed for its owner."
         actions={
           workspace && (
             <Button
@@ -25,7 +25,7 @@ export function Team(props: ScreenProps) {
               icon="arrow"
               onClick={() => navigate("handoff")}
             >
-              Передати керування
+              Hand off control
             </Button>
           )
         }
@@ -40,9 +40,9 @@ export function Team(props: ScreenProps) {
                 <Card
                   key={controller.address || index}
                   eyebrow={
-                    index === 0 ? "Початкова група · M0" : "Наступна група · M1"
+                    index === 0 ? "Original group · M0" : "Next group · M1"
                   }
-                  title={`${controller.threshold} із ${controller.members.length} підписантів`}
+                  title={`${controller.threshold} of ${controller.members.length} signers`}
                   action={
                     <Badge
                       tone={
@@ -54,10 +54,10 @@ export function Team(props: ScreenProps) {
                       }
                     >
                       {controller.active === null
-                        ? "Не перевірено"
+                        ? "Not verified"
                         : controller.active
-                          ? "Має повноваження"
-                          : "Без повноважень"}
+                          ? "Authorized"
+                          : "Not authorized"}
                     </Badge>
                   }
                 >
@@ -77,20 +77,20 @@ export function Team(props: ScreenProps) {
             )}
           </div>
           <Card
-            title="Бюджети та ідентичності"
-            eyebrow="Кошти для виконання операцій"
+            title="Budgets and identities"
+            eyebrow="Funds for executing operations"
           >
             <div className="table-scroll">
               <table>
                 <caption className="sr-only">
-                  Операційні бюджети учасників та бенефіціара
+                  Operating budgets of participants and the beneficiary
                 </caption>
                 <thead>
                   <tr>
-                    <th>Акаунт</th>
-                    <th>Призначення</th>
-                    <th>Вільні / доступні</th>
-                    <th>Зарезервовано</th>
+                    <th>Account</th>
+                    <th>Purpose</th>
+                    <th>Free / available</th>
+                    <th>Reserved</th>
                     <th>Mapping</th>
                   </tr>
                 </thead>
@@ -102,11 +102,11 @@ export function Team(props: ScreenProps) {
                       </td>
                       <td>{balance.role}</td>
                       <td>
-                        {balance.free ?? "Невідомо"} /{" "}
-                        {balance.available ?? "Невідомо"}{" "}
+                        {balance.free ?? "Unknown"} /{" "}
+                        {balance.available ?? "Unknown"}{" "}
                         <span className="muted">{balance.symbol}</span>
                       </td>
-                      <td>{balance.reserved ?? "Невідомо"}</td>
+                      <td>{balance.reserved ?? "Unknown"}</td>
                       <td>
                         <Badge
                           tone={
@@ -119,10 +119,10 @@ export function Team(props: ScreenProps) {
                         >
                           {
                             {
-                              verified: "Підтверджено",
-                              missing: "Потрібне",
-                              unknown: "Невідомо",
-                              "not-required": "Не потрібне",
+                              verified: "Verified",
+                              missing: "Required",
+                              unknown: "Unknown",
+                              "not-required": "Not required",
                             }[balance.mapping]
                           }
                         </Badge>
@@ -133,7 +133,7 @@ export function Team(props: ScreenProps) {
               </table>
               {!workspace.balances.length && (
                 <p className="muted">
-                  Баланси з’являться після читання фіналізованого стану.
+                  Balances appear after the finalized state is read.
                 </p>
               )}
             </div>
@@ -151,9 +151,9 @@ export function Team(props: ScreenProps) {
                 ))}
             </div>
             <p className="footnote">
-              Комісії підписантів, резерви пропозицій, escrow фонду,
-              mapping-hold і ліквідність P обліковуються окремо. Vesting не є
-              доступним операційним бюджетом.
+              Signer fees, proposal reserves, funder escrow, mapping holds and P
+              liquidity are tracked separately. Vested funds are not an
+              available operating budget.
             </p>
           </Card>
         </>

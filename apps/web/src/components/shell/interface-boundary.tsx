@@ -16,12 +16,12 @@ export class InterfaceBoundary extends Component<
     return this.state.failed ? (
       <div className="critical-error">
         <Icon name="alert" size={32} />
-        <h1>Інтерфейс не вдалося відкрити</h1>
+        <h1>Could not open the interface</h1>
         <p>
-          Записи залишаються у сховищі. Перезавантаження відновить перегляд без
-          автоматичного підпису чи надсилання.
+          Records remain in storage. Reloading restores the view without
+          automatically signing or sending.
         </p>
-        <Button onClick={() => window.location.reload()}>Відкрити знову</Button>
+        <Button onClick={() => window.location.reload()}>Open again</Button>
       </div>
     ) : (
       this.props.children

@@ -94,7 +94,7 @@ function Application({ application }: { application: ApplicationFacade }) {
           message:
             error instanceof Error
               ? error.message
-              : "Не вдалося завершити дію. Перевірте поточний стан і спробу.",
+              : "Could not complete the action. Check the current state and attempt.",
           error: true,
         });
         return;
@@ -150,7 +150,7 @@ function Application({ application }: { application: ApplicationFacade }) {
   return (
     <>
       <a className="skip-link" href="#main-content">
-        До основного вмісту
+        Skip to main content
       </a>
       <div className="app-shell">
         <Sidebar
@@ -174,7 +174,7 @@ function Application({ application }: { application: ApplicationFacade }) {
               <button
                 type="button"
                 className="icon-button"
-                aria-label="Закрити повідомлення"
+                aria-label="Dismiss notification"
                 onClick={() => {
                   setLocalNotice(null);
                   if (snapshot.notice)
@@ -190,13 +190,13 @@ function Application({ application }: { application: ApplicationFacade }) {
           )}
           <main className="main-content" id="main-content" tabIndex={-1}>
             {snapshot.storageError && (
-              <Notice tone="negative" title="Сховище недоступне">
-                {snapshot.storageError} Підпис і надсилання потребують надійного
-                локального запису.
+              <Notice tone="negative" title="Storage unavailable">
+                {snapshot.storageError} Signing and sending require reliable
+                local storage.
               </Notice>
             )}
             {snapshot.wallet.error && (
-              <Notice tone="warning" title="Підключення гаманця">
+              <Notice tone="warning" title="Wallet connection">
                 {snapshot.wallet.error}
               </Notice>
             )}
@@ -208,7 +208,7 @@ function Application({ application }: { application: ApplicationFacade }) {
       {snapshot.busy && (
         <div className="activity-indicator" role="status" aria-live="polite">
           <span className="spinner" />
-          Виконуємо запит…
+          Processing request…
         </div>
       )}
     </>

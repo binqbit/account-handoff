@@ -33,10 +33,10 @@ test("narrow view retains every destination without document overflow", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(harness);
   await expect(
-    page.getByRole("button", { name: "Мережа та готовність", exact: true }),
+    page.getByRole("button", { name: "Network and readiness", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Дані простору", exact: true }),
+    page.getByRole("button", { name: "Workspace data", exact: true }),
   ).toBeVisible();
   for (const route of [
     "overview",
@@ -60,14 +60,14 @@ test("keyboard navigation and disclosures never request a signature", async ({
   page,
 }) => {
   await page.goto(`${harness}#review?action=GRC-ROTATION-ADD-M1`);
-  await page.getByRole("button", { name: "Підготувати до перегляду" }).click();
+  await page.getByRole("button", { name: "Prepare for review" }).click();
   await page.getByRole("checkbox").focus();
   await page.keyboard.press("Space");
   await expect(
-    page.getByRole("button", { name: "Запросити підпис" }),
+    page.getByRole("button", { name: "Request signature" }),
   ).toBeEnabled();
   await page
-    .getByText("Точний RuntimeCall і підтверджені ідентифікатори", {
+    .getByText("Exact RuntimeCall and verified identifiers", {
       exact: true,
     })
     .click();

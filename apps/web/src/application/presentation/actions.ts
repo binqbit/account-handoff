@@ -26,7 +26,7 @@ const profileGates = new Set<GateId>([
   "Q-RECEIPTS",
 ]);
 function roles(
-  workspace: WorkspaceRecord,
+  _workspace: WorkspaceRecord,
   keys: ParticipantRole[],
 ): { value: string; label: string }[] {
   return keys.map((role) => ({ value: role, label: roleNames[role] }));
@@ -34,11 +34,11 @@ function roles(
 function amountField(symbol: string): OperationField {
   return {
     name: "amount",
-    label: `Сума (${symbol})`,
+    label: `Amount (${symbol})`,
     type: "number",
     required: true,
     placeholder: "0.00",
-    help: "Десяткова сума в токенах мережі. Перед підписом буде показано точні native units і комісію.",
+    help: "Decimal amount in network tokens. Exact native units and the fee are shown before signing.",
   };
 }
 function roleField(
@@ -79,44 +79,44 @@ export function actionViews(
     eq(member, selectedSigner),
   );
   const common: string[] = [];
-  if (!chain) common.push("Підключіть мережу та отримайте фіналізований стан.");
+  if (!chain) common.push("Connect to the network and read finalized state.");
   if (chain && chain.profile.status !== "accepted")
     common.push(
-      "Профіль мережі заблокований або застарів. Потрібне повторне звіряння.",
+      "The network profile is blocked or stale. Reconciliation is required.",
     );
   if (!selectedSigner)
-    common.push("Підключіть гаманець і виберіть особистий акаунт.");
+    common.push("Connect a wallet and select a personal account.");
   if (chain && !eq(chain.fingerprint.genesis, workspace.genesis))
-    common.push("Простір належить іншій мережі.");
+    common.push("The workspace belongs to another network.");
   if (
     chain &&
     ((workspace.mode === "LOCAL" && chain.localDescriptor?.mode !== "LOCAL") ||
       (workspace.mode !== "LOCAL" && chain.localDescriptor))
   )
-    common.push("Профіль середовища не відповідає простору.");
+    common.push("The environment profile does not match the workspace.");
   if (chain?.localDescriptor?.status === "retired")
-    common.push("Локальний запуск завершено. Потрібен чинний runId.");
+    common.push("The local run has ended. A current runId is required.");
   if (selectedSigner && chain && !actorState)
-    common.push("Бюджет вибраного підписанта ще не прочитано.");
+    common.push("The selected signer's budget has not been read yet.");
   if (actorState && actorState.free <= actorState.frozen)
     common.push(
-      "У вибраного підписанта немає відомих доступних коштів для комісії.",
+      "The selected signer has no known available funds for the fee.",
     );
   const requireOld = (): string[] => [
-    ...(!oldMember ? ["Потрібен підписант початкової групи M0."] : []),
+    ...(!oldMember ? ["A signer from the original group M0 is required."] : []),
     ...(!["M0", "DualControl"].includes(current)
-      ? ["Повноваження M0 не підтверджені."]
+      ? ["M0 authority is not verified."]
       : []),
   ];
   const requireNew = (): string[] => [
-    ...(!newMember ? ["Потрібен підписант нової групи M1."] : []),
+    ...(!newMember ? ["A signer from the new group M1 is required."] : []),
     ...(!["M1", "DualControl"].includes(current)
-      ? ["Повноваження M1 не підтверджені."]
+      ? ["M1 authority is not verified."]
       : []),
   ];
   const requirePure = (): string[] =>
     !workspace.pure
-      ? ["Спочатку створіть і підтвердьте бенефіціара P."]
+      ? ["Create and verify beneficiary P first."]
       : workspace.creationEvidence.some(
             (entry) =>
               entry.kind === "native_chain" &&
@@ -124,24 +124,24 @@ export function actionViews(
               /^0x[0-9a-f]{64}$/.test(entry.sourceId ?? ""),
           )
         ? []
-        : ["Потрібне підтверджене походження Pure з події PureCreated."];
+        : ["Pure provenance must be verified from a PureCreated event."];
   const requireMapping = (): string[] =>
     mapped(pureState)
       ? []
-      : ["Потрібне підтверджене постійне mapping P → h(P) → P."];
+      : ["Verified persistent mapping P → h(P) → P is required."];
   const requireGrant = (): string[] =>
     workspace.grantId !== null && workspace.contract && chain?.grant
       ? requirePure()
-      : ["Спочатку створіть або перевірте грант для бенефіціара P."];
+      : ["Create or verify a grant for beneficiary P first."];
   const grant = chain?.grant;
   const milestone = (index: number) => grant?.milestones[index];
   const requireOpen = (index: number): string[] => {
     const value = milestone(index);
-    if (!value) return ["Стан етапу ще не прочитано."];
+    if (!value) return ["The milestone state has not been read yet."];
     return value.state === 0 && value.round === 0
       ? []
       : [
-          "Потрібен відкритий етап у початковому раунді. Повторне подання не підтримується.",
+          "An open milestone in its initial round is required. Resubmission is unsupported.",
         ];
   };
   const directRole = selectedRoles.find((role) =>
@@ -150,40 +150,40 @@ export function actionViews(
   const fields: OperationField[] = [
     {
       name: "contract",
-      label: "Адреса розгорнутого контракту Vestry",
+      label: "Deployed Vestry contract address",
       type: "text",
       required: true,
       value: workspace.contract ?? "",
-      help: "Точна H160-адреса незміненого контракту в поточній мережі.",
+      help: "Exact H160 address of the unchanged contract on the current network.",
     },
     {
       name: "firstAmount",
-      label: `Перший транш (${symbol})`,
+      label: `First tranche (${symbol})`,
       type: "number",
       required: true,
       value: "18",
     },
     {
       name: "secondAmount",
-      label: `Другий транш (${symbol})`,
+      label: `Second tranche (${symbol})`,
       type: "number",
       required: true,
       value: "12",
     },
     {
       name: "vestingBlocks",
-      label: "Vesting першого траншу: блоків",
+      label: "First tranche vesting: blocks",
       type: "number",
       required: true,
       value: "1800",
     },
     {
       name: "deadlineDays",
-      label: "Строк етапів: днів від підготовки",
+      label: "Milestone deadline: days from preparation",
       type: "number",
       required: true,
       value: "7",
-      help: "Точні Unix-строки будуть зафіксовані в перегляді. Другий транш не має нового vesting.",
+      help: "Exact Unix deadlines are fixed in the review. The second tranche has no new vesting.",
     },
   ];
   function action(
@@ -208,7 +208,7 @@ export function actionViews(
                   record.evidence.length > 0,
               ),
           )
-          .map((gate) => `Потрібне підтвердження можливості мережі: ${gate}.`)
+          .map((gate) => `Network capability must be verified: ${gate}.`)
       : [];
     const blockers = [...common, ...unavailableCapabilities, ...ownBlockers];
     return {
@@ -226,26 +226,29 @@ export function actionViews(
   const proofState = proof(workspace, chain);
   const submittedOptions = [0, 1]
     .filter((index) => milestone(index)?.state === 1)
-    .map((index) => ({ value: String(index), label: `Етап ${index + 1}` }));
+    .map((index) => ({
+      value: String(index),
+      label: `Milestone ${index + 1}`,
+    }));
   return [
     action(
       "GRC-SETUP-FUND-M0",
-      "Поповнити резерв M0",
-      "Окремо забезпечте контролеру резерв створення Pure. Це не бюджет комісій підписантів.",
+      "Fund the M0 reserve",
+      "Fund the controller's Pure creation reserve separately. This does not fund signer fees.",
       "funding",
-      "Вибраний донор",
+      "Selected donor",
       [],
       [amountField(symbol)],
     ),
     action(
       "GRC-SETUP-FUND-ACTOR",
-      "Поповнити бюджет учасника",
-      "Одна визначена адреса та сума. Бюджети учасників не змішуються з коштами гранту.",
+      "Fund a participant's budget",
+      "One specified address and amount. Participant budgets remain separate from grant funds.",
       "funding",
-      "Вибраний донор",
+      "Selected donor",
       [],
       [
-        roleField(workspace, "recipientRole", "Отримувач", [
+        roleField(workspace, "recipientRole", "Recipient", [
           "A",
           "B",
           "D",
@@ -258,65 +261,65 @@ export function actionViews(
     ),
     action(
       "GRC-SETUP-CREATE-PURE",
-      "Створити бенефіціара P",
-      "Початкова група M0 створює окремий native Pure. Адреса визначається з фіналізованої квитанції.",
+      "Create beneficiary P",
+      "The original group M0 creates a separate native Pure. Its address comes from the finalized receipt.",
       "setup",
-      "Група M0",
+      "Group M0",
       [
-        ...(!oldMember ? ["Потрібен підписант M0."] : []),
+        ...(!oldMember ? ["An M0 signer is required."] : []),
         ...(workspace.pure
-          ? ["Бенефіціар P уже прив’язаний до простору."]
+          ? ["Beneficiary P is already linked to the workspace."]
           : []),
       ],
       [
         {
           name: "pureIndex",
-          label: "Індекс Pure",
+          label: "Pure index",
           type: "number",
           required: true,
           value: "0",
-          help: "Ціле число 0–65535. Новий індекс не використовується як повтор невідомої спроби.",
+          help: "Integer from 0 to 65535. A new index is not a retry of an unknown attempt.",
         },
       ],
     ),
     action(
       "GRC-SETUP-FUND-P",
-      "Поповнити ліквідність P",
-      "Окремий незаблокований бюджет бенефіціара для mapping, резервів та native-операцій.",
+      "Fund P liquidity",
+      "A separate unlocked beneficiary budget for mapping, reserves and native operations.",
       "funding",
-      "Вибраний донор",
+      "Selected donor",
       requirePure(),
       [amountField(symbol)],
     ),
     action(
       "GRC-SETUP-MAP-P",
-      "Створити mapping P",
-      "Постійне зіставлення native P з адресою h(P). Потрібна перевірка зворотного mapping.",
+      "Create P mapping",
+      "Persistent mapping from native P to h(P). Reverse mapping must be verified.",
       "setup",
-      "Група M0 через P",
+      "Group M0 through P",
       [
         ...requirePure(),
         ...requireOld(),
-        ...(mapped(pureState) ? ["Mapping P уже підтверджено."] : []),
+        ...(mapped(pureState) ? ["P mapping is already verified."] : []),
       ],
     ),
     action(
       "GRC-SETUP-MAP-ACTOR",
-      "Створити mapping прямого учасника",
-      "Фонд і рецензенти викликають контракт від власних native-акаунтів.",
+      "Map a direct participant",
+      "The funder and reviewers call the contract from their own native accounts.",
       "setup",
-      "Вибраний F / R1 / R2",
+      "Selected F / R1 / R2",
       [
-        ...(!directRole ? ["Виберіть особистий акаунт F, R1 або R2."] : []),
+        ...(!directRole ? ["Select a personal account for F, R1 or R2."] : []),
         ...(mapped(actorState)
-          ? ["Mapping вибраного акаунта вже підтверджено."]
+          ? ["The selected account's mapping is already verified."]
           : []),
       ],
       [
         roleField(
           workspace,
           "actorRole",
-          "Прямий учасник",
+          "Direct participant",
           ["F", "R1", "R2"],
           directRole,
         ),
@@ -324,34 +327,34 @@ export function actionViews(
     ),
     action(
       "GRC-GRANT-CREATE",
-      "Створити та профінансувати грант",
-      "Два етапи, два рецензенти. Фонд від початку задає h(P) бенефіціаром.",
+      "Create and fund the grant",
+      "Two milestones, two reviewers. The funder sets h(P) as beneficiary from the start.",
       "grant",
-      "Фонд F",
+      "Funder F",
       [
         ...requirePure(),
         ...requireMapping(),
         ...(!selectedRoles.includes("F")
-          ? ["Створювати грант може визначений фонд F."]
+          ? ["Only the designated funder F may create the grant."]
           : []),
-        ...(!mapped(actorState) ? ["Потрібне mapping фонду F."] : []),
+        ...(!mapped(actorState) ? ["Funder F mapping is required."] : []),
         ...(["R1", "R2"] as const).flatMap((role) =>
           mapped(stateFor(chain, workspace.participants[role]))
             ? []
-            : [`Потрібне підтверджене mapping ${role}.`],
+            : [`Verified ${role} mapping is required.`],
         ),
         ...(workspace.grantId !== null
-          ? ["Грант уже прив’язаний до цього простору."]
+          ? ["A grant is already linked to this workspace."]
           : []),
       ],
       fields,
     ),
     action(
       "GRC-GRANT-SUBMIT-M0",
-      "Подати перший етап через M0",
-      "Доказ буде публічним. Подання не є схваленням або виплатою.",
+      "Submit the first milestone through M0",
+      "The evidence will be public. Submission does not imply approval or release.",
       "grant",
-      "Група M0 через P",
+      "Group M0 through P",
       [
         ...requirePure(),
         ...requireMapping(),
@@ -362,34 +365,34 @@ export function actionViews(
       [
         {
           name: "evidence",
-          label: "Публічний доказ",
+          label: "Public evidence",
           type: "textarea",
           required: true,
           maxBytes: 1024,
-          help: "Опис або посилання. Текст записується on-chain; не додавайте секрети.",
+          help: "Description or link. Text is recorded on-chain; do not include secrets.",
         },
       ],
     ),
     action(
       "GRC-GRANT-APPROVE",
-      "Схвалити поданий етап",
-      "Ваш голос може одразу спричинити виплату та створення vesting у цій самій транзакції.",
+      "Approve a submitted milestone",
+      "Your vote may immediately release funds and create vesting in the same transaction.",
       "grant",
-      "Прямий рецензент R1 / R2",
+      "Direct reviewer R1 / R2",
       [
         ...requireGrant(),
         ...(!selectedRoles.some((role) => role === "R1" || role === "R2")
-          ? ["Виберіть особистий акаунт рецензента."]
+          ? ["Select the reviewer's personal account."]
           : []),
-        ...(!mapped(actorState) ? ["Потрібне mapping рецензента."] : []),
+        ...(!mapped(actorState) ? ["Reviewer mapping is required."] : []),
         ...(!submittedOptions.length
-          ? ["Немає етапу, що очікує схвалення."]
+          ? ["No milestone is awaiting approval."]
           : []),
       ],
       [
         {
           name: "index",
-          label: "Етап на розгляді",
+          label: "Milestone under review",
           type: "select",
           required: true,
           options: submittedOptions,
@@ -399,116 +402,114 @@ export function actionViews(
     ),
     action(
       "GRC-ROTATION-ADD-M1",
-      "Додати нову групу M1",
-      "Після виконання M0 і M1 матимуть повну владу над P до окремого вилучення M0.",
+      "Add the new controller M1",
+      "M0 and M1 will have full authority over P until M0 is removed separately.",
       "handoff",
-      "Група M0",
+      "Group M0",
       [
         ...requirePure(),
         ...requireOld(),
         ...requireGrant(),
         ...requireMapping(),
         ...(current !== "M0"
-          ? ["Потрібен точний початковий набір із M0."]
+          ? ["The exact initial M0 inventory is required."]
           : []),
         ...(!hasBaseline
-          ? ["Потрібен перевірений початковий грант і активний vesting."]
+          ? ["A verified grant baseline and active vesting are required."]
           : []),
       ],
     ),
     action(
       "GRC-ROTATION-REMOVE-M0",
-      "Вилучити початкову групу M0",
-      "Вилучається тільки M0 / Any / 0. Очікується точний залишковий набір із M1.",
+      "Remove the original controller M0",
+      "Only M0 / Any / 0 is removed. The expected remaining inventory contains M1 only.",
       "handoff",
-      "Група M1",
+      "Group M1",
       [
         ...requirePure(),
         ...requireNew(),
         ...(current !== "DualControl"
-          ? ["Потрібен точний стан DualControl."]
+          ? ["The exact DualControl state is required."]
           : []),
         ...(!hasBaseline
-          ? ["Початковий стан для порівняння ще не зафіксований."]
+          ? ["The comparison baseline has not been recorded yet."]
           : []),
       ],
     ),
     action(
       "GRC-GRANT-SUBMIT-M1",
-      "Подати наступний етап через M1",
-      "Окреме подання наступного етапу тим самим бенефіціаром підтверджує продовження роботи.",
+      "Submit the next milestone through M1",
+      "A separate submission by the same beneficiary proves continued work.",
       "handoff",
-      "Група M1 через P",
+      "Group M1 through P",
       [
         ...requirePure(),
         ...requireMapping(),
         ...requireGrant(),
         ...requireNew(),
         ...(current !== "M1"
-          ? ["Спочатку підтвердьте точний залишковий набір із M1."]
+          ? ["Verify the exact remaining M1 inventory first."]
           : []),
         ...requireOpen(1),
-        ...(!hasBaseline
-          ? ["Потрібен збережений початковий стан гранту."]
-          : []),
+        ...(!hasBaseline ? ["A saved grant baseline is required."] : []),
       ],
       [
         {
           name: "evidence",
-          label: "Публічний доказ",
+          label: "Public evidence",
           type: "textarea",
           required: true,
           maxBytes: 1024,
-          help: "Це окреме подання M1 на тому самому гранті. Дані записуються on-chain.",
+          help: "This is a separate M1 submission on the same grant. Data is recorded on-chain.",
         },
       ],
     ),
     action(
       "GRC-VESTING-VEST-OTHER",
-      "Оновити vesting-lock P",
-      "Окрема післяперевірочна native-операція. Вона не є доказом передачі керування.",
+      "Refresh P's vesting lock",
+      "A separate native maintenance operation after verification. It is not proof of a control handoff.",
       "maintenance",
-      "Оператор S",
+      "Operator S",
       [
         ...requirePure(),
         ...(!selectedRoles.includes("S")
-          ? ["Виберіть визначеного оператора S."]
+          ? ["Select the designated operator S."]
           : []),
         ...(!["continued", "drift"].includes(proofState.continuity)
-          ? ["Спочатку заверште й перевірте продовження гранту."]
+          ? ["Complete and verify grant continuation first."]
           : []),
       ],
     ),
     action(
       "GRC-MULTISIG-CANCEL",
-      "Скасувати native-пропозицію",
-      "Потрібен оригінальний depositor та точний timepoint. Скасування може програти гонку виконанню.",
+      "Cancel a native proposal",
+      "The original depositor and exact timepoint are required. Execution may win a race against cancellation.",
       "recovery",
-      "Початковий депозитор",
+      "Original depositor",
       [
         ...(!oldMember && !newMember
-          ? ["Потрібен учасник відповідного контролера."]
+          ? ["A member of the relevant controller is required."]
           : []),
       ],
       [
         {
           name: "targetController",
-          label: "Контролер пропозиції",
+          label: "Proposal controller",
           type: "select",
           required: true,
           value: "M0",
           options: [
-            { value: "M0", label: "M0 · початкова група" },
-            { value: "M1", label: "M1 · нова група" },
+            { value: "M0", label: "M0 · original group" },
+            { value: "M1", label: "M1 · new group" },
           ],
         },
         {
           name: "callHash",
-          label: "Точний native call hash",
+          label: "Exact native call hash",
           type: "text",
           required: true,
           placeholder: "0x…",
-          help: "Час створення й depositor будуть прочитані з актуальної native-пропозиції.",
+          help: "The creation timepoint and depositor are read from the current native proposal.",
         },
       ],
     ),

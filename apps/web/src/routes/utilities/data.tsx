@@ -21,21 +21,21 @@ export function Data(props: ScreenProps) {
     setError("");
     setInspected(false);
     if (file.size > maxSize) {
-      setError("Пакет перевищує 5 MiB. Файл не прочитано.");
+      setError("The package exceeds 5 MiB. The file was not read.");
       return;
     }
     try {
       setContents(await file.text());
       setFileName(file.name);
     } catch {
-      setError("Не вдалося прочитати файл.");
+      setError("Could not read the file.");
     }
   }
   async function inspect(event: FormEvent) {
     event.preventDefault();
     setError("");
     if (new TextEncoder().encode(contents).length > maxSize) {
-      setError("Пакет перевищує 5 MiB.");
+      setError("The package exceeds 5 MiB.");
       return;
     }
     try {
@@ -48,19 +48,19 @@ export function Data(props: ScreenProps) {
   return (
     <>
       <PageHeader
-        eyebrow="Дані простору"
-        title="Передайте контекст між пристроями"
-        description="Пакет містить дані й докази для незалежної перевірки. Підписи, endpoint та локальні дозволи не передаються."
+        eyebrow="Workspace data"
+        title="Transfer context between devices"
+        description="The package contains data and evidence for independent verification. Signatures, endpoints and local permissions are excluded."
       />
       <div className="equal-grid">
-        <Card title="Імпортувати пакет" eyebrow="Спочатку перевірка">
+        <Card title="Import a package" eyebrow="Verify first">
           <form onSubmit={(event) => void inspect(event)}>
             <input
               type="file"
               ref={fileInput}
               accept="application/json,.json"
               className="sr-only"
-              aria-label="Вибрати JSON-пакет"
+              aria-label="Choose a JSON package"
               onChange={(event) => void loadFile(event.target.files?.[0])}
             />
             <Button
@@ -68,11 +68,11 @@ export function Data(props: ScreenProps) {
               icon="upload"
               onClick={() => fileInput.current?.click()}
             >
-              Вибрати JSON-файл
+              Choose a JSON file
             </Button>
             {fileName && <p className="muted">{fileName}</p>}
             <div className="field">
-              <label htmlFor="import-json">Або вставте JSON</label>
+              <label htmlFor="import-json">Or paste JSON</label>
               <textarea
                 id="import-json"
                 rows={10}
@@ -81,12 +81,12 @@ export function Data(props: ScreenProps) {
                   setContents(event.target.value);
                   setInspected(false);
                 }}
-                placeholder="Вміст unsigned-пакета"
+                placeholder="Unsigned package contents"
                 spellCheck={false}
               />
               <p className="field__help">
-                До 5 MiB. Непідтримувані версії, конфліктні записи та підписані
-                пакети відхиляються або ізолюються.
+                Up to 5 MiB. Unsupported versions, conflicting records and
+                signed packages are rejected or quarantined.
               </p>
             </div>
             {error && (
@@ -100,33 +100,33 @@ export function Data(props: ScreenProps) {
               icon="shield"
               disabled={!contents.trim() || !!snapshot.busy}
             >
-              Перевірити та імпортувати
+              Verify and import
             </Button>
             {inspected && (
               <p className="field__help">
-                Результат перевірки показано в повідомленні. Поточні мережеві
-                факти потребують окремого оновлення.
+                The notification shows the validation result. Current network
+                facts require a separate refresh.
               </p>
             )}
           </form>
         </Card>
         <div>
           <Card
-            title="Експортувати поточний простір"
-            eyebrow="Без підписаних пакетів"
+            title="Export the current workspace"
+            eyebrow="Signed payloads excluded"
           >
             <p className="muted">
-              Експорт збере пов’язані записи й докази. Локальні підписи та
-              службові дані гаманця залишаться в цьому браузері.
+              Export collects related records and evidence. Local signatures and
+              wallet metadata remain in this browser.
             </p>
             <KeyValues
               rows={[
                 {
-                  label: "Простір",
-                  value: snapshot.workspace?.name ?? "Не обрано",
+                  label: "Workspace",
+                  value: snapshot.workspace?.name ?? "Not selected",
                 },
-                { label: "Середовище", value: snapshot.network.mode },
-                { label: "Підписані транзакції", value: "Не включаються" },
+                { label: "Environment", value: snapshot.network.mode },
+                { label: "Signed transactions", value: "Excluded" },
               ]}
             />
             <Button
@@ -135,12 +135,12 @@ export function Data(props: ScreenProps) {
               disabled={!snapshot.workspace || !!snapshot.busy}
               onClick={() => void run({ type: "export-package" })}
             >
-              Завантажити пакет
+              Download package
             </Button>
           </Card>
-          <Notice title="Локальні дані не скасовують on-chain дії">
-            Видалення або передача файлу не скасовує native-пропозиції та не
-            відкликає вже наданих підписів.
+          <Notice title="Local data does not cancel on-chain actions">
+            Deleting or transferring a file does not cancel native proposals or
+            revoke existing signatures.
           </Notice>
         </div>
       </div>

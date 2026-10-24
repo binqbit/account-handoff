@@ -41,14 +41,14 @@ export function workspaceView(
     [
       {
         address: workspace.M0.account,
-        role: "Резерв створення Pure",
+        role: "Pure creation reserve",
         mappingRequired: false,
       },
       ...(workspace.pure
         ? [
             {
               address: workspace.pure,
-              role: "Ліквідність бенефіціара P",
+              role: "Beneficiary P liquidity",
               mappingRequired: true,
             },
           ]
@@ -107,7 +107,7 @@ export function workspaceView(
       return {
         id: `${workspace.grantId}:${index}`,
         index,
-        title: index === 0 ? "Початковий результат" : "Продовження роботи",
+        title: index === 0 ? "Initial deliverable" : "Continued work",
         amount:
           nativeAmount === null
             ? `${milestone.amount} ABI units`
@@ -119,7 +119,7 @@ export function workspaceView(
         vesting:
           milestone.vestingBlocks > 0
             ? `${milestone.vestingBlocks} counted blocks`
-            : "Без нового vesting",
+            : "No new vesting",
         approvals: null,
         approvalCount: milestone.approvals,
         requiredApprovals: grant?.threshold ?? 2,
@@ -130,34 +130,35 @@ export function workspaceView(
   const setupProgress: ReadinessView[] = [
     {
       id: "team",
-      label: "Команда й контролери",
+      label: "Team and controllers",
       status: "ready",
-      detail: "Склад M0/M1 збережено. Поточні повноваження читаються окремо.",
+      detail:
+        "M0/M1 membership is saved. Current authority is read separately.",
     },
     {
       id: "pure",
-      label: "Бенефіціар P",
+      label: "Beneficiary P",
       status:
         workspace.pure && workspace.creationEvidence.length
           ? "ready"
           : "blocked",
       detail: workspace.pure
         ? workspace.creationEvidence.length
-          ? "Збережена адреса та квитанція створення Pure."
-          : "Адреса відома, потрібна перевірка походження."
-        : "Потрібно створити P через M0.",
+          ? "The Pure address and creation receipt are saved."
+          : "The address is known; provenance needs verification."
+        : "Create P through M0.",
     },
     {
       id: "mapping",
-      label: "Постійне mapping P",
+      label: "Persistent P mapping",
       status: mapped(pureState) ? "ready" : !pureState ? "unknown" : "blocked",
       detail: mapped(pureState)
-        ? "Зворотне зіставлення підтверджує той самий P."
-        : "Потрібне актуальне читання P → h(P) → P.",
+        ? "Reverse mapping confirms the same P."
+        : "A current P → h(P) → P read is required.",
     },
     {
       id: "grant",
-      label: "Грант для h(P)",
+      label: "Grant for h(P)",
       status:
         grant &&
         mapped(pureState) &&
@@ -165,51 +166,50 @@ export function workspaceView(
           ? "ready"
           : "blocked",
       detail: grant
-        ? "Стан контракту прочитано; перевіряється точний бенефіціар."
-        : "Фонд створює грант після підготовки бенефіціара.",
+        ? "Contract state was read; the exact beneficiary is checked."
+        : "The funder creates the grant after the beneficiary is ready.",
     },
     {
       id: "baseline",
-      label: "Початковий стан і vesting",
+      label: "Baseline and vesting",
       status: workspace.baseline ? "ready" : "blocked",
       detail: workspace.baseline
-        ? "Початковий стан збережено з прив’язкою до блока."
-        : "Потрібна виплата першого траншу з активним native vesting.",
+        ? "The baseline is saved and bound to its block."
+        : "The first tranche must be released with active native vesting.",
     },
   ];
   let currentTask: WorkspaceView["currentTask"];
   if (!chain || !eq(chain.fingerprint.genesis, workspace.genesis))
     currentTask = {
-      title: "Перевірте мережу простору",
-      detail:
-        "Оберіть відповідний native endpoint і отримайте фіналізовані дані.",
+      title: "Check the workspace network",
+      detail: "Select the matching native endpoint and read finalized data.",
       destination: "network",
     };
   else if (!workspace.pure)
     currentTask = {
-      title: "Створіть сталого бенефіціара",
+      title: "Create the stable beneficiary",
       detail:
-        "Спочатку забезпечте M0 резервом створення, потім створіть P через початкову групу.",
+        "Fund M0's creation reserve, then create P through the original group.",
       actionId: "GRC-SETUP-CREATE-PURE",
     };
   else if (!mapped(pureState))
     currentTask = {
-      title: "Підготуйте mapping бенефіціара",
-      detail:
-        "Забезпечте P ліквідністю та підтвердьте його постійне зіставлення з h(P).",
+      title: "Prepare beneficiary mapping",
+      detail: "Fund P's liquidity and verify its persistent mapping to h(P).",
       actionId: "GRC-SETUP-MAP-P",
     };
   else if (!grant || workspace.grantId === null)
     currentTask = {
-      title: "Створіть грант для h(P)",
-      detail: "Фонд фінансує два етапи для підготовленого бенефіціара.",
+      title: "Create a grant for h(P)",
+      detail:
+        "The funder finances two milestones for the prepared beneficiary.",
       actionId: "GRC-GRANT-CREATE",
     };
   else if (current === "Diverged")
     currentTask = {
-      title: "Перевірте неочікувані повноваження",
+      title: "Review unexpected authority",
       detail:
-        "Фактичний список делегатів не відповідає дозволеному набору M0/M1.",
+        "The actual delegate inventory does not match the allowed M0/M1 set.",
       destination: "team",
     };
   else if (
@@ -217,30 +217,30 @@ export function workspaceView(
     !workspace.baseline
   )
     currentTask = {
-      title: "Перший етап очікує рецензентів",
+      title: "The first milestone awaits reviewers",
       detail:
-        "R1 та R2 окремо перевіряють доказ і схвалюють виплату першого траншу.",
+        "R1 and R2 independently review the evidence and approve the first tranche release.",
       actionId: "GRC-GRANT-APPROVE",
     };
   else if (!workspace.baseline)
     currentTask = {
-      title: "Підготуйте початковий стан гранту",
+      title: "Prepare the grant baseline",
       detail:
-        "Перший етап має створити активний vesting перед передачею керування.",
+        "The first milestone must establish active vesting before control is handed off.",
       actionId: "GRC-GRANT-SUBMIT-M0",
     };
   else if (current === "DualControl")
     currentTask = {
-      title: "Вилучіть початкову групу M0",
+      title: "Remove the original group M0",
       detail:
-        "Зараз обидві групи мають повноваження. Наступний крок виконує M1.",
+        "Both groups currently have authority. M1 performs the next step.",
       actionId: "GRC-ROTATION-REMOVE-M0",
     };
   else if (current === "M1" && continuity.continuity !== "continued")
     currentTask = {
-      title: "Продовжіть грант новою групою",
+      title: "Continue the grant with the new group",
       detail:
-        "Подайте наступний етап через M1. Це окрема дія після вилучення M0.",
+        "Submit the next milestone through M1. This is a separate action after removing M0.",
       actionId: "GRC-GRANT-SUBMIT-M1",
     };
   else if (
@@ -248,15 +248,15 @@ export function workspaceView(
     continuity.continuity === "drift"
   )
     currentTask = {
-      title: "Перегляньте збережений доказ",
+      title: "Review the saved evidence",
       detail: continuity.detail,
       destination: "history",
     };
   else
     currentTask = {
-      title: "Підготуйте нову групу керування",
+      title: "Prepare the new controller group",
       detail:
-        "Додайте M1 через початкову групу. Потім окремо вилучіть M0 та продовжіть грант.",
+        "Add M1 through the original group. Then remove M0 separately and continue the grant.",
       actionId: "GRC-ROTATION-ADD-M1",
     };
   const totals = grant?.milestones.reduce((sum, item) => sum + item.amount, 0n);
@@ -268,7 +268,7 @@ export function workspaceView(
     beneficiary: workspace.pure
       ? {
           address: workspace.pure,
-          label: "Сталий бенефіціар P",
+          label: "Stable beneficiary P",
           mappedAddress: mapped(pureState) ? pureState!.mappedAddress : null,
         }
       : null,

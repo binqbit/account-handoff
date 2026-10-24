@@ -33,10 +33,10 @@ export function ReadinessCards({ rows }: { rows: ReadinessView[] }) {
           >
             {
               {
-                ready: "Готово",
-                blocked: "Потрібна дія",
-                unknown: "Не перевірено",
-                checking: "Перевіряємо",
+                ready: "Ready",
+                blocked: "Action required",
+                unknown: "Not verified",
+                checking: "Checking",
               }[row.status]
             }
           </Badge>

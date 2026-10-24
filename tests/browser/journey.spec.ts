@@ -9,48 +9,50 @@ test("four destinations retain the same beneficiary and separate operation stage
     page.getByRole("heading", { name: "Atlas Research", exact: true }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Грант і етапи", exact: true })
+    .getByRole("button", { name: "Grant and milestones", exact: true })
     .click();
   await expect(
     page.getByRole("heading", {
-      name: "Продовжуйте роботу над тим самим грантом",
+      name: "Continue work on the same grant",
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Наступний результат" }),
+    page.getByRole("heading", { name: "Next deliverable" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Команда", exact: true }).click();
+  await page.getByRole("button", { name: "Team", exact: true }).click();
   await expect(
     page.getByRole("heading", {
-      name: "Люди змінюються. Бенефіціар — той самий.",
+      name: "People change. The beneficiary stays.",
     }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Передати керування", exact: true })
+    .getByRole("button", { name: "Hand off control", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Три дії. Один сталий бенефіціар." }),
+    page.getByRole("heading", {
+      name: "Three actions. One stable beneficiary.",
+    }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Перевірити наступну дію" }).click();
-  await page.getByRole("button", { name: "Підготувати до перегляду" }).click();
-  const sign = page.getByRole("button", { name: "Запросити підпис" });
+  await page.getByRole("button", { name: "Review the next action" }).click();
+  await page.getByRole("button", { name: "Prepare for review" }).click();
+  const sign = page.getByRole("button", { name: "Request signature" });
   await expect(sign).toBeDisabled();
   await expect(
-    page.getByText("M0 залишається авторизованою.", { exact: true }),
+    page.getByText("M0 remains authorized.", { exact: true }),
   ).toBeVisible();
   await page.getByRole("checkbox").check();
   await sign.click();
   const send = page.getByRole("button", {
-    name: "Надіслати підписану операцію",
+    name: "Send signed operation",
   });
   await expect(send).toBeDisabled();
   await page.getByRole("checkbox").check();
   await send.click();
   await expect(
-    page.getByRole("button", { name: "Запросити підпис" }),
+    page.getByRole("button", { name: "Request signature" }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Звірити результат", exact: true }),
+    page.getByRole("button", { name: "Reconcile outcome", exact: true }),
   ).toBeVisible();
   const commands = await page.evaluate(() =>
     (
@@ -67,15 +69,15 @@ test("changing the account invalidates review without prompting or sending", asy
   page,
 }) => {
   await page.goto(`${harness}#review?action=GRC-ROTATION-ADD-M1`);
-  await page.getByRole("button", { name: "Підготувати до перегляду" }).click();
+  await page.getByRole("button", { name: "Prepare for review" }).click();
   await page.getByRole("checkbox").check();
-  await page.getByLabel("Особистий акаунт").selectOption({ label: "Богдан" });
+  await page.getByLabel("Personal account").selectOption({ label: "Bob" });
   await expect(page.getByRole("checkbox")).not.toBeChecked();
   await expect(
-    page.getByRole("button", { name: "Запросити підпис" }),
+    page.getByRole("button", { name: "Request signature" }),
   ).toHaveCount(0);
   await expect(
-    page.getByText("Змінено акаунт. Потрібен новий перегляд."),
+    page.getByText("Account changed. A new review is required."),
   ).toBeVisible();
   const types = await page.evaluate(() =>
     (
@@ -88,13 +90,13 @@ test("UTF-8 evidence limit blocks preparation and retains text", async ({
   page,
 }) => {
   await page.goto(`${harness}#review?action=GRC-GRANT-SUBMIT-M1`);
-  const evidence = page.getByLabel("Публічний доказ");
-  await evidence.fill("ї".repeat(513));
-  await page.getByRole("button", { name: "Підготувати до перегляду" }).click();
+  const evidence = page.getByLabel("Public evidence");
+  await evidence.fill("é".repeat(513));
+  await page.getByRole("button", { name: "Prepare for review" }).click();
   await expect(page.getByRole("alert")).toContainText(
-    "перевищує 1024 UTF-8 байт",
+    "exceeds 1024 UTF-8 bytes",
   );
-  await expect(evidence).toHaveValue("ї".repeat(513));
+  await expect(evidence).toHaveValue("é".repeat(513));
   expect(
     await page.evaluate(
       () =>
@@ -109,19 +111,17 @@ test("empty workspace exposes setup and actual network configuration without a f
   await page.goto(`${harness}?scenario=empty`);
   await expect(
     page.getByRole("heading", {
-      name: "Команда змінюється. Грант залишається.",
+      name: "The team changes. The grant stays.",
     }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Створити простір", exact: true })
+    .getByRole("button", { name: "Create workspace", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Почніть зі сталого бенефіціара" }),
+    page.getByRole("heading", { name: "Start with a stable beneficiary" }),
   ).toBeVisible();
   await expect(
-    page.getByLabel("Початкова група M0 — три адреси"),
+    page.getByLabel("Original group M0 — three addresses"),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Зберегти команду" }),
-  ).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Save team" })).toBeDisabled();
 });

@@ -16,9 +16,9 @@ export function Attention(props: ScreenProps) {
   return (
     <>
       <PageHeader
-        eyebrow="Потребує уваги"
-        title="З’ясуйте результат перед наступною дією"
-        description="Невідомий результат не означає помилку транзакції. Перевірте наявну спробу та native-пропозицію."
+        eyebrow="Needs attention"
+        title="Resolve the outcome before acting again"
+        description="An unknown outcome does not mean the transaction failed. Check the existing attempt and native proposal."
       />
       {operation &&
         (operation.canReconcile || operation.blockers.length > 0) && (
@@ -37,7 +37,7 @@ export function Attention(props: ScreenProps) {
               icon="arrow"
               onClick={() => props.navigate("review", operation.actionId)}
             >
-              Відкрити спробу
+              Open attempt
             </Button>
           </Card>
         )}
@@ -59,16 +59,16 @@ export function Attention(props: ScreenProps) {
                 })
               }
             >
-              Звірити цю спробу
+              Reconcile this attempt
             </Button>
           )}
           {entry.evidence && <Evidence value={entry.evidence} />}
         </Card>
       ))}
       {!entries.length && !operation?.canReconcile && (
-        <EmptyState icon="check" title="Нез’ясованих спроб не знайдено">
-          Це стан відомих цьому браузеру записів. Оновіть простір, щоб звірити
-          поточні мережеві дані.
+        <EmptyState icon="check" title="No unresolved attempts found">
+          This reflects records known to this browser. Refresh the workspace to
+          reconcile current network data.
         </EmptyState>
       )}
       {props.snapshot.actions
@@ -77,7 +77,7 @@ export function Attention(props: ScreenProps) {
           <Card key={action.id} title={action.title}>
             <p>{action.description}</p>
             <Button onClick={() => props.openAction(action.id)}>
-              Перевірити скасування
+              Review cancellation
             </Button>
           </Card>
         ))}

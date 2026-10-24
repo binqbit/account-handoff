@@ -16,18 +16,18 @@ import type {
 import type { ScreenProps } from "../screen-types";
 
 export const authorityText: Record<WorkspaceView["authority"], string> = {
-  M0: "Початкова група M0",
-  DualControl: "Обидві групи мають владу",
-  M1: "Нова група M1",
-  Diverged: "Неочікувані повноваження",
-  Unknown: "Потрібна перевірка",
+  M0: "Original group M0",
+  DualControl: "Both groups have authority",
+  M1: "New group M1",
+  Diverged: "Unexpected authority",
+  Unknown: "Verification required",
 };
 const milestoneText: Record<MilestoneView["state"], string> = {
-  Open: "Відкритий",
-  Submitted: "На розгляді",
-  Released: "Виплачено",
-  Reclaimed: "Повернуто фонду",
-  Unknown: "Стан невідомий",
+  Open: "Open",
+  Submitted: "Submitted",
+  Released: "Released",
+  Reclaimed: "Reclaimed by funder",
+  Unknown: "State unknown",
 };
 export const stateTone = (state: string): Tone =>
   ["Released", "M1", "continued"].includes(state)
@@ -60,7 +60,7 @@ export function ActionButton({
 export function NoWorkspace({ navigate }: ScreenProps) {
   return (
     <EmptyState
-      title="Спочатку відкрийте робочий простір"
+      title="Open a workspace first"
       icon="overview"
       action={
         <>
@@ -69,16 +69,16 @@ export function NoWorkspace({ navigate }: ScreenProps) {
             icon="plus"
             onClick={() => navigate("setup")}
           >
-            Створити простір
+            Create workspace
           </Button>
           <Button icon="upload" onClick={() => navigate("data")}>
-            Імпортувати дані
+            Import data
           </Button>
         </>
       }
     >
-      Тут з’являться бенефіціар, команда, етапи гранту та підтверджені дії.
-      Відомі простори зберігаються в цьому браузері.
+      The beneficiary, team, milestones and verified actions appear here. Known
+      workspaces are saved in this browser.
     </EmptyState>
   );
 }
@@ -94,7 +94,7 @@ export function MilestoneCard({
   return (
     <Card
       className="milestone-card"
-      eyebrow={`Етап ${milestone.index + 1}`}
+      eyebrow={`Milestone ${milestone.index + 1}`}
       title={milestone.title}
       action={
         <Badge tone={stateTone(milestone.state)}>
@@ -108,24 +108,27 @@ export function MilestoneCard({
       </div>
       <KeyValues
         rows={[
-          { label: "Раунд", value: milestone.round ?? "Невідомо" },
-          { label: "Строк", value: milestone.deadline ?? "Потрібна перевірка" },
+          { label: "Round", value: milestone.round ?? "Unknown" },
           {
-            label: "Умови виплати",
-            value: milestone.vesting ?? "Без нового vesting",
+            label: "Deadline",
+            value: milestone.deadline ?? "Verification required",
           },
           {
-            label: "Схвалення",
+            label: "Release terms",
+            value: milestone.vesting ?? "No new vesting",
+          },
+          {
+            label: "Approvals",
             value:
               milestone.approvals === null
-                ? "Невідомо"
-                : `${milestone.approvals.length} із ${milestone.requiredApprovals}`,
+                ? "Unknown"
+                : `${milestone.approvals.length} of ${milestone.requiredApprovals}`,
           },
         ]}
       />
       {milestone.evidence && (
         <div className="submitted-evidence">
-          <span className="eyebrow">Опублікований доказ</span>
+          <span className="eyebrow">Published evidence</span>
           <p>{milestone.evidence}</p>
         </div>
       )}
@@ -169,12 +172,12 @@ export function ActivityRow({
         </div>
         <p>{entry.detail}</p>
         <div className="activity-meta">
-          {entry.block && <span>Блок {entry.block}</span>}
+          {entry.block && <span>Block {entry.block}</span>}
           {entry.timestamp && <time>{entry.timestamp}</time>}
         </div>
         {onInspect && (
           <button type="button" className="text-button" onClick={onInspect}>
-            Відкрити запис <Icon name="arrow" size={14} />
+            Open record <Icon name="arrow" size={14} />
           </button>
         )}
       </div>

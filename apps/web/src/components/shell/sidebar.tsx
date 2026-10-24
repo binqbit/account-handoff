@@ -20,7 +20,7 @@ export function Sidebar({
         type="button"
         className="brand"
         onClick={() => navigate("overview")}
-        aria-label="Account Handoff — огляд"
+        aria-label="Account Handoff — overview"
       >
         <span className="brand-symbol">⇄</span>
         <span>
@@ -36,15 +36,15 @@ export function Sidebar({
           {snapshot.workspace?.name.slice(0, 1) ?? "A"}
         </span>
         <span>
-          <strong>{snapshot.workspace?.name ?? "Робочі простори"}</strong>
+          <strong>{snapshot.workspace?.name ?? "Workspaces"}</strong>
           <small>
-            {snapshot.workspace ? "Простір команди" : "Відкрити або створити"}
+            {snapshot.workspace ? "Team workspace" : "Open or create"}
           </small>
         </span>
         <Icon name="chevron" size={15} />
       </button>
-      <div className="navigation-label">Робочий простір</div>
-      <nav className="primary-nav" aria-label="Робочий простір">
+      <div className="navigation-label">Workspace</div>
+      <nav className="primary-nav" aria-label="Workspace">
         {navigation.map((item) => (
           <button
             type="button"
@@ -74,19 +74,19 @@ export function Sidebar({
             <small>
               {snapshot.network.connected
                 ? snapshot.network.name
-                : "Мережа не підключена"}
+                : "Network disconnected"}
             </small>
           </span>
           <Icon name="chevron" size={14} />
         </button>
-        <nav aria-label="Налаштування простору" className="secondary-nav">
+        <nav aria-label="Workspace settings" className="secondary-nav">
           <button
             type="button"
             aria-current={destination === "network" ? "page" : undefined}
             onClick={() => navigate("network")}
           >
             <Icon name="network" size={17} />
-            Мережа та готовність
+            Network and readiness
           </button>
           <button
             type="button"
@@ -94,13 +94,14 @@ export function Sidebar({
             onClick={() => navigate("data")}
           >
             <Icon name="settings" size={17} />
-            Дані простору
+            Workspace data
           </button>
         </nav>
         <p className="key-assurance">
           <Icon name="shield" size={15} />
-          Ключі залишаються
-          <br />у вашому гаманці.
+          Your keys stay
+          <br />
+          in your wallet.
         </p>
       </div>
     </aside>

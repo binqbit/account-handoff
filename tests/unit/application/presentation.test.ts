@@ -325,7 +325,7 @@ describe("UI presentation preserves authoritative distinctions", () => {
     const actions = actionViews(workspace, chain, R1!);
     expect(
       actions.find((action) => action.id === "GRC-GRANT-APPROVE")?.blockers,
-    ).toContain("Потрібне підтвердження можливості мережі: Q-VESTING.");
+    ).toContain("Network capability must be verified: Q-VESTING.");
     // Q-FUNDING and Q-WALLET are assessed from actual preparation inputs, not guessed at view time.
     expect(
       actions.find((action) => action.id === "GRC-SETUP-FUND-M0")?.enabled,
@@ -350,7 +350,7 @@ describe("UI presentation preserves authoritative distinctions", () => {
       "GRC-GRANT-SUBMIT-M1",
     ]) {
       expect(actions.find((action) => action.id === id)?.blockers).toContain(
-        "Потрібне підтверджене походження Pure з події PureCreated.",
+        "Pure provenance must be verified from a PureCreated event.",
       );
     }
     expect(

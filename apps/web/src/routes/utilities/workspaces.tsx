@@ -18,32 +18,32 @@ export function Workspaces(props: ScreenProps) {
   return (
     <>
       <PageHeader
-        eyebrow="Ваші простори"
-        title="Поверніться до роботи команди"
-        description="Відкрийте збережений простір або створіть новий. Гаманець надає особисті акаунти; відомості про грант зберігаються окремо."
+        eyebrow="Your workspaces"
+        title="Return to your team's work"
+        description="Open a saved workspace or create a new one. The wallet provides personal accounts; grant details are stored separately."
         actions={
           <Button
             variant="primary"
             icon="plus"
             onClick={() => navigate("setup")}
           >
-            Новий простір
+            New workspace
           </Button>
         }
       />
       <div className="workspace-toolbar">
         <label htmlFor={searchId} className="sr-only">
-          Знайти робочий простір
+          Find a workspace
         </label>
         <input
           id={searchId}
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Знайти простір за назвою"
+          placeholder="Find a workspace by name"
         />
         <Button icon="upload" onClick={() => navigate("data")}>
-          Імпортувати простір
+          Import workspace
         </Button>
       </div>
       {filtered.length ? (
@@ -51,13 +51,13 @@ export function Workspaces(props: ScreenProps) {
           {filtered.map((workspace) => (
             <Card
               key={workspace.id}
-              eyebrow={`${workspace.mode} · відомий простір`}
+              eyebrow={`${workspace.mode} · saved workspace`}
               title={workspace.name}
               action={<Icon name="overview" />}
             >
               <p className="muted">
-                Збережений у цьому браузері. Поточні повноваження перевіряються
-                в мережі.
+                Saved in this browser. Current authority is verified on the
+                network.
               </p>
               <Button
                 variant="primary"
@@ -69,7 +69,7 @@ export function Workspaces(props: ScreenProps) {
                   )
                 }
               >
-                Відкрити простір
+                Open workspace
               </Button>
             </Card>
           ))}
@@ -79,8 +79,8 @@ export function Workspaces(props: ScreenProps) {
           icon="overview"
           title={
             query
-              ? "За цією назвою нічого не знайдено"
-              : "Перший простір починається тут"
+              ? "No workspace matches this name"
+              : "Your first workspace starts here"
           }
           action={
             !query && (
@@ -89,14 +89,14 @@ export function Workspaces(props: ScreenProps) {
                 icon="plus"
                 onClick={() => navigate("setup")}
               >
-                Налаштувати команду
+                Set up a team
               </Button>
             )
           }
         >
           {query
-            ? "Змініть пошуковий запит або відкрийте інший простір."
-            : "Додайте склад команди, перевірте контролера та створіть окремого бенефіціара для гранту."}
+            ? "Change the search or open another workspace."
+            : "Add the team, verify its controller and create a separate grant beneficiary."}
         </EmptyState>
       )}
     </>

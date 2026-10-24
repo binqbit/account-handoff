@@ -127,29 +127,29 @@ export function proof(
       return {
         continuity: "drift",
         detail:
-          "Збережено окремі фіналізовані квитанції вилучення M0 і подання M1 після нього для того самого гранту. Поточний стан відрізняється або потребує повторної перевірки; історичні квитанції залишаються доступними.",
+          "Separate finalized receipts record M0 removal and a later M1 submission on the same grant. Current state differs or needs verification; historical receipts remain available.",
       };
     return {
       continuity: "continued",
       detail:
-        "Збережено початковий стан, окрему квитанцію вилучення M0 та пізніше подання M1 на тому самому гранті. Поточний бенефіціар і контролер узгоджені. Це не означає схвалення чи виплату наступного траншу.",
+        "The baseline, separate M0 removal receipt and later M1 submission on the same grant are saved. The current beneficiary and controller match. This does not imply approval or release of the next tranche.",
     };
   }
   if (removals.length && identityPreserved)
     return {
       continuity: "rotated",
       detail:
-        "Вилучення M0 має окрему фіналізовану квитанцію. Для завершення потрібно подати наступний етап через M1 та перевірити його результат.",
+        "M0 removal has a separate finalized receipt. Submit the next milestone through M1 and verify its outcome to complete the handoff.",
     };
   if (!chain && workspace.history.length)
     return {
       continuity: "unknown",
       detail:
-        "Локальна історія доступна. Поточна мережа та повнота доказів ще не перевірені.",
+        "Local history is available. The current network and completeness of evidence have not been verified yet.",
     };
   return {
     continuity: "not-started",
     detail:
-      "Початковий стан, вилучення M0 і наступне подання M1 ще не утворюють повного ланцюжка доказів.",
+      "The baseline, M0 removal and subsequent M1 submission do not yet form a complete chain of evidence.",
   };
 }

@@ -89,12 +89,12 @@ describe("review resource split shares the exact funding guard allocation", () =
     const rows = buildResourceReview(value, token);
     expect(
       rows.find((row) => row.kind === "proposal_deposit")?.label,
-    ).toContain("повертається depositor");
+    ).toContain("refunded to the depositor");
     expect(rows.find((row) => row.kind === "pure_deposit")?.label).toContain(
-      "залишається у M0",
+      "remains with M0",
     );
     expect(rows.find((row) => row.kind === "pure_deposit")?.label).toContain(
-      "після другого підпису",
+      "after the second signature",
     );
     value.phase = "multisig_final";
     value.signer = participants.B;
@@ -150,7 +150,7 @@ describe("review resource split shares the exact funding guard allocation", () =
     const fee = buildResourceReview(value, token).find(
       (row) => row.kind === "outer_fee",
     )!;
-    expect(fee.amount).toContain("2 UNIT (оцінка 1 UNIT");
+    expect(fee.amount).toContain("2 UNIT (estimate 1 UNIT");
     expect(fee.source).toBe("reviewed_fee_budget");
   });
   it("uses P for submitted contract storage and preserves unknown requirements as unknown", async () => {
@@ -165,7 +165,7 @@ describe("review resource split shares the exact funding guard allocation", () =
     const row = buildResourceReview(value, token).find(
       (item) => item.kind === "storage_limit",
     )!;
-    expect(row.amount).toBe("Невідомо");
+    expect(row.amount).toBe("Unknown");
     expect(row.amountNative).toBeNull();
     expect(
       validateFreshOperation(value).some(

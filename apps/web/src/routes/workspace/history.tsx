@@ -18,9 +18,9 @@ export function History(props: ScreenProps) {
   return (
     <>
       <PageHeader
-        eyebrow="Історія та докази"
-        title="Результат, який можна перевірити"
-        description="Зовнішня транзакція, вкладений виклик і бізнес-результат показані окремо. Історичний доказ не підмінює поточний стан."
+        eyebrow="History and evidence"
+        title="An outcome you can verify"
+        description="The outer transaction, nested call and business outcome are shown separately. Historical evidence does not replace the current state."
       />
       {!workspace ? (
         <NoWorkspace {...props} />
@@ -31,20 +31,20 @@ export function History(props: ScreenProps) {
             title={
               workspace.continuity === "continued" ||
               workspace.continuity === "drift"
-                ? "Продовження гранту зафіксовано"
+                ? "Grant continuation recorded"
                 : workspace.continuity === "rotated"
-                  ? "Керування змінено. Потрібне продовження."
-                  : "Доказ продовження ще не сформовано"
+                  ? "Control changed. Continuation required."
+                  : "Continuation evidence is not complete yet"
             }
             action={
               <Badge tone={stateTone(workspace.continuity)}>
                 {
                   {
-                    "not-started": "Очікується",
+                    "not-started": "Pending",
                     rotated: "Rotated",
                     continued: "Continued",
-                    drift: "Історичний доказ",
-                    unknown: "Невідомо",
+                    drift: "Historical evidence",
+                    unknown: "Unknown",
                   }[workspace.continuity]
                 }
               </Badge>
@@ -54,12 +54,12 @@ export function History(props: ScreenProps) {
             <div className="proof-chain">
               <span>
                 <Icon name="shield" size={18} />
-                Той самий P
+                The same P
               </span>
               <Icon name="arrow" size={16} />
-              <span>Точне вилучення M0</span>
+              <span>Exact M0 removal</span>
               <Icon name="arrow" size={16} />
-              <span>Окреме подання M1</span>
+              <span>Separate M1 submission</span>
             </div>
           </Card>
           {workspace.history.length ? (
@@ -82,7 +82,7 @@ export function History(props: ScreenProps) {
                   <KeyValues
                     rows={[
                       {
-                        label: "Транзакція",
+                        label: "Transaction",
                         value: <Address value={entry.txHash} />,
                       },
                     ]}
@@ -99,21 +99,21 @@ export function History(props: ScreenProps) {
                         })
                       }
                     >
-                      Звірити цю спробу
+                      Reconcile this attempt
                     </Button>
                   )}
                 {entry.evidence && (
                   <Evidence
                     value={entry.evidence}
-                    title="Доказ і технічні деталі запису"
+                    title="Record evidence and technical details"
                   />
                 )}
               </Card>
             ))
           ) : (
-            <EmptyState title="Історія ще порожня" icon="history">
-              Тут зберігатимуться підтверджені операції, відмови та нез’ясовані
-              спроби. Жодних подій не підставляється автоматично.
+            <EmptyState title="No history yet" icon="history">
+              Verified operations, rejections and unresolved attempts appear
+              here. No events are fabricated.
             </EmptyState>
           )}
           {snapshot.actions

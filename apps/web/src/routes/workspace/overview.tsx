@@ -25,9 +25,9 @@ export function Overview(props: ScreenProps) {
     return (
       <>
         <PageHeader
-          eyebrow="Ваш робочий простір"
-          title="Команда змінюється. Грант залишається."
-          description="Створіть сталого бенефіціара та керуйте передачею повноважень із перевіркою кожного результату."
+          eyebrow="Your workspace"
+          title="The team changes. The grant stays."
+          description="Create a stable beneficiary and manage a control handoff with verified outcomes."
         />
         <NoWorkspace {...props} />
       </>
@@ -38,23 +38,23 @@ export function Overview(props: ScreenProps) {
   return (
     <>
       <PageHeader
-        eyebrow="Робочий простір / огляд"
+        eyebrow="Workspace / overview"
         title={workspace.name}
-        description="Сталий бенефіціар. Прозорі повноваження. Наступна дія — з перевіреним результатом."
+        description="Stable beneficiary. Visible authority. Each next action has a verified outcome."
         actions={
           <Button
             icon="refresh"
             disabled={!!snapshot.busy}
             onClick={() => void props.run({ type: "refresh" })}
           >
-            Оновити стан
+            Refresh state
           </Button>
         }
       />
       <div className="overview-grid">
         <Card
           className="next-task"
-          eyebrow="Наступний крок"
+          eyebrow="Next step"
           title={workspace.currentTask.title}
         >
           <p className="next-task__description">
@@ -71,63 +71,63 @@ export function Overview(props: ScreenProps) {
                   navigate(workspace.currentTask.destination ?? "network")
                 }
               >
-                Відкрити наступний крок
+                Open the next step
               </Button>
             )}
           </div>
           <div className="next-task__footer">
             <Icon name="shield" size={16} />
-            <span>Кожна дія має окремий перегляд і підпис.</span>
+            <span>Every action has a separate review and signature.</span>
           </div>
         </Card>
-        <Card eyebrow="Незмінна ідентичність" title="Бенефіціар гранту">
+        <Card eyebrow="Stable identity" title="Grant beneficiary">
           <div className="beneficiary-emblem">
             <Icon name="shield" size={30} />
             <span>P</span>
           </div>
           <Identity identity={workspace.beneficiary} />
           <div className="identity-secondary">
-            <span>Адреса в застосунку</span>
+            <span>Application address</span>
             <Address value={workspace.beneficiary?.mappedAddress} compact />
           </div>
         </Card>
       </div>
       {workspace.authority === "DualControl" && (
-        <Notice tone="warning" title="Період спільних повноважень">
-          M0 і M1 зараз можуть діяти від імені бенефіціара. Завершіть окреме
-          вилучення M0 та перевірте повний список дозволів.
+        <Notice tone="warning" title="Shared authority period">
+          M0 and M1 can currently act for the beneficiary. Complete the separate
+          M0 removal and verify the full permission inventory.
         </Notice>
       )}
       {workspace.authority === "Diverged" && (
-        <Notice tone="negative" title="Конфігурація повноважень змінилася">
-          Виявлено неочікувані права. Перевірте історію й точний список
-          делегатів перед новими діями.
+        <Notice tone="negative" title="Authority configuration changed">
+          Unexpected authority was found. Review the history and exact delegate
+          inventory before taking further action.
         </Notice>
       )}
       <div className="summary-grid">
-        <Card eyebrow="Грант">
+        <Card eyebrow="Grant">
           <div className="metric">
             {workspace.grantTotal ?? "—"} <span>{workspace.symbol}</span>
           </div>
           <p>
             {workspace.grantId
-              ? `Грант #${workspace.grantId}`
-              : "Грант ще не прив’язано"}{" "}
-            · {workspace.milestones.length} етапи
+              ? `Grant #${workspace.grantId}`
+              : "Grant not linked yet"}{" "}
+            · {workspace.milestones.length} milestones
           </p>
         </Card>
-        <Card eyebrow="Керування">
+        <Card eyebrow="Control">
           <div className="metric">
             {workspace.oldController.threshold}{" "}
-            <span>із {workspace.oldController.members.length}</span>
+            <span>of {workspace.oldController.members.length}</span>
           </div>
           <Badge tone={stateTone(workspace.authority)}>
             {authorityText[workspace.authority]}
           </Badge>
         </Card>
-        <Card eyebrow="Спостереження">
+        <Card eyebrow="Observation">
           <div className="metric">
-            {snapshot.network.blockNumber ?? "—"} <span>блок</span>
+            {snapshot.network.blockNumber ?? "—"} <span>block</span>
           </div>
           <Badge
             tone={
@@ -137,21 +137,21 @@ export function Overview(props: ScreenProps) {
             }
           >
             {snapshot.network.connected && snapshot.network.blockHash
-              ? "Фіналізований якір"
+              ? "Finalized anchor"
               : snapshot.network.connected
-                ? "Перевіряємо якір"
-                : "Очікуємо підключення"}
+                ? "Checking the anchor"
+                : "Waiting for a connection"}
           </Badge>
         </Card>
       </div>
       <div className="section-heading">
-        <h2>Етапи гранту</h2>
+        <h2>Grant milestones</h2>
         <button
           className="text-button"
           type="button"
           onClick={() => navigate("milestones")}
         >
-          Усі деталі <Icon name="arrow" size={15} />
+          All details <Icon name="arrow" size={15} />
         </button>
       </div>
       {workspace.milestones.length ? (
@@ -168,18 +168,18 @@ export function Overview(props: ScreenProps) {
       ) : (
         <Card>
           <p className="muted">
-            Після створення або підключення гранту тут з’являться його етапи.
+            Milestones appear here after a grant is created or linked.
           </p>
         </Card>
       )}
       <div className="section-heading">
-        <h2>Останні дії</h2>
+        <h2>Recent activity</h2>
         <button
           className="text-button"
           type="button"
           onClick={() => navigate("history")}
         >
-          Повна історія <Icon name="arrow" size={15} />
+          Full history <Icon name="arrow" size={15} />
         </button>
       </div>
       <Card>
@@ -195,8 +195,8 @@ export function Overview(props: ScreenProps) {
             ))
         ) : (
           <p className="muted">
-            Підтверджених операцій ще немає. Події з’являться після їх отримання
-            та перевірки.
+            No verified operations yet. Events appear after they are received
+            and verified.
           </p>
         )}
       </Card>

@@ -28,29 +28,29 @@ export function Network(props: ScreenProps) {
     try {
       const url = new URL(endpoint);
       if (!["ws:", "wss:"].includes(url.protocol))
-        throw new Error("Використайте адресу ws:// або wss://.");
+        throw new Error("Use a ws:// or wss:// address.");
       if (url.username || url.password)
-        throw new Error("Адреса не може містити логін чи пароль.");
+        throw new Error("The address must not contain a username or password.");
       await run({ type: "connect-network", mode, endpoint: endpoint.trim() });
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Не вдалося підключити мережу.",
+          : "Could not connect to the network.",
       );
     }
   }
   return (
     <>
       <PageHeader
-        eyebrow="Мережа та готовність"
-        title="Перевірте середовище перед діями"
-        description="З’єднання з вузлом і готовність конкретної операції — різні перевірки. Кожне середовище має окремі дані та докази."
+        eyebrow="Network and readiness"
+        title="Check the environment before acting"
+        description="A node connection and readiness for an operation are separate checks. Each environment has its own data and evidence."
       />
       <div className="overview-grid">
-        <Card title="Підключення до native-вузла">
+        <Card title="Native node connection">
           <form onSubmit={(event) => void submit(event)}>
-            <div className="mode-picker" role="group" aria-label="Середовище">
+            <div className="mode-picker" role="group" aria-label="Environment">
               {(["LOCAL", "DEMO", "LIVE"] as const).map((value) => (
                 <button
                   key={value}
@@ -66,9 +66,9 @@ export function Network(props: ScreenProps) {
                   <span>{value}</span>
                   <small>
                     {value === "LOCAL"
-                      ? "Локальний native-стек"
+                      ? "Local native stack"
                       : value === "DEMO"
-                        ? "Реальна тестова мережа"
+                        ? "Real test network"
                         : "Mainnet"}
                   </small>
                 </button>
@@ -88,17 +88,17 @@ export function Network(props: ScreenProps) {
                 autoComplete="url"
               />
               <p className="field__help">
-                Адреса зберігається локально. Імпортований пакет не змінює
-                endpoint.
+                The address is stored locally. An imported package does not
+                change the endpoint.
               </p>
             </div>
             {mode === "LIVE" && (
               <Notice
                 tone="warning"
-                title="Mainnet потребує окремої кваліфікації"
+                title="Mainnet requires separate qualification"
               >
-                Локальні та тестові результати не дозволяють виконання в LIVE.
-                Готовність перевіряється для конкретного runtime і контракту.
+                Local and test results do not authorize LIVE execution.
+                Readiness is verified for the specific runtime and contract.
               </Notice>
             )}
             {error && (
@@ -113,38 +113,38 @@ export function Network(props: ScreenProps) {
               disabled={network.checking || !!snapshot.busy}
             >
               {network.checking
-                ? "Перевіряємо з’єднання…"
-                : "Підключити та перевірити"}
+                ? "Checking the connection…"
+                : "Connect and verify"}
             </Button>
           </form>
         </Card>
         <Card
-          title="Поточний профіль"
+          title="Current profile"
           action={
             <Badge tone={network.connected ? "positive" : "warning"}>
-              {network.connected ? "Підключено" : "Не підключено"}
+              {network.connected ? "Connected" : "Disconnected"}
             </Badge>
           }
         >
           <KeyValues
             rows={[
-              { label: "Середовище", value: network.mode },
-              { label: "Мережа", value: network.name },
-              { label: "Локальний запуск", value: network.runId ?? "—" },
+              { label: "Environment", value: network.mode },
+              { label: "Network", value: network.name },
+              { label: "Local run", value: network.runId ?? "—" },
               {
-                label: "Фіналізований блок",
-                value: network.blockNumber ?? "Не отримано",
+                label: "Finalized block",
+                value: network.blockNumber ?? "Not received",
               },
               {
                 label: "Runtime",
-                value: network.runtimeVersion ?? "Не встановлено",
+                value: network.runtimeVersion ?? "Not set",
               },
               {
                 label: "Genesis",
                 value: <Address value={network.genesis} compact />,
               },
               {
-                label: "Блок",
+                label: "Block",
                 value: <Address value={network.blockHash} compact />,
               },
             ]}
@@ -152,12 +152,12 @@ export function Network(props: ScreenProps) {
           {network.error && <Notice tone="negative">{network.error}</Notice>}
         </Card>
       </div>
-      <Card title="Готовність можливостей">
+      <Card title="Capability readiness">
         <ReadinessCards rows={network.readiness} />
         {!network.readiness.length && (
           <p className="muted">
-            Підключіть вузол, щоб перевірити runtime, mapping, контракт і
-            доступні операції.
+            Connect a node to verify the runtime, mapping, contract and
+            available operations.
           </p>
         )}
       </Card>

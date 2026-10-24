@@ -159,7 +159,7 @@ export async function requestSignature(
         ("name" in error && error.name === "UserRejectedRequestError"))
     )
       throw new WalletRejectedError(
-        "Користувач відхилив підпис у гаманці. Нічого не відправлено.",
+        "The user rejected the signature. Nothing was submitted.",
       );
     throw error;
   }

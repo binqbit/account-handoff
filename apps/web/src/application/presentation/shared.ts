@@ -8,14 +8,14 @@ export const eq = (
   right: string | null | undefined,
 ): boolean => !!left && !!right && left.toLowerCase() === right.toLowerCase();
 export const roleNames: Record<ParticipantRole, string> = {
-  A: "A · початковий підписант",
-  B: "B · підписант",
-  C: "C · учасник початкової групи",
-  D: "D · новий підписант",
-  F: "F · фонд",
-  R1: "R1 · рецензент",
-  R2: "R2 · рецензент",
-  S: "S · оператор vesting",
+  A: "A · original signer",
+  B: "B · signer",
+  C: "C · original group member",
+  D: "D · new signer",
+  F: "F · funder",
+  R1: "R1 · reviewer",
+  R2: "R2 · reviewer",
+  S: "S · vesting operator",
 };
 export function stateFor(
   chain: ChainView | null,

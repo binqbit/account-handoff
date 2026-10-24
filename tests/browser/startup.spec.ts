@@ -10,23 +10,23 @@ test("actual application starts with an empty local workspace and no signing req
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: "Команда змінюється. Грант залишається.",
+      name: "The team changes. The grant stays.",
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Підключити гаманець", exact: true }),
+    page.getByRole("button", { name: "Connect wallet", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("Мережа не підключена", { exact: true }),
+    page.getByText("Network disconnected", { exact: true }),
   ).toBeVisible();
   await expect(page.getByText("TEST HARNESS", { exact: false })).toHaveCount(0);
   expect(errors).toEqual([]);
   expect(sockets.every((url) => new URL(url).port === "4173")).toBe(true);
   await page
-    .getByRole("button", { name: "Грант і етапи", exact: true })
+    .getByRole("button", { name: "Grant and milestones", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Спочатку відкрийте робочий простір" }),
+    page.getByRole("heading", { name: "Open a workspace first" }),
   ).toBeVisible();
 });
 
@@ -35,13 +35,13 @@ test("actual application reports missing native wallet without substituting an a
 }) => {
   await page.goto("/");
   await page
-    .getByRole("button", { name: "Підключити гаманець", exact: true })
+    .getByRole("button", { name: "Connect wallet", exact: true })
     .click();
   await expect(page.getByRole("alert")).toContainText(
     "Install a supported native wallet",
   );
-  await expect(page.getByLabel("Особистий акаунт")).toHaveCount(0);
+  await expect(page.getByLabel("Personal account")).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Запросити підпис", exact: true }),
+    page.getByRole("button", { name: "Request signature", exact: true }),
   ).toHaveCount(0);
 });

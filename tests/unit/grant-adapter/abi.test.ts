@@ -31,14 +31,14 @@ describe("controlled unchanged Vestry ABI", () => {
     expect(decoded.args?.[0]).toBe(address("1"));
   });
   it("counts evidence in UTF-8 bytes and preserves exact text", () => {
-    const evidence = "ї".repeat(512);
+    const evidence = "é".repeat(512);
     expect(
       decodeFunctionData({
         abi: vestryAbi,
         data: encodeSubmission(0n, 1, evidence),
       }).args,
     ).toEqual([0n, 1n, evidence]);
-    expect(() => encodeSubmission(0n, 1, evidence + "ї")).toThrow();
+    expect(() => encodeSubmission(0n, 1, evidence + "é")).toThrow();
     expect(() => encodeSubmission(0n, 2, "unsupported")).toThrow();
   });
   it("keeps approval a direct contract operation for a specific grant and milestone", () => {

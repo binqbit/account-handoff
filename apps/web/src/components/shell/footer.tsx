@@ -9,7 +9,7 @@ export function Footer({ mode }: { mode: RuntimeMode }) {
         <span>Account Handoff</span>
         <Badge tone={mode === "LIVE" ? "warning" : "neutral"}>{mode}</Badge>
       </div>
-      <span>Сталий бенефіціар. Перевірені повноваження.</span>
+      <span>Stable beneficiary. Verified authority.</span>
     </footer>
   );
 }

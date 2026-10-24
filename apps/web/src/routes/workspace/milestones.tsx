@@ -15,30 +15,30 @@ export function Milestones(props: ScreenProps) {
   return (
     <>
       <PageHeader
-        eyebrow="Грант і етапи"
-        title="Продовжуйте роботу над тим самим грантом"
-        description="Подання, схвалення й виплата мають різні результати. Тут видно умови та стан кожного етапу."
+        eyebrow="Grant and milestones"
+        title="Continue work on the same grant"
+        description="Submission, approval and release have different outcomes. Review the terms and state of each milestone here."
       />
       {!workspace ? (
         <NoWorkspace {...props} />
       ) : (
         <>
-          <Card title="Умови гранту">
+          <Card title="Grant terms">
             <div className="equal-grid">
               <KeyValues
                 rows={[
                   {
-                    label: "Грант",
+                    label: "Grant",
                     value: workspace.grantId
                       ? `#${workspace.grantId}`
-                      : "Ще не створено",
+                      : "Not created yet",
                   },
                   {
-                    label: "Контракт",
+                    label: "Contract",
                     value: <Address value={workspace.contract} />,
                   },
                   {
-                    label: "Бенефіціар",
+                    label: "Beneficiary",
                     value: (
                       <Address value={workspace.beneficiary?.mappedAddress} />
                     ),
@@ -48,11 +48,11 @@ export function Milestones(props: ScreenProps) {
               <KeyValues
                 rows={[
                   {
-                    label: "Фонд",
+                    label: "Funder",
                     value: <Identity identity={workspace.funder} />,
                   },
                   {
-                    label: "Рецензенти",
+                    label: "Reviewers",
                     value: workspace.reviewers.length
                       ? workspace.reviewers
                           .map(
@@ -61,9 +61,9 @@ export function Milestones(props: ScreenProps) {
                               `${reviewer.address.slice(0, 8)}…`,
                           )
                           .join(", ")
-                      : "Не задані",
+                      : "Not specified",
                   },
-                  { label: "Поріг рецензентів", value: "2 схвалення" },
+                  { label: "Reviewer threshold", value: "2 approvals" },
                 ]}
               />
             </div>
@@ -80,10 +80,10 @@ export function Milestones(props: ScreenProps) {
               ))}
             </div>
           ) : (
-            <Card title="Грант ще не створено">
+            <Card title="Grant not created yet">
               <p className="muted">
-                Спочатку потрібно підтвердити створення P, його mapping і
-                бюджет, потім фонд створює грант для h(P).
+                Verify P's creation, mapping and budget first. The funder then
+                creates a grant for h(P).
               </p>
               {snapshot.actions
                 .filter((action) => action.id === "GRC-GRANT-CREATE")
@@ -96,9 +96,10 @@ export function Milestones(props: ScreenProps) {
                 ))}
             </Card>
           )}
-          <Notice title="Схвалення може одразу виплатити транш">
-            Якщо ваш голос досягає порога рецензентів, виплата відбудеться в тій
-            самій операції. Перед підписом перевірте суму та умови vesting.
+          <Notice title="Approval can immediately release a tranche">
+            If your vote reaches the reviewer threshold, funds are released in
+            the same operation. Check the amount and vesting terms before
+            signing.
           </Notice>
         </>
       )}
