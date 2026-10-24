@@ -165,7 +165,13 @@ function reviewOperation(): OperationView {
     route: ["Alice", "Multisig M0", "Proxy P", "addProxy M1"],
     consequences: ["M0 remains authorized."],
     terms: [{ label: "Permission", value: "Any / 0" }],
-    resources: [{ label: "Test estimate", amount: "1 UNIT", payer: "Alice" }],
+    resources: [
+      {
+        label: "Test estimate",
+        amount: "0.00000008132674 UNIT (budget 0.00000016265348 UNIT)",
+        payer: addresses[0]!,
+      },
+    ],
     blockers: [],
     canSign: true,
     canSend: false,

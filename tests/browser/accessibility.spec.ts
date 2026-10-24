@@ -79,3 +79,36 @@ test("keyboard navigation and disclosures never request a signature", async ({
   );
   expect(types).toEqual(["prepare-operation"]);
 });
+
+test("native payer hashes and exact fee amounts stay inside the review card", async ({
+  page,
+}, testInfo) => {
+  await page.goto(`${harness}#review?action=GRC-ROTATION-ADD-M1`);
+  await page
+    .getByRole("button", { name: "Prepare for review", exact: true })
+    .click();
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const resources = page.locator(".resource-list");
+    await expect(resources).toContainText(`0x${"1".repeat(64)}`);
+    await expect(resources).toContainText("0.00000008132674 UNIT");
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+    ).toBe(true);
+    expect(
+      await resources
+        .locator("div,span,strong,small")
+        .evaluateAll((elements) =>
+          elements.every(
+            (element) => element.scrollWidth <= element.clientWidth + 1,
+          ),
+        ),
+    ).toBe(true);
+    await page.screenshot({
+      path: testInfo.outputPath(`native-resource-review-${width}.png`),
+      fullPage: true,
+    });
+  }
+});

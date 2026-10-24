@@ -123,11 +123,20 @@
 }
 .resource-list > div {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
   border-bottom: 1px solid var(--border);
   padding: 13px 0;
   font-size: 0.8rem;
+}
+.resource-list > div > span,
+.resource-list > div > strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.resource-list > div > span {
+  flex: 1 1 55%;
 }
 .resource-list > div:first-child {
   padding-top: 0;
@@ -143,6 +152,7 @@
   margin-top: 4px;
 }
 .resource-list strong {
+  flex: 1 1 45%;
   font-size: 0.83rem;
   text-align: right;
   white-space: pre-wrap;
