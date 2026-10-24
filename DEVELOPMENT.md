@@ -33,6 +33,8 @@ This emits static production files to `dist-testnet/`, with the native endpoint 
 
 The current testnet artifact is a **read-only preview**: network identity/readiness and public account reads are available; testnet transactions remain blocked by the existing runtime, wallet, and contract qualification checks. A successful build or RPC connection does not qualify a PortalDot deployment. The complete grant/handoff journey has been verified separately on LOCAL. No testnet contract address is configured by this build.
 
+Create the standalone archive with `npm run package:testnet` (requires `zip` and `unzip`), or `npm run package:testnet -- /absolute/path/release.zip`. The default output is `private-docs/Account Handoff Testnet.zip` with a SHA-256 sidecar. This command rebuilds the assets, copies only approved static files and startup resources, and records the Git revision and checksums. The extracted package runs with `node serve.mjs` or `docker compose up --build -d` at `http://127.0.0.1:8080`; see [the package instructions](infra/testnet/README.md). Public static hosting uses only the contents of `www/`.
+
 ## Website navigation
 
 The default route is **Home**, with a short product explanation and a three-step introduction. **Docs** contains the in-app usage guide and recovery vocabulary. The header keeps Home, Workspaces, Docs and the creation action available; opening a workspace adds its task tabs underneath. Wallet account choices show the name and a compact public address in an accessible custom menu.

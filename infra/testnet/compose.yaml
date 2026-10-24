@@ -1,0 +1,21 @@
+name: account-handoff-testnet
+services:
+  web:
+    build: .
+    ports:
+      - "127.0.0.1:${AH_PORT:-8080}:8080"
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - --input-type=module
+        - -e
+        - "const r = await fetch('http://127.0.0.1:8080/'); if (!r.ok) process.exit(1);"
+      interval: 30s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
