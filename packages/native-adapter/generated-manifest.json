@@ -1,0 +1,49 @@
+{
+  "generator": "dedot@1.4.0",
+  "sourceCommit": "b76182dd335abcc07b0ff876d4889416a4c08ab7",
+  "metadataSha256": "4d9165f89439124894a14bbfb2f30aca2d52cebc53f84907869568a7fc230dac",
+  "runtimeCodeHash": "0x2c0497152fbb6985be0589fb17fc9720cb1c8ccb392b68ba7a7432877e76544d",
+  "files": [
+    {
+      "path": "packages/native-adapter/generated/account-handoff-local/consts.d.ts",
+      "sha256": "3b3ce86d55c79206505579738ad12dbe8b20b1642c1c6c926ee1255ca1ada109"
+    },
+    {
+      "path": "packages/native-adapter/generated/account-handoff-local/errors.d.ts",
+      "sha256": "62b37e0d860058a5da14acf453265bb6bfc7f109cd3f40de3da9e34b19dc328c"
+    },
+    {
+      "path": "packages/native-adapter/generated/account-handoff-local/events.d.ts",
+      "sha256": "24a6600bd3701d8492a199346ca79dd43bba5023ea92651341158edc8c249c54"
+    },
+    {
+      "path": "packages/native-adapter/generated/account-handoff-local/index.d.ts",
+      "sha256": "73258d0750491adb04592b79b5d2d899751833fd0f2101f8732855778c3f90f9"
+    },
+    {
+      "path": "packages/native-adapter/generated/account-handoff-local/json-rpc.d.ts",
+      "sha256": "b51c6ed437a05c7940a136ba623a6367f542b1432da748dd8a571608c205d6bd"
+    },
+    {
+      "path": "packages/native-adapter/generated/account-handoff-local/query.d.ts",
+      "sha256": "0b65e92f2a40185af693842ba3c08e60d9fe810f79018d6ca1429004587bb6cf"
+    },
+    {
+      "path": "packages/native-adapter/generated/account-handoff-local/runtime.d.ts",
+      "sha256": "5b808c606f1510a00ac86d604293be5d7eec5e0c8cc19631c0dfb924d2df6b44"
+    },
+    {
+      "path": "packages/native-adapter/generated/account-handoff-local/tx.d.ts",
+      "sha256": "2199ad7187c5b915a0d4113dcd2afef17ad7b7897c8e23d5e3f06ed94cf37987"
+    },
+    {
+      "path": "packages/native-adapter/generated/account-handoff-local/types.d.ts",
+      "sha256": "85f6a8a1faf9efccb40f7c431a24bab75e2adf113c2b464313008dda630d997e"
+    },
+    {
+      "path": "packages/native-adapter/generated/account-handoff-local/view-functions.d.ts",
+      "sha256": "31d13a813a70bd2286fc7099c42bb54d2de70af99a9eb7ae51009828b0fcb4b5"
+    }
+  ],
+  "generatedNativeTypesSha256": "2b6168899d152bda6cb989caa6219e5c0b3a13c1346c30ab3f27b14822c72d47"
+}
