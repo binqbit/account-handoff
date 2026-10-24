@@ -1,0 +1,15 @@
+/private-docs/
+/.agent-workspace/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+node_modules/
+.venv/
+__pycache__/
+dist/
+build/
+coverage/
+.DS_Store
+*.log
