@@ -5,6 +5,7 @@ services:
       context: ../..
       dockerfile: infra/local/Dockerfile
     image: account-handoff-local:b76182d-patch1
+    pull_policy: build
     command:
       - substrate-node
       - --dev
@@ -28,6 +29,7 @@ services:
     networks: [local]
   gateway:
     image: account-handoff-local:b76182d-patch1
+    pull_policy: never
     command:
       - eth-rpc
       - --dev

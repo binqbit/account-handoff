@@ -30,7 +30,7 @@ cp .env.example .env
 docker compose --env-file .env -f infra/local/compose.yaml up -d --build
 ```
 
-The runtime base obtains its CA bundle from the pinned toolchain image before accessing the HTTPS package snapshot. Package index failures stop the build immediately.
+The `native` service builds the shared image locally; `gateway` reuses it without pulling an application image from a registry. The runtime base obtains its CA bundle from the pinned toolchain image before accessing the HTTPS package snapshot. Package index failures stop the build immediately.
 
 The versioned [.env.example](../../.env.example) provides the settings; your local `.env` is ignored by Git. Pass `--env-file .env` explicitly because the Compose file is under `infra/local`. Keep an existing `.env` when restarting or upgrading this stack. The example uses project `account-handoff-docker-local`, native WebSocket `ws://127.0.0.1:9966`, and gateway HTTP `http://127.0.0.1:8566`, so it can coexist with the host launcher's default ports.
 
