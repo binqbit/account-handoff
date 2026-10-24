@@ -1,0 +1,83 @@
+name: Verify application
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Contracts, domain, journal, and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Use the pinned Node version
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install the locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Check source formatting
+        run: npm run format:check
+      - name: Regenerate structural validators
+        run: |
+          npm run generate:contracts
+          git diff --exit-code -- packages/contracts/generated
+          test -z "$(git status --porcelain -- packages/contracts/generated)"
+      - name: Load validators as native ES modules
+        run: node --import tsx --input-type=module -e "await import('./packages/contracts/src/index.ts')"
+      - name: Verify unchanged contract compilation
+        run: |
+          npm run compile:contract
+          git diff --exit-code -- contracts/artifacts/Vestry.json
+          test -z "$(git status --porcelain -- contracts/artifacts/Vestry.json)"
+      - name: Check TypeScript and execute offline tests
+        run: |
+          npm run typecheck
+          npm test
+      - name: Build the static application
+        run: npm run build
+      - name: Verify generated sources remain unchanged
+        run: |
+          git diff --exit-code -- packages/contracts/generated contracts/artifacts/Vestry.json
+          test -z "$(git status --porcelain -- packages/contracts/generated contracts/artifacts/Vestry.json)"
+
+  browser:
+    name: Browser interaction and accessibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Use the pinned Node version
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install the locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Install the pinned Playwright Chromium and OS dependencies
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Run browser tests with the Playwright-managed executable
+        shell: bash
+        run: |
+          CHROME_PATH="$(node --input-type=module -e "import { chromium } from '@playwright/test'; console.log(chromium.executablePath())")" \
+            npm run test:browser
+      - name: Retain browser failure traces
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: browser-failure-traces
+          path: artifacts/browser/
+          if-no-files-found: ignore
+          retention-days: 7

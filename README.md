@@ -13,3 +13,5 @@ This workflow requires an available current signing quorum and a grant created f
 ## Documentation
 
 This repository describes the product and its mechanics. Start with the [documentation guide](docs/README.md), then read the [concept](docs/concept.md), [how it works](docs/how-it-works.md), [architecture](docs/architecture.md), [worked example](docs/example.md), and [operating boundaries](docs/safety-and-limitations.md).
+
+For installation, local development, verification, and native environment commands, read the [development guide](DEVELOPMENT.md).
