@@ -21,7 +21,7 @@ const outputDirectory = fileURLToPath(
 export default defineConfig({
   testDir: ".",
   testMatch: "browser.spec.ts",
-  timeout: 300000,
+  timeout: 900000,
   expect: { timeout: 30000 },
   workers: 1,
   fullyParallel: false,

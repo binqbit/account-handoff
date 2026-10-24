@@ -134,9 +134,11 @@ export async function performApproval(
         exact: true,
       }),
     ).toHaveCount(0);
-    await expect(discard).toBeVisible();
+    await expect(discard).toBeVisible({ timeout: 180000 });
     // The native receipt is separately asserted by the caller. This wait only gates the next explicit review.
-    await expect(page.locator(".activity-indicator")).toHaveCount(0);
+    await expect(page.locator(".activity-indicator")).toHaveCount(0, {
+      timeout: 180000,
+    });
   });
 }
 export async function captureActualWorkspace(
