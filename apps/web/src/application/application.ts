@@ -46,6 +46,7 @@ import {
   type FreshOperationInput,
   hasPreservedSchedule,
   vestingRemaining,
+  assessNativeEra,
 } from "@account-handoff/domain";
 import {
   NativeConnection,
@@ -1877,6 +1878,37 @@ export class Application implements ApplicationFacade {
       throw new Error(
         "Runtime змінився після перегляду. Потрібна нова кваліфікація.",
       );
+    const originalPayload = object(
+      parseBoundedJson(p.context.originalSignPayloadJcsUtf8),
+    );
+    const signingBlock = originalPayload["blockNumber"];
+    if (
+      typeof signingBlock !== "string" ||
+      !/^0x[0-9a-f]+$/i.test(signingBlock)
+    )
+      throw new Error(
+        "Відсутній точний початковий блок підпису для перевірки строку дії.",
+      );
+    const era = assessNativeEra(
+      p.context.era,
+      BigInt(signingBlock),
+      BigInt(f.anchor.number),
+    );
+    if (era.state === "expired") {
+      const message = `Строк дії native-пакета сплив у блоці ${era.death}. Потрібен новий явний перегляд; стан multisig-пропозиції перевіряється окремо.`;
+      if (["prepared", "wallet-requested", "signed"].includes(p.stage)) {
+        p.stage = "stale";
+        p.blockers = [message];
+        await this.journal.setPreference("recovery", null);
+        this.recovery = null;
+        await this.journal.releaseLease(p.lease);
+      }
+      throw new Error(message);
+    }
+    if (era.state === "not_yet_valid")
+      throw new Error(
+        "Початковий блок native-пакета ще не підтверджений у поточній мережі.",
+      );
     if (this.selected()?.address !== p.signer)
       throw new Error("Підписант змінився");
     const selected = this.selected();
@@ -1979,6 +2011,8 @@ export class Application implements ApplicationFacade {
       p.stage = "signed";
       await this.saveRecovery(p);
     } catch (error) {
+      // checkPending can expire the request after the asynchronous wallet response.
+      if ((p as PendingOperation).stage === "stale") throw error;
       const rejected =
         error instanceof WalletRejectedError ||
         error instanceof WalletGuardError;
@@ -2574,7 +2608,7 @@ export class Application implements ApplicationFacade {
         await this.checkPending(recovered.id);
         await this.saveRecovery(recovered);
       } catch (error) {
-        this.pending = null;
+        if (recovered.stage !== "stale") this.pending = null;
         await this.journal.releaseLease(lease);
         throw error;
       }

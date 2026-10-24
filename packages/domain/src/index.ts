@@ -13,3 +13,4 @@ export type {
 } from "@account-handoff/contracts";
 
 export * from "./freshness.js";
+export * from "./mortality.js";
