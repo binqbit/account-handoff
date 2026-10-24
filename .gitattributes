@@ -1,0 +1,2 @@
+# Unified diffs retain the upstream context and indentation verbatim.
+infra/local/patches/*.patch -whitespace

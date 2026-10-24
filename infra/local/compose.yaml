@@ -1,0 +1,51 @@
+name: account-handoff-${AH_RUN_ID:?Set AH_RUN_ID to a dedicated local run ID}
+services:
+  native:
+    build:
+      context: ../..
+      dockerfile: infra/local/Dockerfile
+    image: account-handoff-local:b76182d-patch1
+    command:
+      - substrate-node
+      - --dev
+      - --base-path=/home/runtime/native
+      - --rpc-external
+      - --rpc-methods=Unsafe
+      - --rpc-cors=http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173,http://localhost:4173,http://127.0.0.1:4175,http://localhost:4175
+      - --no-telemetry
+      - --no-prometheus
+      - --state-pruning=archive
+      - --blocks-pruning=archive
+      - --listen-addr=/ip4/127.0.0.1/tcp/30333
+    ports:
+      - 127.0.0.1:${AH_NATIVE_PORT:-9944}:9944
+    volumes:
+      - native:/home/runtime/native
+    stop_signal: SIGINT
+    stop_grace_period: 30s
+    networks: [local]
+  gateway:
+    image: account-handoff-local:b76182d-patch1
+    command:
+      - eth-rpc
+      - --dev
+      - --base-path=/home/runtime/gateway
+      - --node-rpc-url=ws://native:9944
+      - --rpc-external
+      - --rpc-cors=http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173,http://localhost:4173,http://127.0.0.1:4175,http://localhost:4175
+      - --no-prometheus
+    ports:
+      - 127.0.0.1:${AH_GATEWAY_PORT:-8545}:8545
+    volumes:
+      - gateway:/home/runtime/gateway
+    depends_on: [native]
+    restart: on-failure:5
+    stop_signal: SIGINT
+    stop_grace_period: 30s
+    networks: [local]
+volumes:
+  native:
+  gateway:
+networks:
+  local:
+    internal: true

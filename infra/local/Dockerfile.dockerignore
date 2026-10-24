@@ -1,0 +1,5 @@
+*
+!infra/
+!infra/local/
+!infra/local/patches/
+!infra/local/patches/0001-account-handoff-local.patch

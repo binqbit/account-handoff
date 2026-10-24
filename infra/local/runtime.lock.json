@@ -1,0 +1,49 @@
+{
+  "formatVersion": 1,
+  "environment": "LOCAL",
+  "name": "Account Handoff modified upstream LOCAL",
+  "source": {
+    "url": "https://github.com/paritytech/polkadot-sdk.git",
+    "commit": "b76182dd335abcc07b0ff876d4889416a4c08ab7",
+    "cargoLockSha256": "f154053bb6f3e2df510a89f471ddf32539ad12e0c83fe3b1df720e05d110abb6"
+  },
+  "patch": {
+    "path": "infra/local/patches/0001-account-handoff-local.patch",
+    "sha256": "20d00e9040fbda539c4405fbbc2bed0f2077e8e27dd9eda0920289e34ab0d18a"
+  },
+  "runtime": {
+    "specName": "account-handoff-local",
+    "specVersion": 272,
+    "nativeDecimals": 14,
+    "nativeToEthRatio": "10000",
+    "minVestedTransfer": "1000000000000000",
+    "autoMap": false,
+    "chainId": 420420420
+  },
+  "build": {
+    "rust": "1.99.1",
+    "packages": ["staging-node-cli", "pallet-revive-eth-rpc"],
+    "binaries": ["substrate-node", "eth-rpc"],
+    "profile": "release",
+    "jobs": 6,
+    "nixpkgs": {
+      "type": "github",
+      "owner": "NixOS",
+      "repo": "nixpkgs",
+      "rev": "da6dc0e7b26060f2f71ce3ef7088fb56ee44fa36",
+      "narHash": "sha256-MlvRfa1O5Cqc2/a+gG+l9TSuowEoCKCmrJ1d9oAVm0I="
+    },
+    "wasmToolchain": "1.99.0",
+    "containerRust": "1.99.0",
+    "cflags": "-O2",
+    "wasmTargets": ["wasm32v1-none", "wasm32-unknown-unknown"]
+  },
+  "contract": {
+    "path": "contracts/Vestry.sol",
+    "sourceCommit": "1c09ff369d53155487f3dd84d97ee6fd53a94902",
+    "sourceSha256": "62e0b0f196133fedd29f354a753bb46e5a80f7c90251ccac8272182064352797",
+    "compiler": "solc@0.8.24",
+    "evmVersion": "cancun"
+  },
+  "qualification": "NOT_RUN"
+}

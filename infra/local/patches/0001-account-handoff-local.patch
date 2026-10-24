@@ -1,0 +1,53 @@
+diff --git a/substrate/bin/node/cli/src/chain_spec.rs b/substrate/bin/node/cli/src/chain_spec.rs
+index 18e3ab8..1c61ed0 100644
+--- a/substrate/bin/node/cli/src/chain_spec.rs
++++ b/substrate/bin/node/cli/src/chain_spec.rs
+@@ -405,7 +405,8 @@ fn collective(endowed: &[AccountId]) -> Vec<AccountId> {
+ 
+ fn props() -> Properties {
+ 	let mut properties = Properties::new();
+-	properties.insert("tokenDecimals".to_string(), 12.into());
++	properties.insert("tokenDecimals".to_string(), 14.into());
++	properties.insert("tokenSymbol".to_string(), "AHLOCAL".into());
+ 	properties
+ }
+ 
+diff --git a/substrate/bin/node/runtime/src/lib.rs b/substrate/bin/node/runtime/src/lib.rs
+index 8f3bb11..84c95c2 100644
+--- a/substrate/bin/node/runtime/src/lib.rs
++++ b/substrate/bin/node/runtime/src/lib.rs
+@@ -171,14 +171,14 @@ pub fn wasm_binary_unwrap() -> &'static [u8] {
+ /// Runtime version.
+ #[sp_version::runtime_version]
+ pub const VERSION: RuntimeVersion = RuntimeVersion {
+-	spec_name: alloc::borrow::Cow::Borrowed("node"),
++	spec_name: alloc::borrow::Cow::Borrowed("account-handoff-local"),
+ 	impl_name: alloc::borrow::Cow::Borrowed("substrate-node"),
+ 	authoring_version: 10,
+ 	// Per convention: if the runtime behavior changes, increment spec_version
+ 	// and set impl_version to 0. If only runtime
+ 	// implementation changes and behavior does not, then leave spec_version as
+ 	// is and increment impl_version.
+-	spec_version: 271,
++	spec_version: 272,
+ 	impl_version: 0,
+ 	apis: RUNTIME_API_VERSIONS,
+ 	transaction_version: 2,
+@@ -1575,7 +1575,7 @@ impl pallet_revive::Config for Runtime {
+ 	type RuntimeHoldReason = RuntimeHoldReason;
+ 	type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
+ 	type ChainId = ConstU64<420_420_420>;
+-	type NativeToEthRatio = ConstU32<1_000_000>; // 10^(18 - 12) Eth is 10^18, Native is 10^12.
++	type NativeToEthRatio = ConstU32<10_000>; // Account Handoff LOCAL: native precision 14; unchanged Vestry uses 10^4 wei per planck.
+ 	type FindAuthor = <Runtime as pallet_authorship::Config>::FindAuthor;
+ 	type AllowEVMBytecode = ConstBool<true>;
+ 	type FeeInfo = pallet_revive::evm::fees::Info<Address, Signature, EthExtraImpl>;
+@@ -1842,7 +1842,7 @@ impl pallet_society::Config for Runtime {
+ }
+ 
+ parameter_types! {
+-	pub const MinVestedTransfer: Balance = 100 * DOLLARS;
++	pub const MinVestedTransfer: Balance = 10 * DOLLARS; // Account Handoff LOCAL: 10 tokens at 14 decimals.
+ 	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+ 		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
+ }
