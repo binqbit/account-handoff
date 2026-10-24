@@ -29,6 +29,8 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Check source formatting
         run: npm run format:check
+      - name: Verify pinned native metadata and generated declarations
+        run: npm run verify:native
       - name: Regenerate structural validators
         run: |
           npm run generate:contracts

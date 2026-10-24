@@ -14,6 +14,7 @@ import { dirname, join, resolve, relative, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import { keccak256 } from "viem";
+import { verifyGeneratedNativeArtifacts } from "../dev/native-artifacts.mjs";
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 export const STATE = join(ROOT, ".local-state");
@@ -126,7 +127,7 @@ export function emitDescriptor(data, { activate = false } = {}) {
     "packages/native-adapter/generated-manifest.json",
   );
   if (existsSync(generatedPath)) {
-    const manifest = JSON.parse(readFileSync(generatedPath, "utf8"));
+    const manifest = verifyGeneratedNativeArtifacts(ROOT);
     if (
       manifest.metadataSha256 === data.qualification?.metadataSha256 &&
       manifest.runtimeCodeHash === data.qualification?.runtimeCodeHash

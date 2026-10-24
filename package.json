@@ -12,7 +12,7 @@
   },
   "scripts": {
     "dev": "vite --config apps/web/vite.config.ts --host 127.0.0.1",
-    "build": "npm run generate:contracts && tsc --noEmit && vite build --config apps/web/vite.config.ts",
+    "build": "npm run verify:native && npm run generate:contracts && tsc --noEmit && vite build --config apps/web/vite.config.ts",
     "preview": "vite preview --config apps/web/vite.config.ts --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -38,7 +38,8 @@
     "compile:contract": "node scripts/local/compile-contract.mjs",
     "local:reconcile": "node scripts/local/reconcile.mjs",
     "local:refresh-descriptor": "node scripts/local/refresh-descriptor.mjs",
-    "generate:native": "node scripts/dev/generate-native.mjs"
+    "generate:native": "node scripts/dev/generate-native.mjs",
+    "verify:native": "node scripts/dev/verify-generated-native.mjs"
   },
   "dependencies": {
     "@polkadot/util": "14.0.3",
