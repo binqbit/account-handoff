@@ -156,7 +156,7 @@ npm run local:seed -- --run development
 
 These are explicit local transactions. The seed creates P through M0, funds operating accounts, establishes persistent mapping, creates the grant for h(P), and releases the first vested milestone. Each stage retains its own attempt and receipt; it learns P and the grant ID from actual finalized events. `.local-state/development/workspace.json` is the local workspace import for the website. Import verifies its original Pure and grant provenance against the selected runtime.
 
-The host launcher is the integrated path for application/deployment/seed tooling. [Compose](infra/local/compose.yaml) provides an alternate container process definition for the same pinned node/gateway source. Container state and host PID/state management are different: use one process owner for a given port set, and keep Compose volumes separate from host runs. The [LOCAL environment guide](infra/local/README.md) documents container build/start and ownership boundaries.
+The host launcher is the integrated path for application/deployment/seed tooling. [Compose](infra/local/compose.yaml) provides an alternate container process definition for the same pinned node/gateway source. Copy [.env.example](.env.example) to a local, Git-ignored `.env` on first setup; the [LOCAL environment guide](infra/local/README.md) documents the explicit environment-file commands and settings. Container state and host PID/state management are different: use one process owner for a given port set, and keep Compose volumes separate from host runs.
 
 ## Exercise the complete native mechanism
 

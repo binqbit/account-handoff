@@ -25,9 +25,32 @@ The seed command creates the vested first-milestone baseline, a separate rejecte
 For Docker-enabled hosts, the optional [Compose configuration](compose.yaml) builds the same source and patch with digest-pinned Rust/Debian images and a dated Debian package snapshot:
 
 ```bash
-AH_RUN_ID=development docker compose -f infra/local/compose.yaml build
-AH_RUN_ID=development docker compose -f infra/local/compose.yaml up -d
+# From the repository root, create .env once and adjust it as needed.
+cp .env.example .env
+docker compose --env-file .env -f infra/local/compose.yaml up -d --build
 ```
+
+The versioned [.env.example](../../.env.example) provides the settings; your local `.env` is ignored by Git. Pass `--env-file .env` explicitly because the Compose file is under `infra/local`. Keep an existing `.env` when restarting or upgrading this stack. The example uses project `account-handoff-docker-local`, native WebSocket `ws://127.0.0.1:9966`, and gateway HTTP `http://127.0.0.1:8566`, so it can coexist with the host launcher's default ports.
+
+Exported `AH_*` shell variables take precedence over the file. If you previously exported them and now want to use only `.env`, run `unset AH_RUN_ID AH_NATIVE_PORT AH_GATEWAY_PORT` first.
+
+| Variable          | Purpose                                               | Example value  |
+| ----------------- | ----------------------------------------------------- | -------------- |
+| `AH_RUN_ID`       | Compose project suffix and container/volume namespace | `docker-local` |
+| `AH_NATIVE_PORT`  | Native RPC port published on host loopback            | `9966`         |
+| `AH_GATEWAY_PORT` | Revive gateway port published on host loopback        | `8566`         |
+
+These settings configure Compose. Host-managed run manifests and the website's qualified `local-run.json` remain separate. The containers start the native node and gateway; they do not start the frontend, deploy Vestry, or seed a grant.
+
+Inspect or stop the same stack with the same environment file:
+
+```bash
+docker compose --env-file .env -f infra/local/compose.yaml ps
+docker compose --env-file .env -f infra/local/compose.yaml logs -f
+docker compose --env-file .env -f infra/local/compose.yaml down
+```
+
+If access to the Docker socket requires elevation, prefix these commands with `sudo`; the explicit environment file avoids relying on shell variables surviving `sudo`.
 
 Only loopback ports are published. The private network prevents native peering outside this stack. Persistent volumes belong to the selected Compose project. Container startup is not full qualification; run the application-level native and gateway checks before transactions. The host process launcher and Compose are alternative process owners: do not start both on the same ports.
 
