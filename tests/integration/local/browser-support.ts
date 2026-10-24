@@ -96,7 +96,11 @@ export async function performApproval(
     });
     if (await discard.isVisible()) await discard.click();
     for (const [label, value] of Object.entries(fields)) {
-      const input = page.getByLabel(label, { exact: true });
+      const input = page
+        .getByRole("textbox", { name: label, exact: true })
+        .or(page.getByRole("spinbutton", { name: label, exact: true }))
+        .or(page.getByRole("combobox", { name: label, exact: true }));
+      await expect(input).toHaveCount(1);
       if ((await input.evaluate((element) => element.tagName)) === "SELECT")
         await input.selectOption(value);
       else await input.fill(value);

@@ -90,7 +90,10 @@ test("UTF-8 evidence limit blocks preparation and retains text", async ({
   page,
 }) => {
   await page.goto(`${harness}#review?action=GRC-GRANT-SUBMIT-M1`);
-  const evidence = page.getByLabel("Public evidence");
+  const evidence = page.getByRole("textbox", {
+    name: "Public evidence",
+    exact: true,
+  });
   await evidence.fill("é".repeat(513));
   await page.getByRole("button", { name: "Prepare for review" }).click();
   await expect(page.getByRole("alert")).toContainText(

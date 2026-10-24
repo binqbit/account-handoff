@@ -12,6 +12,11 @@ test.afterEach(async ({ page }, testInfo) => {
       body: JSON.stringify(trace, null, 2),
       contentType: "application/json",
     });
+  if (testInfo.status !== testInfo.expectedStatus && !page.isClosed())
+    await page.context().storageState({
+      indexedDB: true,
+      path: testInfo.outputPath("resume-storage-state.json"),
+    });
 });
 
 test.describe("real LOCAL website and native wallet boundary", () => {
