@@ -1,5 +1,6 @@
 import { decodeGrantEvent } from "./index.js";
-import { account, hex, number, plain } from "@account-handoff/native-adapter";
+import { hex } from "@account-handoff/native-adapter";
+import { nativeHistorySource } from "./history-source.js";
 import type { Hex, NativeConnection } from "@account-handoff/native-adapter";
 
 export interface HistoryEvent {
@@ -290,70 +291,7 @@ export async function scanGrantHistory(
   connection: NativeConnection,
   options: ScanOptions,
 ): Promise<GrantHistory> {
-  const source: FinalizedHistorySource = {
-    async finalizedHeight() {
-      return number(
-        (await connection.api.rpc.chain_getHeader(
-          await connection.api.rpc.chain_getFinalizedHead(),
-        ))!.number,
-      );
-    },
-    async block(height) {
-      const blockHash = await connection.api.rpc.chain_getBlockHash(height);
-      if (!blockHash) throw new Error("Historical block hash is unavailable");
-      const signedBlock = await connection.api.rpc.chain_getBlock(blockHash);
-      if (!signedBlock) throw new Error("Historical block is unavailable");
-      await connection.assertRuntimeAt(hex(blockHash, 32));
-      const at = await connection.api.at(blockHash);
-      const [events, currentCodeHash, parentCodeHash] = await Promise.all([
-        at.query.system.events(),
-        connection.api.rpc.state_getStorageHash("0x3a636f6465", blockHash),
-        height === 0
-          ? Promise.resolve(null)
-          : connection.api.rpc.state_getStorageHash(
-              "0x3a636f6465",
-              signedBlock.block.header.parentHash,
-            ),
-      ]);
-      const executionCompatible =
-        currentCodeHash !== null &&
-        (height === 0 || currentCodeHash === parentCodeHash);
-      return {
-        number: number(signedBlock.block.header.number),
-        hash: hex(blockHash, 32),
-        executionCompatible,
-        events: events.map((entry, eventIndex) => {
-          const rawEvent = entry.event;
-          return {
-            pallet: rawEvent.pallet,
-            name:
-              typeof rawEvent.palletEvent === "string"
-                ? rawEvent.palletEvent
-                : rawEvent.palletEvent.name,
-            data:
-              typeof rawEvent.palletEvent === "string" ||
-              !("data" in rawEvent.palletEvent)
-                ? {}
-                : object(plain(rawEvent.palletEvent.data)),
-            eventIndex,
-            txIndex:
-              entry.phase.type === "ApplyExtrinsic" ? entry.phase.value : null,
-          };
-        }),
-        extrinsics: signedBlock.block.extrinsics.map((bytes) => {
-          const extrinsic = at.registry.$Extrinsic.tryDecode(bytes);
-          let signer: string | null = null;
-          if (extrinsic.signature) {
-            const address = object(plain(extrinsic.signature.address));
-            if (address.type === "Id" && typeof address.value === "string")
-              signer = account(address.value);
-          }
-          return { bytes: hex(bytes), call: plain(extrinsic.call), signer };
-        }),
-      };
-    },
-  };
-  return scanGrantHistoryWithSource(source, options);
+  return scanGrantHistoryWithSource(nativeHistorySource(connection), options);
 }
 
 export function roundAtSubmission(
