@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "vite --config apps/web/vite.config.ts --host 127.0.0.1",
     "build": "npm run verify:native && npm run generate:contracts && tsc --noEmit && vite build --config apps/web/vite.config.ts",
+    "build:testnet": "npm run verify:native && npm run generate:contracts && tsc --noEmit && vite build --config apps/web/vite.config.ts --mode testnet",
     "preview": "vite preview --config apps/web/vite.config.ts --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

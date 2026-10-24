@@ -1,0 +1,9 @@
+{
+  "name": "PortalDot V3 testnet",
+  "mode": "DEMO",
+  "nativeRpc": "wss://test-node-v3.portaldot.dev",
+  "evmRpc": "https://test-evm-rpc-v3.portaldot.dev",
+  "evmChainId": 420420777,
+  "genesisHash": "0xd4f9acbcf7f52388d8b095abe3c198d19fc510e0343e643e87cfbccb155283bd",
+  "explorerUrl": "https://node-console.portaldot.dev"
+}

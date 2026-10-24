@@ -9,6 +9,7 @@ node_modules/
 .venv/
 __pycache__/
 dist/
+/dist-testnet/
 build/
 coverage/
 .DS_Store

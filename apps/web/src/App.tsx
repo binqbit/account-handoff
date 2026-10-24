@@ -34,6 +34,7 @@ import {
   Workspaces,
 } from "./routes/utilities";
 import type { ScreenProps } from "./routes/screen-types";
+import { deployment } from "./config/deployment";
 import "./styles/app.css";
 
 function saveDownload(download: NonNullable<CommandResult["download"]>) {
@@ -189,6 +190,12 @@ function Application({ application }: { application: ApplicationFacade }) {
             </div>
           )}
           <main className="main-content" id="main-content" tabIndex={-1}>
+            {deployment.isTestnet && (
+              <Notice tone="warning" title="PortalDot V3 testnet preview">
+                Network reads are available. Transaction support is pending
+                testnet qualification.
+              </Notice>
+            )}
             {snapshot.storageError && (
               <Notice tone="negative" title="Storage unavailable">
                 {snapshot.storageError} Signing and sending require reliable

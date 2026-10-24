@@ -67,15 +67,20 @@ import {
   readWalletPreference,
   WALLET_PREFERENCE,
 } from "./wallet-connection";
+import {
+  deployment,
+  assertDeploymentMode,
+  assertDeploymentGenesis,
+} from "../config/deployment";
 
 const terminal = new Set(["finalized", "failed", "stale"]);
 
 const initial = (): AppSnapshot => ({
   revision: 0,
   network: {
-    mode: "LOCAL",
-    name: "Account Handoff LOCAL",
-    endpoint: "ws://127.0.0.1:9944",
+    mode: deployment.defaultMode,
+    name: deployment.defaultName,
+    endpoint: deployment.defaultEndpoint,
     connected: false,
     checking: false,
     readiness: [],
@@ -122,7 +127,7 @@ export class Application implements ApplicationFacade {
     );
   }
   static async create(): Promise<Application> {
-    const app = new Application(await openJournal("account-handoff:local:ui"));
+    const app = new Application(await openJournal(deployment.journalName));
     const stored = await app.metadata.getPreference<unknown>("workspaces");
     if (Array.isArray(stored))
       for (const value of stored) {
@@ -304,6 +309,7 @@ export class Application implements ApplicationFacade {
     return readLocalDescriptor(this.state.network.mode);
   }
   private async connectNetwork(mode: RuntimeMode, endpoint: string) {
+    assertDeploymentMode(mode);
     this.generation++;
     this.invalidateReview("Network changed");
     if (this.connection) await this.connection.close();
@@ -313,7 +319,11 @@ export class Application implements ApplicationFacade {
       ...this.state,
       network: {
         mode,
-        name: mode === "LOCAL" ? "Account Handoff LOCAL" : `PortalDot ${mode}`,
+        name: deployment.isTestnet
+          ? deployment.defaultName
+          : mode === "LOCAL"
+            ? "Account Handoff LOCAL"
+            : `PortalDot ${mode}`,
         endpoint,
         connected: false,
         checking: true,
@@ -334,10 +344,14 @@ export class Application implements ApplicationFacade {
       );
       await this.refresh();
     } catch (error) {
+      await this.connection?.close();
+      this.connection = null;
+      this.chain = null;
       this.state = {
         ...this.state,
         network: {
           ...this.state.network,
+          connected: false,
           checking: false,
           error: errorText(error),
         },
@@ -365,6 +379,7 @@ export class Application implements ApplicationFacade {
         connection.fingerprint(),
         this.descriptor(),
       ]);
+      assertDeploymentGenesis(f.genesis);
       if (
         d &&
         d.nativeRpc !== connection.endpoint &&

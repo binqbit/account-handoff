@@ -23,6 +23,16 @@ npm run preview -- --port 4174
 
 Static assets are emitted to `dist/`. Reserve port 4173 for browser tests and 4175 for the dedicated real-LOCAL browser suite.
 
+### PortalDot V3 testnet build
+
+```bash
+npm run build:testnet
+```
+
+This emits static production files to `dist-testnet/`, with the native endpoint and expected genesis from [infra/testnet/network.json](infra/testnet/network.json). It starts in DEMO mode, rejects another network's genesis and LOCAL/LIVE connection commands, and uses a separate browser journal. Wallet access and network connection remain explicit. The build excludes the host's `local-run.json` and does not load Vite env files. Never ship `.env`, wallet secrets, or LOCAL state with it.
+
+The current testnet artifact is a **read-only preview**: network identity/readiness and public account reads are available; testnet transactions remain blocked by the existing runtime, wallet, and contract qualification checks. A successful build or RPC connection does not qualify a PortalDot deployment. The complete grant/handoff journey has been verified separately on LOCAL. No testnet contract address is configured by this build.
+
 ## Website navigation
 
 The default route is **Home**, with a short product explanation and a three-step introduction. **Docs** contains the in-app usage guide and recovery vocabulary. The header keeps Home, Workspaces, Docs and the creation action available; opening a workspace adds its task tabs underneath. Wallet account choices show the name and a compact public address in an accessible custom menu.

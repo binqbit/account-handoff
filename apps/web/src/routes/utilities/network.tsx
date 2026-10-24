@@ -13,6 +13,7 @@ import { HelpDisclosure } from "../../components/help-disclosure";
 import type { RuntimeMode } from "../../ui-contract";
 import type { ScreenProps } from "../screen-types";
 import { ReadinessCards } from "../../components/readiness";
+import { deployment } from "../../config/deployment";
 
 export function Network(props: ScreenProps) {
   const { snapshot, run } = props;
@@ -54,7 +55,7 @@ export function Network(props: ScreenProps) {
         <Card title="Native node connection">
           <form onSubmit={(event) => void submit(event)}>
             <div className="mode-picker" role="group" aria-label="Environment">
-              {(["LOCAL", "DEMO", "LIVE"] as const).map((value) => (
+              {deployment.allowedModes.map((value) => (
                 <button
                   key={value}
                   type="button"
@@ -76,7 +77,7 @@ export function Network(props: ScreenProps) {
                     }
                     size={20}
                   />
-                  <span>{value}</span>
+                  <span>{deployment.isTestnet ? "Testnet" : value}</span>
                   <small>
                     {value === "LOCAL"
                       ? "Local native stack"
@@ -108,16 +109,30 @@ export function Network(props: ScreenProps) {
               </p>
             </div>
             <HelpDisclosure title="Which endpoint should I use?">
+              {mode === "LOCAL" ? (
+                <p>
+                  For the default host-run local node, use{" "}
+                  <code>ws://127.0.0.1:9944</code>. For Docker Compose, use the
+                  port configured as <code>AH_NATIVE_PORT</code> in your local
+                  .env.
+                </p>
+              ) : (
+                <p>
+                  Use the network's native secure WebSocket endpoint.{" "}
+                  {deployment.isTestnet ? (
+                    <>
+                      This build defaults to{" "}
+                      <code>{deployment.defaultEndpoint}</code>. Alternative
+                      endpoints must have the same testnet genesis.
+                    </>
+                  ) : (
+                    <> This differs from the network's EVM HTTP endpoint.</>
+                  )}
+                </p>
+              )}
               <p>
-                For the default host-run local node, use{" "}
-                <code>ws://127.0.0.1:9944</code>. For Docker Compose, use the
-                port configured as <code>AH_NATIVE_PORT</code> in your local
-                .env.
-              </p>
-              <p>
-                The URL is saved on this device. Changing the environment does
-                not connect automatically; use “Connect and verify” to check the
-                selected chain.
+                Changing the environment does not connect automatically; use
+                “Connect and verify” to check the selected chain.
               </p>
             </HelpDisclosure>
             {mode === "LIVE" && (
@@ -158,7 +173,9 @@ export function Network(props: ScreenProps) {
             rows={[
               { label: "Environment", value: network.mode },
               { label: "Network", value: network.name },
-              { label: "Local run", value: network.runId ?? "—" },
+              ...(network.mode === "LOCAL"
+                ? [{ label: "Local run", value: network.runId ?? "—" }]
+                : []),
               {
                 label: "Finalized block",
                 value: network.blockNumber ?? "Not received",
