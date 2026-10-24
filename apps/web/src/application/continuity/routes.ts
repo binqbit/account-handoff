@@ -1,3 +1,4 @@
+import { hasHandoff } from "../models";
 import { canonicalJson } from "@account-handoff/contracts";
 import type { FrozenEnvelope } from "@account-handoff/contracts";
 import type { WorkspaceRecord } from "../models";
@@ -23,6 +24,7 @@ export function inspectM1ProofRoute(
   w: WorkspaceRecord,
   first: boolean,
 ): unknown {
+  if (!hasHandoff(w)) return null;
   const expectedSigner = first ? w.participants.A : w.participants.D;
   if (inspection.signer !== expectedSigner)
     throw new Error("Unexpected participant in M1 route");

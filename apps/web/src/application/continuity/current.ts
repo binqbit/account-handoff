@@ -28,7 +28,8 @@ export function certificateMatchesWorkspace(
     certificate.identity.P === workspace.pure &&
     certificate.identity.contractAddress === workspace.contract &&
     certificate.identity.grantId === workspace.grantId &&
-    certificate.before.blockHash === workspace.baseline?.blockHash &&
+    certificate.before.blockHash ===
+      (workspace.handoffBaseline ?? workspace.baseline)?.blockHash &&
     canonicalJson(certificate.M0) === canonicalJson(workspace.M0) &&
     canonicalJson(certificate.M1) === canonicalJson(workspace.M1)
   );
@@ -108,7 +109,7 @@ export function assessCurrentContinuity(input: {
         reject("Current beneficiary or persisted reverse mapping differs.");
       if (
         pure.proxies.length !== 1 ||
-        pure.proxies[0]!.delegate !== w.M1.account ||
+        pure.proxies[0]!.delegate !== w.M1?.account ||
         pure.proxies[0]!.proxyType !== "Any" ||
         pure.proxies[0]!.delay !== 0
       )
@@ -166,7 +167,7 @@ export function assessCurrentContinuity(input: {
       try {
         if (
           accounting.pure !== w.pure ||
-          accounting.creator !== w.M0.account ||
+          accounting.creator !== (w.creator?.account ?? w.M0.account) ||
           !assessBacking(accounting).backed ||
           accounting.creatorCurrentAggregateReservedNative === null ||
           BigInt(accounting.creatorCurrentAggregateReservedNative) <

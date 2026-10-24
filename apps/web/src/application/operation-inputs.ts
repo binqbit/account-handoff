@@ -37,9 +37,10 @@ export async function loadOperationInputs(
   f: NativeFingerprint,
 ): Promise<FreshOperationInput & { accounts: ChainView["accounts"] }> {
   const wanted = new Set([
-    ...Object.values(w.participants),
+    ...Object.values(w.participants).filter((a): a is string => a !== null),
     w.M0.account,
-    w.M1.account,
+    ...(w.creator ? [w.creator.account] : []),
+    ...(w.M1 ? [w.M1.account] : []),
     p.signer,
     ...(w.pure ? [w.pure] : []),
   ]);
@@ -107,6 +108,10 @@ export async function loadOperationInputs(
           f.anchor.hash,
         )
       : false;
+  const rotation = ["GRC-ROTATION-ADD-M1", "GRC-ROTATION-REMOVE-M0"].includes(
+    p.actionId,
+  );
+  const baseline = rotation ? (w.handoffBaseline ?? w.baseline) : w.baseline;
   return {
     envelope: p.envelope,
     signer: p.signer,
@@ -123,7 +128,7 @@ export async function loadOperationInputs(
     pure: w.pure,
     mappedPure: w.pure ? contractAddress(w.pure) : null,
     M0: w.M0.account,
-    M1: w.M1.account,
+    M1: w.M1?.account ?? null,
     existentialDepositNative: connection.api.consts.balances.existentialDeposit,
     proposalDepositNative:
       connection.api.consts.multisig.depositBase +
@@ -136,8 +141,8 @@ export async function loadOperationInputs(
       connection.api.consts.revive.depositPerByte * 52n,
     proxyIncrementNative: connection.api.consts.proxy.proxyDepositFactor,
     ...(ledger ? { accounting: ledger } : {}),
-    ...(w.baseline
-      ? { baselineVesting: schedules(w.baseline.account.vesting) }
+    ...(baseline
+      ? { baselineVesting: schedules(baseline.account.vesting) }
       : {}),
     ...(pure ? { currentVesting: schedules(pure.vesting) } : {}),
     vestingBlockNumber: BigInt(f.anchor.number),

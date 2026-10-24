@@ -53,13 +53,15 @@ export function workspaceView(
             },
           ]
         : []),
-      ...(
-        Object.entries(workspace.participants) as [ParticipantRole, string][]
-      ).map(([role, address]) => ({
-        address,
-        role: roleNames[role],
-        mappingRequired: ["F", "R1", "R2"].includes(role),
-      })),
+      ...(Object.entries(workspace.participants) as [ParticipantRole, string][])
+        .filter(
+          (entry): entry is [ParticipantRole, string] => entry[1] !== null,
+        )
+        .map(([role, address]) => ({
+          address,
+          role: roleNames[role],
+          mappingRequired: ["F", "R1", "R2"].includes(role),
+        })),
     ];
   for (const entry of entries) {
     const state = stateFor(chain, entry.address);
@@ -96,7 +98,9 @@ export function workspaceView(
       const actions: string[] = [];
       if (milestone.state === 0 && milestone.round === 0)
         actions.push(
-          index === 0 ? "GRC-GRANT-SUBMIT-M0" : "GRC-GRANT-SUBMIT-M1",
+          index === 0 || current === "M0"
+            ? "GRC-GRANT-SUBMIT-M0"
+            : "GRC-GRANT-SUBMIT-M1",
         );
       if (milestone.state === 1) actions.push("GRC-GRANT-APPROVE");
       const ratio = ratioFor(chain);
@@ -133,7 +137,7 @@ export function workspaceView(
       label: "Team and controllers",
       status: "ready",
       detail:
-        "M0/M1 membership is saved. Current authority is read separately.",
+        "The current group is saved. Authority is verified from the network.",
     },
     {
       id: "pure",
@@ -189,7 +193,7 @@ export function workspaceView(
     currentTask = {
       title: "Create the stable beneficiary",
       detail:
-        "Fund M0's creation reserve, then create P through the original group.",
+        "Fund the controller’s creation reserve, then create the beneficiary through your current group.",
       actionId: "GRC-SETUP-CREATE-PURE",
     };
   else if (!mapped(pureState))
@@ -208,8 +212,7 @@ export function workspaceView(
   else if (current === "Diverged")
     currentTask = {
       title: "Review unexpected authority",
-      detail:
-        "The actual delegate inventory does not match the allowed M0/M1 set.",
+      detail: "The delegate inventory differs from the configured groups.",
       destination: "team",
     };
   else if (
@@ -231,16 +234,16 @@ export function workspaceView(
     };
   else if (current === "DualControl")
     currentTask = {
-      title: "Remove the original group M0",
+      title: "Remove the current group",
       detail:
-        "Both groups currently have authority. M1 performs the next step.",
+        "Both groups currently have authority. The replacement group performs the next step.",
       actionId: "GRC-ROTATION-REMOVE-M0",
     };
   else if (current === "M1" && continuity.continuity !== "continued")
     currentTask = {
       title: "Continue the grant with the new group",
       detail:
-        "Submit the next milestone through M1. This is a separate action after removing M0.",
+        "Submit the next milestone. This is a separate action after removing M0.",
       actionId: "GRC-GRANT-SUBMIT-M1",
     };
   else if (
@@ -252,11 +255,25 @@ export function workspaceView(
       detail: continuity.detail,
       destination: "history",
     };
+  else if (!workspace.M1 && milestones.some((item) => item.state === "Open"))
+    currentTask = {
+      title: "Continue work on the grant",
+      detail:
+        "The current group can submit the next open milestone, or start a control handoff when needed.",
+      actionId: "GRC-GRANT-SUBMIT-M0",
+    };
+  else if (!workspace.M1)
+    currentTask = {
+      title: "Manage your team",
+      detail:
+        "Your grant is ready. Start a control handoff when the signing group needs to change.",
+      destination: "handoff",
+    };
   else
     currentTask = {
       title: "Prepare the new controller group",
       detail:
-        "Add M1 through the original group. Then remove M0 separately and continue the grant.",
+        "Authorize the replacement group, remove the previous group, then continue the grant.",
       actionId: "GRC-ROTATION-ADD-M1",
     };
   const totals = grant?.milestones.reduce((sum, item) => sum + item.amount, 0n);
@@ -274,7 +291,7 @@ export function workspaceView(
       : null,
     oldController: {
       address: workspace.M0.account,
-      label: "M0",
+      label: "Current controller",
       threshold: Number(workspace.M0.threshold),
       members: workspace.M0.members.map((address) =>
         identity(workspace, address),
@@ -284,23 +301,57 @@ export function workspaceView(
           ? null
           : current === "M0" || current === "DualControl",
     },
-    newController: {
-      address: workspace.M1.account,
-      label: "M1",
-      threshold: Number(workspace.M1.threshold),
-      members: workspace.M1.members.map((address) =>
-        identity(workspace, address),
-      ),
-      active:
-        current === "Unknown"
-          ? null
-          : current === "M1" || current === "DualControl",
-    },
+    newController: workspace.M1
+      ? {
+          address: workspace.M1.account,
+          label: "Replacement controller",
+          threshold: Number(workspace.M1.threshold),
+          members: workspace.M1.members.map((address) =>
+            identity(workspace, address),
+          ),
+          active:
+            current === "Unknown"
+              ? null
+              : current === "M1" || current === "DualControl",
+        }
+      : null,
     contract: workspace.contract,
     grantId: workspace.grantId,
     authority: current,
     continuity: continuity.continuity,
     continuityDetail: continuity.detail,
+    handoffs: (workspace.handoffs ?? []).map((item) => ({
+      id: item.id,
+      from: item.from.account,
+      to: item.to.account,
+      completedAt: item.completedAt,
+      continued: !!item.certificate,
+      receiptId: item.removalReceiptId,
+    })),
+    identityComparison: workspace.baseline
+      ? [
+          {
+            label: "Native beneficiary",
+            before: workspace.baseline.account.address,
+            current: pureState?.address ?? null,
+            matches: pureState
+              ? eq(workspace.baseline.account.address, pureState.address) &&
+                eq(workspace.pure, pureState.address)
+              : null,
+          },
+          {
+            label: "Grant recipient",
+            before: workspace.baseline.grant.grantee,
+            current: grant?.grantee ?? null,
+            matches:
+              grant && pureState
+                ? mapped(pureState) &&
+                  eq(workspace.baseline.grant.grantee, grant.grantee) &&
+                  eq(grant.grantee, pureState.mappedAddress)
+                : null,
+          },
+        ]
+      : [],
     symbol,
     grantTotal:
       totals === undefined || ratio === null || totals % ratio !== 0n

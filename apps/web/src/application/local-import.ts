@@ -32,7 +32,7 @@ export interface VerifiedLocalWorkspaceImport {
   creationEvidence: EvidenceRef[];
   creationBlock: number;
   grantCreationEvidence: EvidenceRef[];
-  grantCreationBlock: number;
+  grantCreationBlock: number | null;
 }
 function requireValue(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -264,7 +264,7 @@ export async function validateLocalWorkspaceImport(
   );
   requireValue(
     packet["format"] === "account-handoff-local-workspace" &&
-      packet["version"] === 1 &&
+      (packet["version"] === 1 || packet["version"] === 2) &&
       packet["mode"] === "LOCAL",
     "Unsupported LOCAL workspace format",
   );
@@ -286,6 +286,7 @@ export async function validateLocalWorkspaceImport(
     expectedRun.status === "running" && !!expectedRun.contract,
     "The LOCAL run is retired or has no bound contract",
   );
+  const currentOnly = packet["version"] === 2;
   const source = object(packet["input"]);
   exactFields(
     source,
@@ -308,10 +309,18 @@ export async function validateLocalWorkspaceImport(
     "Workspace name must contain 1–80 characters",
   );
   const oldMembers = accounts(source["oldMembers"], 3, "M0");
-  const newMembers = accounts(source["newMembers"], 3, "M1");
+  requireValue(
+    !currentOnly || source["newMembers"] === undefined,
+    "A connected current group cannot contain a preplanned replacement",
+  );
+  const newMembers = currentOnly
+    ? undefined
+    : accounts(source["newMembers"], 3, "M1");
   requireValue(
     source["threshold"] === 2 &&
-      oldMembers.filter((member) => newMembers.includes(member)).length === 2,
+      (!newMembers ||
+        oldMembers.filter((member) => newMembers.includes(member)).length ===
+          2),
     "Expected two 2-of-3 groups with exactly one replaced participant",
   );
   const reviewers = accounts(source["reviewers"], 2, "Reviewers");
@@ -322,27 +331,31 @@ export async function validateLocalWorkspaceImport(
       ![funder, ...reviewers].some((who) => who.endsWith("ee".repeat(12))),
     "The first profile requires normal persisted account mappings",
   );
-  const contract = hex(text(source["contract"], "Contract address"), 20);
-  const grantId = text(source["grantId"], "Grant ID");
+  const hasGrant =
+    source["contract"] !== undefined || source["grantId"] !== undefined;
+  const contract = hasGrant
+    ? hex(text(source["contract"], "Contract address"), 20)
+    : undefined;
+  const grantId = hasGrant ? text(source["grantId"], "Grant ID") : undefined;
+  requireValue(currentOnly || hasGrant, "The imported grant is required");
   requireValue(
-    /^(0|[1-9][0-9]*)$/.test(grantId),
+    !hasGrant || /^(0|[1-9][0-9]*)$/.test(grantId!),
     "Grant ID must be a canonical unsigned decimal string",
   );
   requireValue(
-    contract === hex(expectedRun.contract.address, 20),
+    !hasGrant || contract === hex(expectedRun.contract.address, 20),
     "Imported contract differs from the qualified runtime binding",
   );
   const expectedCode = hex(expectedRun.contract.runtimeCodeHash, 32);
   const input: WorkspaceInput = {
     name,
     oldMembers,
-    newMembers,
+    ...(newMembers ? { newMembers } : {}),
     threshold: 2,
     funder,
     reviewers,
     beneficiary: pure,
-    contract,
-    grantId,
+    ...(hasGrant ? { contract: contract!, grantId: grantId! } : {}),
   };
   const M0 = makeController(oldMembers, 2, "M0", {
     deriveMultisig: (members, threshold) =>
@@ -417,6 +430,29 @@ export async function validateLocalWorkspaceImport(
       initial.proxies[0]!.delay === 0,
     "Pure initial authority was not exactly M0 / Any / 0",
   );
+  if (currentOnly) {
+    const now = await connection.readAccount(pure, current.anchor.hash);
+    requireValue(
+      now.proxies.length === 1 &&
+        now.proxies[0]!.delegate === M0.account &&
+        now.proxies[0]!.proxyType === "Any" &&
+        now.proxies[0]!.delay === 0,
+      "The connected multisig is not the beneficiary's sole Any/0 controller",
+    );
+    if (hasGrant)
+      requireValue(
+        now.mappedTo === pure && now.mappedAddress === contractAddress(pure),
+        "The beneficiary's persistent mapping must be verified before connecting its grant",
+      );
+  }
+  if (!contract || grantId === undefined)
+    return {
+      input,
+      creationEvidence: [await evidence(receipt)],
+      creationBlock: blockNumber,
+      grantCreationEvidence: [],
+      grantCreationBlock: null,
+    };
   await verifyContractAt(
     connection,
     contract,
@@ -505,4 +541,42 @@ export async function validateLocalWorkspaceImport(
     ],
     grantCreationBlock: grantCreation.blockNumber,
   };
+}
+
+/** Resolve public creation locators, then apply the same on-chain checks as imports. */
+export async function verifyWorkspaceConnection(
+  input: WorkspaceInput,
+  creation: { blockHash: string; transactionHash: string },
+  connection: NativeConnection,
+  expectedRun: LocalDescriptor,
+): Promise<VerifiedLocalWorkspaceImport> {
+  const blockHash = hex(creation.blockHash, 32);
+  const transactionHash = hex(creation.transactionHash, 32);
+  const receipt = await connection.receiptAt(blockHash, transactionHash);
+  const {
+    controllerAddress: _address,
+    creation: _creation,
+    newMembers: _next,
+    ...current
+  } = input;
+  return validateLocalWorkspaceImport(
+    {
+      format: "account-handoff-local-workspace",
+      version: 2,
+      mode: "LOCAL",
+      runId: expectedRun.runId,
+      generation: expectedRun.generation,
+      genesisHash: expectedRun.genesisHash ?? expectedRun.genesis,
+      endpoint: connection.endpoint,
+      input: current,
+      creation: {
+        blockHash,
+        transactionHash,
+        blockNumber: receipt.blockNumber,
+        transactionIndex: receipt.txIndex,
+      },
+    },
+    connection,
+    expectedRun,
+  );
 }

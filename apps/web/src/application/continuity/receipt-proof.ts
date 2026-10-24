@@ -1,3 +1,4 @@
+import { hasHandoff } from "../models";
 import {
   canonicalJson,
   hexBytes,
@@ -36,6 +37,7 @@ export async function proveReceipt(
   baselineAccount: NativeAccountState,
 ): Promise<ReceiptProof | null> {
   const { connection, workspace: w, records } = input;
+  if (!hasHandoff(w)) return null;
   if (
     !candidate.anchor ||
     candidate.profileDigest !== input.profile.digest ||

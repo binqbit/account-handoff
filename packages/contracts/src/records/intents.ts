@@ -131,7 +131,7 @@ export type Params_GRC_GRANT_CREATE = {
 export type Params_GRC_GRANT_SUBMIT_M0 = {
   contract: H160;
   grantId: Decimal;
-  index: "0";
+  index: "0" | "1";
   evidence: string;
 };
 

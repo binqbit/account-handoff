@@ -112,6 +112,10 @@ export async function operationPostconditions(
       },
     ];
   }
+  const rotation = ["GRC-ROTATION-ADD-M1", "GRC-ROTATION-REMOVE-M0"].includes(
+    p.actionId,
+  );
+  const baseline = rotation ? (w.handoffBaseline ?? w.baseline) : w.baseline;
   const pure = w.pure
     ? await connection.readAccount(w.pure, receipt.blockHash)
     : null;
@@ -131,7 +135,7 @@ export async function operationPostconditions(
               delay: "0" as const,
             })),
           w.M0.account,
-          w.M1.account,
+          w.M1?.account ?? null,
         )
       : "Unknown";
     ok =
@@ -167,7 +171,7 @@ export async function operationPostconditions(
       "GRC-GRANT-SUBMIT-M1",
     ].includes(p.actionId)
   ) {
-    if (!pure || !w.baseline || !w.contract || w.grantId === null) {
+    if (!pure || !baseline || !w.contract || w.grantId === null) {
       result.push({
         id: "continuity-evidence",
         result: "unknown",
@@ -179,24 +183,25 @@ export async function operationPostconditions(
     }
     const f = await connection.fingerprint(receipt.blockHash);
     const creator = await connection.readAccount(
-      w.M0.account,
+      w.creator?.account ?? w.M0.account,
       receipt.blockHash,
     );
     const ledger = await accounting(f, {
       [w.pure!]: pure,
-      [w.M0.account]: creator,
+      [w.creator?.account ?? w.M0.account]: creator,
     });
     const backing =
       ledger?.status === "reconciled" &&
       ledger.unexplainedReservedDeltaNative === "0";
     const vesting =
       hasPreservedSchedule(
-        schedules(w.baseline.account.vesting),
+        schedules(baseline.account.vesting),
         schedules(pure.vesting),
       ) &&
-      schedules(w.baseline.account.vesting).some(
-        (s) => vestingRemaining(s, BigInt(receipt.blockNumber)) > 0n,
-      );
+      (rotation ||
+        schedules(baseline.account.vesting).some(
+          (s) => vestingRemaining(s, BigInt(receipt.blockNumber)) > 0n,
+        ));
     const grant = await readGrant(
       connection,
       w.pure!,
@@ -206,8 +211,8 @@ export async function operationPostconditions(
     );
     const binding =
       grant.grantee === contractAddress(w.pure!) &&
-      grant.grantee === w.baseline.grant.grantee &&
-      grant.funder === w.baseline.grant.funder;
+      grant.grantee === baseline.grant.grantee &&
+      grant.funder === baseline.grant.funder;
     result.push(
       {
         id: "reserve-backing",

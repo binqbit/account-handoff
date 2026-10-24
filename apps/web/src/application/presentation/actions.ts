@@ -29,11 +29,13 @@ function roles(
   workspace: WorkspaceRecord,
   keys: ParticipantRole[],
 ): { value: string; label: string; detail: string }[] {
-  return keys.map((role) => ({
-    value: role,
-    label: `${roleNames[role]} · ${workspace.participants[role].slice(0, 8)}…${workspace.participants[role].slice(-6)}`,
-    detail: workspace.participants[role],
-  }));
+  return keys
+    .filter((role) => workspace.participants[role] !== null)
+    .map((role) => ({
+      value: role,
+      label: `${roleNames[role]} · ${workspace.participants[role]!.slice(0, 8)}…${workspace.participants[role]!.slice(-6)}`,
+      detail: workspace.participants[role]!,
+    }));
 }
 function amountField(symbol: string): OperationField {
   return {
@@ -81,7 +83,7 @@ export function actionViews(
   const oldMember = workspace.M0.members.some((member) =>
     eq(member, selectedSigner),
   );
-  const newMember = workspace.M1.members.some((member) =>
+  const newMember = workspace.M1?.members.some((member) =>
     eq(member, selectedSigner),
   );
   const common: string[] = [];
@@ -109,15 +111,15 @@ export function actionViews(
       "The selected signer has no known available funds for the fee.",
     );
   const requireOld = (): string[] => [
-    ...(!oldMember ? ["A signer from the original group M0 is required."] : []),
+    ...(!oldMember ? ["A signer from the current group is required."] : []),
     ...(!["M0", "DualControl"].includes(current)
-      ? ["M0 authority is not verified."]
+      ? ["The current group’s authority is not verified."]
       : []),
   ];
   const requireNew = (): string[] => [
-    ...(!newMember ? ["A signer from the new group M1 is required."] : []),
+    ...(!newMember ? ["A signer from the replacement group is required."] : []),
     ...(!["M1", "DualControl"].includes(current)
-      ? ["M1 authority is not verified."]
+      ? ["The replacement group’s authority is not verified."]
       : []),
   ];
   const requirePure = (): string[] =>
@@ -197,6 +199,7 @@ export function actionViews(
       help: "Exact Unix deadlines are fixed in the review. The second tranche has no new vesting.",
     },
   ];
+  const replacementPlanned = workspace.M1 !== null;
   function action(
     id: EnabledOperationId,
     title: string,
@@ -221,7 +224,19 @@ export function actionViews(
           )
           .map((gate) => `Network capability must be verified: ${gate}.`)
       : [];
-    const blockers = [...common, ...unavailableCapabilities, ...ownBlockers];
+    const blockers = [
+      ...common,
+      ...unavailableCapabilities,
+      ...ownBlockers,
+      ...(!replacementPlanned &&
+      [
+        "GRC-ROTATION-ADD-M1",
+        "GRC-ROTATION-REMOVE-M0",
+        "GRC-GRANT-SUBMIT-M1",
+      ].includes(id)
+        ? ["Choose a replacement group in Control handoff first."]
+        : []),
+    ];
     return {
       id,
       title,
@@ -233,8 +248,18 @@ export function actionViews(
       fields: inputs,
     };
   }
-  const hasBaseline = !!workspace.baseline;
+  const hasBaseline =
+    !!(workspace.handoffBaseline ?? workspace.baseline) ||
+    !!(pureState && chain?.grant);
   const proofState = proof(workspace, chain);
+  const openOptions = [0, 1]
+    .filter(
+      (index) => milestone(index)?.state === 0 && milestone(index)?.round === 0,
+    )
+    .map((index) => ({
+      value: String(index),
+      label: `Milestone ${index + 1}`,
+    }));
   const submittedOptions = [0, 1]
     .filter((index) => milestone(index)?.state === 1)
     .map((index) => ({
@@ -244,7 +269,7 @@ export function actionViews(
   return [
     action(
       "GRC-SETUP-FUND-M0",
-      "Fund the M0 reserve",
+      "Fund the controller reserve",
       "Fund the controller's Pure creation reserve separately. This does not fund signer fees.",
       "funding",
       "Selected donor",
@@ -273,11 +298,11 @@ export function actionViews(
     action(
       "GRC-SETUP-CREATE-PURE",
       "Create beneficiary P",
-      "The original group M0 creates a separate native Pure. Its address comes from the finalized receipt.",
+      "The current group creates a separate native Pure. Its address comes from the finalized receipt.",
       "setup",
-      "Group M0",
+      "Current group",
       [
-        ...(!oldMember ? ["An M0 signer is required."] : []),
+        ...(!oldMember ? ["A current-group signer is required."] : []),
         ...(workspace.pure
           ? ["Beneficiary P is already linked to the workspace."]
           : []),
@@ -307,7 +332,7 @@ export function actionViews(
       "Create P mapping",
       "Persistent mapping from native P to h(P). Reverse mapping must be verified.",
       "setup",
-      "Group M0 through P",
+      "Current group through the beneficiary",
       [
         ...requirePure(),
         ...requireOld(),
@@ -341,14 +366,14 @@ export function actionViews(
       "Create and fund the grant",
       "Two milestones, two reviewers. The funder sets h(P) as beneficiary from the start.",
       "grant",
-      "Funder F",
+      "Funder",
       [
         ...requirePure(),
         ...requireMapping(),
         ...(!selectedRoles.includes("F")
-          ? ["Only the designated funder F may create the grant."]
+          ? ["Only the designated funder may create the grant."]
           : []),
-        ...(!mapped(actorState) ? ["Funder F mapping is required."] : []),
+        ...(!mapped(actorState) ? ["Funder mapping is required."] : []),
         ...(["R1", "R2"] as const).flatMap((role) =>
           mapped(stateFor(chain, workspace.participants[role]))
             ? []
@@ -362,18 +387,28 @@ export function actionViews(
     ),
     action(
       "GRC-GRANT-SUBMIT-M0",
-      "Submit the first milestone through M0",
+      "Submit a milestone",
       "The evidence will be public. Submission does not imply approval or release.",
       "grant",
-      "Group M0 through P",
+      "Current group through the beneficiary",
       [
         ...requirePure(),
         ...requireMapping(),
         ...requireGrant(),
         ...requireOld(),
-        ...requireOpen(0),
+        ...(!openOptions.length
+          ? ["No milestone is open for submission."]
+          : []),
       ],
       [
+        {
+          name: "index",
+          label: "Milestone",
+          type: "select",
+          required: true,
+          options: openOptions,
+          value: openOptions[0]?.value ?? "0",
+        },
         {
           name: "evidence",
           label: "Public evidence",
@@ -391,7 +426,7 @@ export function actionViews(
       "Approve a submitted milestone",
       "Your vote may immediately release funds and create vesting in the same transaction.",
       "grant",
-      "Direct reviewer R1 / R2",
+      "Reviewer",
       [
         ...requireGrant(),
         ...(!selectedRoles.some((role) => role === "R1" || role === "R2")
@@ -415,29 +450,29 @@ export function actionViews(
     ),
     action(
       "GRC-ROTATION-ADD-M1",
-      "Add the new controller M1",
-      "M0 and M1 will have full authority over P until M0 is removed separately.",
+      "Authorize the replacement group",
+      "Both groups can act for the beneficiary until the previous group is removed.",
       "handoff",
-      "Group M0",
+      "Current group",
       [
         ...requirePure(),
         ...requireOld(),
         ...requireGrant(),
         ...requireMapping(),
         ...(current !== "M0"
-          ? ["The exact initial M0 inventory is required."]
+          ? ["The current group must be the sole controller."]
           : []),
         ...(!hasBaseline
-          ? ["A verified grant baseline and active vesting are required."]
+          ? ["A verified grant and beneficiary checkpoint are required."]
           : []),
       ],
     ),
     action(
       "GRC-ROTATION-REMOVE-M0",
-      "Remove the original controller M0",
-      "Only M0 / Any / 0 is removed. The expected remaining inventory contains M1 only.",
+      "Remove the previous group",
+      "Remove only the previous controller’s permission and verify that the replacement is the sole controller.",
       "handoff",
-      "Group M1",
+      "Replacement group",
       [
         ...requirePure(),
         ...requireNew(),
@@ -451,10 +486,10 @@ export function actionViews(
     ),
     action(
       "GRC-GRANT-SUBMIT-M1",
-      "Submit the next milestone through M1",
+      "Submit the next milestone",
       "A separate submission by the same beneficiary proves continued work.",
       "handoff",
-      "Group M1 through P",
+      "Replacement group through the beneficiary",
       [
         ...requirePure(),
         ...requireMapping(),

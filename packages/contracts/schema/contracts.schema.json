@@ -5299,7 +5299,11 @@
           "$ref": "#/$defs/Decimal"
         },
         "index": {
-          "const": "0"
+          "type": "string",
+          "enum": [
+            "0",
+            "1"
+          ]
         },
         "evidence": {
           "type": "string",

@@ -1,3 +1,4 @@
+import { hasHandoff } from "../models";
 import {
   canonicalJson,
   createSnapshot,
@@ -51,6 +52,8 @@ export async function buildWorkspaceCertificate(
       afterFingerprint: after,
       accounting,
     } = input;
+    if (!hasHandoff(w)) return null;
+    const baseline = w.handoffBaseline ?? w.baseline;
     if (
       !input.records.some(
         (record) =>
@@ -69,13 +72,13 @@ export async function buildWorkspaceCertificate(
       !w.pure ||
       !w.contract ||
       w.grantId === null ||
-      !w.baseline ||
+      !baseline ||
       !w.creationEvidence.length ||
-      w.baseline.creatorReserved === undefined ||
+      baseline.creatorReserved === undefined ||
       !history.complete ||
       history.toBlock !== after.anchor.number ||
       history.scannedThrough !== after.anchor.number ||
-      before.anchor.hash !== w.baseline.blockHash ||
+      before.anchor.hash !== baseline.blockHash ||
       before.metadataSha256 !== profile.metadataSha256 ||
       after.metadataSha256 !== profile.metadataSha256 ||
       before.runtimeCodeHash !== after.runtimeCodeHash ||
@@ -87,10 +90,10 @@ export async function buildWorkspaceCertificate(
       hex(before.anchor.hash, 32),
     );
     const baselineCreator = await input.connection.readAccount(
-      w.M0.account,
+      w.creator?.account ?? w.M0.account,
       hex(before.anchor.hash, 32),
     );
-    if (String(baselineCreator.reserved) !== w.baseline.creatorReserved)
+    if (String(baselineCreator.reserved) !== baseline.creatorReserved)
       return null;
     const current = input.currentAccounts[w.pure];
     if (
@@ -100,10 +103,10 @@ export async function buildWorkspaceCertificate(
       current.mappedTo !== w.pure ||
       baselineAccount.mappedTo !== w.pure ||
       input.currentGrant.grantee !== contractAddress(w.pure) ||
-      w.baseline.grant.grantee !== input.currentGrant.grantee ||
+      baseline.grant.grantee !== input.currentGrant.grantee ||
       accounting.anchor.blockHash !== after.anchor.hash ||
       accounting.pure !== w.pure ||
-      accounting.creator !== w.M0.account ||
+      accounting.creator !== (w.creator?.account ?? w.M0.account) ||
       !assessBacking(accounting).backed
     )
       return null;
@@ -153,7 +156,8 @@ export async function buildWorkspaceCertificate(
       return null;
     if (
       !history.firstVestingRelease ||
-      history.firstVestingRelease.blockHash !== before.anchor.hash
+      history.firstVestingRelease.blockHash !== w.baseline?.blockHash ||
+      history.firstVestingRelease.blockNumber > before.anchor.number
     )
       return null;
     const creationMarker = w.creationEvidence.find(
@@ -222,7 +226,7 @@ export async function buildWorkspaceCertificate(
       baselineAccount.reserved !== beforeLiabilities ||
       baselineAccount.proxyDeposit !==
         BigInt(accounting.creatorHistoricalDepositNative) ||
-      BigInt(w.baseline.creatorReserved) <
+      BigInt(baseline.creatorReserved) <
         BigInt(accounting.creatorHistoricalDepositNative)
     )
       return null;
@@ -230,7 +234,7 @@ export async function buildWorkspaceCertificate(
       ...accounting,
       anchor: beforeAnchor,
       proxyDepositRecordedNative: String(baselineAccount.proxyDeposit),
-      creatorCurrentAggregateReservedNative: w.baseline.creatorReserved,
+      creatorCurrentAggregateReservedNative: baseline.creatorReserved,
       pureProxyIncrementNative: "0",
       pureFreeNative: String(baselineAccount.free),
       pureReservedNative: String(baselineAccount.reserved),
@@ -363,7 +367,7 @@ export async function buildWorkspaceCertificate(
         const originalIdentity = {
           P: w.pure,
           hP: contractAddress(w.pure),
-          grantee: w.baseline.grant.grantee,
+          grantee: baseline.grant.grantee,
           reverseMappingAccount: baselineAccount.mappedTo!,
           milestone0Tuple: tuple,
           tupleMultiplicity: String(

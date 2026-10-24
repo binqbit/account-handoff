@@ -99,7 +99,7 @@ export async function prepareOperation(
   const authority = unsupported.length
     ? "UnexpectedSet"
     : w.pure
-      ? classifyAuthority(tuples, w.M0.account, w.M1.account)
+      ? classifyAuthority(tuples, w.M0.account, w.M1?.account ?? null)
       : "NotCreated";
   if (
     authority === "UnexpectedSet" &&

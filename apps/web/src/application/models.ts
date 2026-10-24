@@ -29,12 +29,16 @@ export interface WorkspaceRecord {
   mode: RuntimeMode;
   genesis: Hex;
   M0: Controller;
-  M1: Controller;
+  creator?: Controller;
+  handoffId?: string;
+  handoffBaseline?: WorkspaceRecord["baseline"];
+  handoffs?: ArchivedHandoff[];
+  M1: Controller | null;
   participants: {
     A: string;
     B: string;
     C: string;
-    D: string;
+    D: string | null;
     F: string;
     R1: string;
     R2: string;
@@ -64,6 +68,7 @@ export interface WorkspaceHistory {
   envelopeDigest: string;
   attemptId: string;
   grantId: string | null;
+  handoffId?: string;
 }
 export interface ChainView {
   fingerprint: NativeFingerprint;
@@ -155,4 +160,31 @@ export interface OperationRecovery {
   context: PendingOperation["context"];
   attemptId: string | null;
   signer: string;
+}
+
+export type HandoffWorkspace = WorkspaceRecord & {
+  M1: Controller;
+  participants: WorkspaceRecord["participants"] & { D: string };
+};
+export function hasHandoff(
+  workspace: WorkspaceRecord,
+): workspace is HandoffWorkspace {
+  return !!workspace.M1 && typeof workspace.participants?.D === "string";
+}
+
+export interface ArchivedHandoff {
+  id: string;
+  completedAt: string;
+  from: Controller;
+  to: Controller;
+  removalReceiptId: string;
+  certificate: ContinuityCertificate | null;
+}
+export function currentHandoffHistory(
+  workspace: WorkspaceRecord,
+): WorkspaceHistory[] {
+  return workspace.history.filter(
+    (row) =>
+      (row.handoffId ?? "initial") === (workspace.handoffId ?? "initial"),
+  );
 }

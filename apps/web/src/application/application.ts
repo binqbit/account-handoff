@@ -36,11 +36,21 @@ import type {
   PendingOperation,
 } from "./models";
 import { actionViews, workspaceView } from "./presentation";
-import { validateLocalWorkspaceImport } from "./local-import";
+import {
+  validateLocalWorkspaceImport,
+  verifyWorkspaceConnection,
+  type VerifiedLocalWorkspaceImport,
+} from "./local-import";
 import type { OperationRecovery } from "./models";
 import { errorText, id, json } from "./values";
+import { verifyAndAdvanceHandoff } from "./advance-handoff";
 import { operationView } from "./operation-view";
-import { createWorkspaceRecord, restoreWorkspace } from "./workspace-state";
+import {
+  createWorkspaceRecord,
+  planHandoff,
+  captureHandoffBaseline,
+  restoreWorkspace,
+} from "./workspace-state";
 import { accountingLedger } from "./accounting";
 import { loadOperationInputs } from "./operation-inputs";
 import { prepareOperation } from "./prepare-operation";
@@ -210,6 +220,12 @@ export class Application implements ApplicationFacade {
           break;
         case "create-workspace":
           await this.createWorkspace(command.input);
+          break;
+        case "next-handoff":
+          await this.nextHandoff();
+          break;
+        case "plan-handoff":
+          await this.planHandoff(command.members);
           break;
         case "select-workspace":
           if (!this.workspaces.some((w) => w.id === command.id))
@@ -420,7 +436,10 @@ export class Application implements ApplicationFacade {
       this.render();
     }
   }
-  private async createWorkspace(input: WorkspaceInput) {
+  private async createWorkspace(
+    input: WorkspaceInput,
+    verified?: VerifiedLocalWorkspaceImport,
+  ) {
     if (!this.chain) throw new Error("Connect to a network first.");
     const w = createWorkspaceRecord(
       input,
@@ -428,6 +447,26 @@ export class Application implements ApplicationFacade {
       this.chain.fingerprint.genesis,
       this.selected()?.address,
     );
+    if ((input.contract || input.grantId !== undefined) && !input.beneficiary)
+      throw new Error(
+        "Connect the grant's Pure beneficiary and its creation receipt first.",
+      );
+    if (input.beneficiary && !verified) {
+      if (!input.creation || !this.connection || !this.chain.localDescriptor)
+        throw new Error(
+          "Connecting a beneficiary requires its creation block and transaction on a qualified network.",
+        );
+      verified = await verifyWorkspaceConnection(
+        input,
+        input.creation,
+        this.connection,
+        this.chain.localDescriptor,
+      );
+    }
+    if (verified) {
+      w.creationBlock = verified.creationBlock;
+      w.creationEvidence = verified.creationEvidence;
+    }
     this.workspaces.push(w);
     this.currentId = w.id;
     this.pending = null;
@@ -435,6 +474,85 @@ export class Application implements ApplicationFacade {
     await this.refresh();
     this.notify(
       "Workspace saved. Authority and state are verified through native RPC.",
+      "positive",
+    );
+  }
+  private async planHandoff(members: string[]) {
+    const workspace = this.workspace();
+    if (!workspace || !this.connection || !this.chain || !this.journal)
+      throw new Error("Open a workspace on its network first.");
+    if (this.recovery || (this.pending && !terminal.has(this.pending.stage)))
+      throw new Error("Finish or reconcile the current operation first.");
+    await this.refresh();
+    if (this.chain.fingerprint.genesis !== workspace.genesis)
+      throw new Error("Connect to this workspace's network first.");
+    if (
+      workspace.pure &&
+      workspaceView(workspace, this.chain).authority !== "M0"
+    )
+      throw new Error(
+        "Verify the current group as the beneficiary's sole controller first.",
+      );
+    for (const record of await this.journal.listRecords("FrozenEnvelope")) {
+      if (
+        record.kind === "FrozenEnvelope" &&
+        record.controller?.account === workspace.M0.account &&
+        record.innerRuntimeCallHash &&
+        (await this.connection.proposal(
+          workspace.M0.account,
+          hex(record.innerRuntimeCallHash, 32),
+        ))
+      )
+        throw new Error(
+          "Complete or cancel the current group's outstanding proposal before planning a handoff.",
+        );
+    }
+    const next = planHandoff(workspace, members);
+    if (workspace.pure && this.chain.grant)
+      next.handoffBaseline = captureHandoffBaseline(workspace, this.chain);
+    this.workspaces = this.workspaces.map((item) =>
+      item.id === next.id ? next : item,
+    );
+    this.pending = null;
+    await this.save();
+    this.render();
+    this.notify(
+      "Replacement group saved. Review the on-chain handoff separately.",
+      "positive",
+    );
+  }
+  private async nextHandoff() {
+    if (this.recovery || (this.pending && !terminal.has(this.pending.stage)))
+      throw new Error("Finish or reconcile the current operation first.");
+    await this.refresh();
+    const workspace = this.workspace();
+    if (
+      !workspace ||
+      !this.chain ||
+      !this.connection ||
+      !this.journal ||
+      !this.grantHistory
+    )
+      throw new Error("Read the current workspace and grant history first.");
+    const next = await verifyAndAdvanceHandoff({
+      workspace,
+      chain: this.chain,
+      connection: this.connection,
+      journal: this.journal,
+      history: this.grantHistory,
+      accounting: await this.accounting(
+        this.chain.fingerprint,
+        this.chain.accounts,
+      ),
+    });
+    this.workspaces = this.workspaces.map((item) =>
+      item.id === next.id ? next : item,
+    );
+    this.pending = null;
+    await this.save();
+    await this.refresh();
+    this.notify(
+      "Previous handoff saved. The authorized group is now the current group.",
       "positive",
     );
   }
@@ -447,6 +565,16 @@ export class Application implements ApplicationFacade {
     if (this.recovery || (this.pending && !terminal.has(this.pending.stage)))
       throw new Error("Finish or reconcile the current operation first.");
     await this.refresh();
+    if (
+      actionId === "GRC-ROTATION-ADD-M1" &&
+      !this.workspace()!.handoffBaseline
+    ) {
+      this.workspace()!.handoffBaseline = captureHandoffBaseline(
+        this.workspace()!,
+        this.chain!,
+      );
+      await this.save();
+    }
     this.pending = await prepareOperation(
       {
         selected,
@@ -704,7 +832,7 @@ export class Application implements ApplicationFacade {
         this.connection,
         descriptor,
       );
-      await this.createWorkspace(verified.input);
+      await this.createWorkspace(verified.input, verified);
       const w = this.workspace()!;
       w.creationBlock = verified.creationBlock;
       w.creationEvidence = verified.creationEvidence;

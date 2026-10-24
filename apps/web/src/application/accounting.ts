@@ -35,7 +35,7 @@ export async function accountingLedger(
 ): Promise<AccountingLedger | undefined> {
   if (!w?.pure || !w.baseline || !chain || !connection) return undefined;
   const pure = accounts[w.pure];
-  const creator = accounts[w.M0.account];
+  const creator = accounts[w.creator?.account ?? w.M0.account];
   if (!pure || !creator) return undefined;
   const evidence: EvidenceRef = {
     kind: "native_chain",
@@ -90,7 +90,7 @@ export async function accountingLedger(
         ? "reconciled"
         : "conflicted",
     pure: w.pure,
-    creator: w.M0.account,
+    creator: w.creator?.account ?? w.M0.account,
     anchor: buildReadAnchor(chain.profile, f),
     proxyDepositRecordedNative: String(pure.proxyDeposit),
     creatorHistoricalDepositNative: String(historical),

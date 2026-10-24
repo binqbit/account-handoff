@@ -93,7 +93,7 @@ export async function operationParameters(
       Object.assign(p, {
         pure: requirePure(),
         oldController: w.M0.account,
-        newController: w.M1.account,
+        newController: w.M1?.account ?? null,
         proxyType: "Any",
         delay: "0",
       });
@@ -172,7 +172,9 @@ export async function operationParameters(
     case "GRC-GRANT-SUBMIT-M1": {
       if (!w.contract || w.grantId === null)
         throw new Error("No verified grant is available");
-      const index = actionId.endsWith("M0") ? "0" : "1";
+      const index = actionId.endsWith("M0") ? (fields["index"] ?? "0") : "1";
+      if (!["0", "1"].includes(index))
+        throw new Error("Choose a supported milestone.");
       Object.assign(p, {
         contract: w.contract,
         grantId: w.grantId,
@@ -201,6 +203,7 @@ export async function operationParameters(
       break;
     case "GRC-MULTISIG-CANCEL": {
       const target = fields["targetController"] === "M1" ? w.M1 : w.M0;
+      if (!target) throw new Error("Plan a replacement group first.");
       const hash = hex(fields["callHash"] ?? "", 32);
       const proposal = await connection.proposal(target.account, hash);
       if (!proposal || proposal.depositor !== signer)

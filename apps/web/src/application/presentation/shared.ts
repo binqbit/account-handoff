@@ -8,14 +8,14 @@ export const eq = (
   right: string | null | undefined,
 ): boolean => !!left && !!right && left.toLowerCase() === right.toLowerCase();
 export const roleNames: Record<ParticipantRole, string> = {
-  A: "A · original signer",
-  B: "B · signer",
-  C: "C · original group member",
-  D: "D · new signer",
-  F: "F · funder",
-  R1: "R1 · reviewer",
-  R2: "R2 · reviewer",
-  S: "S · vesting operator",
+  A: "First current signer",
+  B: "Second current signer",
+  C: "Third current signer",
+  D: "Replacement signer",
+  F: "Funder",
+  R1: "First reviewer",
+  R2: "Second reviewer",
+  S: "Vesting operator",
 };
 export function stateFor(
   chain: ChainView | null,
@@ -67,14 +67,14 @@ export function authority(
       proxy.proxyType === "Any" &&
       proxy.delay === 0 &&
       (eq(proxy.delegate, workspace.M0.account) ||
-        eq(proxy.delegate, workspace.M1.account)),
+        eq(proxy.delegate, workspace.M1?.account)),
   );
   if (!known) return "Diverged";
   const old = state.proxies.filter((proxy) =>
     eq(proxy.delegate, workspace.M0.account),
   ).length;
   const next = state.proxies.filter((proxy) =>
-    eq(proxy.delegate, workspace.M1.account),
+    eq(proxy.delegate, workspace.M1?.account),
   ).length;
   if (old === 1 && next === 0 && state.proxies.length === 1) return "M0";
   if (old === 0 && next === 1 && state.proxies.length === 1) return "M1";

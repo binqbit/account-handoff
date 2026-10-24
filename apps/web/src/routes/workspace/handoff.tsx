@@ -94,7 +94,7 @@ export function Handoff(props: ScreenProps) {
               },
               {
                 label: "New group",
-                value: <Address value={workspace.newController.address} />,
+                value: <Address value={workspace.newController?.address ?? ""} />,
               },
               {
                 label: "Beneficiary",

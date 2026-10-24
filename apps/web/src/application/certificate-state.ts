@@ -111,7 +111,9 @@ export async function updateWorkspaceCertificate({
           connection: connection,
           workspace: w,
           profile: c.profile,
-          beforeFingerprint: await connection.fingerprint(w.baseline.blockHash),
+          beforeFingerprint: await connection.fingerprint(
+            (w.handoffBaseline ?? w.baseline).blockHash,
+          ),
           afterFingerprint: f,
           currentAccounts: accounts,
           currentGrant: grant,
@@ -132,7 +134,9 @@ export async function updateWorkspaceCertificate({
         connection: connection,
         workspace: w,
         profile: c.profile,
-        beforeFingerprint: await connection.fingerprint(w.baseline.blockHash),
+        beforeFingerprint: await connection.fingerprint(
+          (w.handoffBaseline ?? w.baseline).blockHash,
+        ),
         afterFingerprint: c.fingerprint,
         currentAccounts: c.accounts,
         currentGrant: c.grant,

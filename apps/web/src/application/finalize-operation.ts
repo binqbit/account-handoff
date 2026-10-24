@@ -129,6 +129,7 @@ export async function finalizeOperation(
     envelopeDigest: p.envelope.digest,
     attemptId: p.signedAttempt.recordId,
     grantId: w.grantId,
+    handoffId: w.handoffId ?? "initial",
   };
   const previous = w.history.findIndex(
     (row) => row.attemptId === p.signedAttempt!.recordId,

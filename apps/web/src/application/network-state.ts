@@ -25,9 +25,12 @@ export async function readWorkspaceState(
   let baselineChanged = false;
   const addresses = new Set<string>(walletAccounts.map((a) => a.address));
   if (w) {
-    Object.values(w.participants).forEach((a) => addresses.add(a));
+    Object.values(w.participants).forEach((a) => {
+      if (a) addresses.add(a);
+    });
     addresses.add(w.M0.account);
-    addresses.add(w.M1.account);
+    if (w.creator) addresses.add(w.creator.account);
+    if (w.M1) addresses.add(w.M1.account);
     if (w.pure) addresses.add(w.pure);
   }
   const entries = await Promise.all(
@@ -75,8 +78,12 @@ export async function readWorkspaceState(
         ),
         blockHash: release.blockHash,
         creatorReserved: String(
-          (await connection.readAccount(w.M0.account, release.blockHash))
-            .reserved,
+          (
+            await connection.readAccount(
+              w.creator?.account ?? w.M0.account,
+              release.blockHash,
+            )
+          ).reserved,
         ),
       };
       baselineChanged = true;

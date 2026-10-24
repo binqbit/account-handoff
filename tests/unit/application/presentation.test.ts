@@ -5,7 +5,7 @@ import { anchor as syntheticAnchor, evidence } from "../../fixtures/core";
 import type {
   ChainView,
   WorkspaceHistory,
-  WorkspaceRecord,
+  HandoffWorkspace,
 } from "../../../apps/web/src/application/models";
 import {
   actionViews,
@@ -26,8 +26,8 @@ const [A, B, C, D, F, R1, R2, S, P, M0, M1] = [
   "a",
   "b",
 ].map((value) => hex(value));
-function fixture(): { workspace: WorkspaceRecord; chain: ChainView } {
-  const workspace: WorkspaceRecord = {
+function fixture(): { workspace: HandoffWorkspace; chain: ChainView } {
+  const workspace: HandoffWorkspace = {
     id: "workspace",
     name: "Example",
     createdAt: "2026-10-24T00:00:00Z",
@@ -204,7 +204,7 @@ function row(
 }
 /** Synthetic certificate used only to exercise the already-verified view boundary. */
 function certificate(
-  workspace: WorkspaceRecord,
+  workspace: HandoffWorkspace,
   chain: ChainView,
 ): ContinuityCertificate {
   const before = syntheticAnchor();

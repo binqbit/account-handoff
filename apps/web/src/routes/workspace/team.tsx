@@ -62,7 +62,7 @@ export function Team(props: ScreenProps) {
       ) : (
         <>
           <div className="equal-grid">
-            {[workspace.oldController, workspace.newController].map(
+            {[workspace.oldController, ...(workspace.newController ? [workspace.newController] : [])].map(
               (controller, index) => (
                 <Card
                   key={controller.address || index}

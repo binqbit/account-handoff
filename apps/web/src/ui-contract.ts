@@ -95,12 +95,26 @@ export interface WorkspaceView {
   createdAt?: string;
   beneficiary: IdentityView | null;
   oldController: ControllerView;
-  newController: ControllerView;
+  newController: ControllerView | null;
   contract: string | null;
   grantId: string | null;
   authority: "M0" | "DualControl" | "M1" | "Diverged" | "Unknown";
   continuity: "not-started" | "rotated" | "continued" | "drift" | "unknown";
   continuityDetail: string;
+  handoffs?: {
+    id: string;
+    from: string;
+    to: string;
+    completedAt: string;
+    continued: boolean;
+    receiptId: string;
+  }[];
+  identityComparison?: {
+    label: string;
+    before: string | null;
+    current: string | null;
+    matches: boolean | null;
+  }[];
   symbol: string;
   grantTotal: string | null;
   milestones: MilestoneView[];
@@ -191,13 +205,15 @@ export interface AppSnapshot {
 export interface WorkspaceInput {
   name: string;
   oldMembers: string[];
-  newMembers: string[];
+  newMembers?: string[];
   threshold: number;
   funder: string;
   reviewers: string[];
   beneficiary?: string;
   contract?: string;
   grantId?: string;
+  controllerAddress?: string;
+  creation?: { blockHash: string; transactionHash: string };
 }
 export type AppCommand =
   | { type: "connect-wallet" }
@@ -207,6 +223,8 @@ export type AppCommand =
   | { type: "refresh" }
   | { type: "select-workspace"; id: string }
   | { type: "create-workspace"; input: WorkspaceInput }
+  | { type: "plan-handoff"; members: string[] }
+  | { type: "next-handoff" }
   | {
       type: "prepare-operation";
       actionId: string;

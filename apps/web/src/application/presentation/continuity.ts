@@ -1,5 +1,6 @@
 import { validateRecord, type Controller } from "@account-handoff/contracts";
 import type { WorkspaceView } from "../../ui-contract";
+import { currentHandoffHistory } from "../models";
 import type { ChainView, WorkspaceHistory, WorkspaceRecord } from "../models";
 import { authority, eq, mapped, stateFor } from "./shared";
 
@@ -25,8 +26,14 @@ function hasBoundCertificate(
   chain: ChainView | null,
 ): boolean {
   const certificate = workspace.continuityCertificate;
-  const baseline = workspace.baseline;
-  if (!chain || !certificate || !baseline || !validateRecord(certificate).ok)
+  const baseline = workspace.handoffBaseline ?? workspace.baseline;
+  if (
+    !workspace.M1 ||
+    !chain ||
+    !certificate ||
+    !baseline ||
+    !validateRecord(certificate).ok
+  )
     return false;
   return (
     ["verified", "historically_verified_current_drift"].includes(
@@ -71,7 +78,7 @@ export function proof(
   workspace: WorkspaceRecord,
   chain: ChainView | null,
 ): { continuity: WorkspaceView["continuity"]; detail: string } {
-  const removals = workspace.history.filter(
+  const removals = currentHandoffHistory(workspace).filter(
     (row) =>
       row.operationId === "GRC-ROTATION-REMOVE-M0" &&
       row.receipt.businessExecuted &&
@@ -79,7 +86,7 @@ export function proof(
       row.receipt.nestedSuccess &&
       eq(row.grantId, workspace.grantId),
   );
-  const submissions = workspace.history.filter(
+  const submissions = currentHandoffHistory(workspace).filter(
     (row) =>
       row.operationId === "GRC-GRANT-SUBMIT-M1" &&
       row.receipt.businessExecuted &&
@@ -87,7 +94,7 @@ export function proof(
       row.receipt.nestedSuccess &&
       eq(row.grantId, workspace.grantId),
   );
-  const baseline = workspace.baseline;
+  const baseline = workspace.handoffBaseline ?? workspace.baseline;
   const identityPreserved =
     !!baseline &&
     eq(baseline.account.address, workspace.pure) &&

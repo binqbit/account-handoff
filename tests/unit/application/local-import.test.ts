@@ -22,7 +22,10 @@ vi.mock("@account-handoff/grant-adapter", async (importOriginal) => ({
   scanGrantHistory: readers.history,
   readGrant: readers.grant,
 }));
-import { validateLocalWorkspaceImport } from "../../../apps/web/src/application/local-import";
+import {
+  validateLocalWorkspaceImport,
+  verifyWorkspaceConnection,
+} from "../../../apps/web/src/application/local-import";
 const h = (digit: string, bytes = 32) => `0x${digit.repeat(bytes * 2)}` as Hex;
 const A = h("1"),
   B = h("2"),
@@ -266,6 +269,72 @@ function fixture() {
 }
 beforeEach(() => vi.clearAllMocks());
 describe("LOCAL workspace import verifies original chain provenance", () => {
+  it("connects an existing Pure without preconfiguring a replacement or grant", async () => {
+    const f = fixture();
+    const {
+      newMembers: _next,
+      contract: _contract,
+      grantId: _grant,
+      ...input
+    } = f.raw.input;
+    const result = await verifyWorkspaceConnection(
+      input,
+      { blockHash: creationBlock, transactionHash: creationHash },
+      f.connection,
+      f.expected,
+    );
+    expect(result.input.newMembers).toBeUndefined();
+    expect(result.input.contract).toBeUndefined();
+    expect(result.creationEvidence).toHaveLength(1);
+    expect(result.grantCreationBlock).toBeNull();
+    expect(readers.grant).not.toHaveBeenCalled();
+  });
+  it("checks the current controller and persistent mapping when connecting a grant", async () => {
+    const f = fixture();
+    const { newMembers: _next, ...input } = f.raw.input;
+    f.state.mappedTo = P;
+    expect(
+      (
+        await verifyWorkspaceConnection(
+          input,
+          { blockHash: creationBlock, transactionHash: creationHash },
+          f.connection,
+          f.expected,
+        )
+      ).input.grantId,
+    ).toBe("0");
+    f.state.mappedTo = null;
+    await expect(
+      verifyWorkspaceConnection(
+        input,
+        { blockHash: creationBlock, transactionHash: creationHash },
+        f.connection,
+        f.expected,
+      ),
+    ).rejects.toThrow("persistent mapping");
+  });
+  it("rejects an unrelated current controller and a partial grant locator", async () => {
+    const f = fixture();
+    const { newMembers: _next, ...input } = f.raw.input;
+    f.state.proxies.push({ delegate: D, proxyType: "Any", delay: 0 });
+    await expect(
+      verifyWorkspaceConnection(
+        input,
+        { blockHash: creationBlock, transactionHash: creationHash },
+        f.connection,
+        f.expected,
+      ),
+    ).rejects.toThrow(/initial authority|sole/);
+    const { grantId: _grant, ...partial } = input;
+    await expect(
+      verifyWorkspaceConnection(
+        partial,
+        { blockHash: creationBlock, transactionHash: creationHash },
+        f.connection,
+        f.expected,
+      ),
+    ).rejects.toThrow("Grant ID");
+  });
   it("returns normalized input and two chain-bound evidence references without mutation", async () => {
     const f = fixture();
     const result = await validateLocalWorkspaceImport(
