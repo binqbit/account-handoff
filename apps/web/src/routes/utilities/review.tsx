@@ -343,7 +343,13 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                 rows={[
                   {
                     label: "Signer",
-                    value: <Address value={active.signer?.address} />,
+                    value: (
+                      <Address
+                        value={active.signer?.address}
+                        compact={false}
+                        label="signer address"
+                      />
+                    ),
                   },
                   { label: "Role", value: active.actor },
                 ]}

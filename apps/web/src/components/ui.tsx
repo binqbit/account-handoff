@@ -1,6 +1,8 @@
-import { useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 import type { IdentityView, Tone } from "../ui-contract";
 import { Icon } from "./icon";
+import { Address } from "./addresses/address";
+export { Address } from "./addresses/address";
 export { Icon } from "./icon";
 
 export function Button({
@@ -111,48 +113,6 @@ export function KeyValues({
         </div>
       ))}
     </dl>
-  );
-}
-export function Address({
-  value,
-  label,
-  compact = false,
-}: {
-  value: string | null | undefined;
-  label?: string;
-  compact?: boolean;
-}) {
-  const [copied, setCopied] = useState(false);
-  if (!value) return <span className="unknown-value">Not set yet</span>;
-  const display =
-    compact && value.length > 24
-      ? `${value.slice(0, 10)}…${value.slice(-8)}`
-      : value;
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(value!);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    }
-  }
-  return (
-    <span className="address-wrap">
-      <code className="address" title={compact ? value : undefined}>
-        {display}
-      </code>
-      <button
-        className="icon-button"
-        type="button"
-        onClick={() => void copy()}
-        aria-label={copied ? "Copied" : `Copy ${label ?? "address"}`}
-      >
-        <Icon name={copied ? "check" : "copy"} size={14} />
-      </button>
-      <span className="sr-only" role="status">
-        {copied ? "Address copied" : ""}
-      </span>
-    </span>
   );
 }
 export function Identity({ identity }: { identity: IdentityView | null }) {

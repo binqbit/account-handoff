@@ -109,35 +109,6 @@
   font-size: 0.7rem;
   font-weight: 700;
 }
-.identity {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-.identity__label {
-  font-size: 0.82rem;
-  color: #d8e6dc;
-  font-weight: 550;
-}
-.address-wrap {
-  display: inline-flex;
-  align-items: flex-start;
-  gap: 5px;
-  min-width: 0;
-  max-width: 100%;
-}
-.address {
-  font:
-    400 0.77rem/1.7 ui-monospace,
-    SFMono-Regular,
-    Consolas,
-    monospace;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  color: #b9cfc3;
-  min-width: 0;
-}
 .icon-button {
   border: 0;
   background: transparent;

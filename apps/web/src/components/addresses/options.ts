@@ -24,9 +24,7 @@ export function addressKey(
   }
 }
 
-export function compactAddress(value: string): string {
-  return value.length > 24 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
-}
+export { compactAddress } from "./format";
 
 export function participantOptions(snapshot: AppSnapshot): AddressOption[] {
   const options = snapshot.wallet.accounts.map((account) => ({
