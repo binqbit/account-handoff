@@ -1,0 +1,598 @@
+{
+  "format_version": "2.0.0",
+  "document_type": "grc_mandatory_semantic_contract",
+  "status": "specified_not_executed",
+  "schema": "contracts.schema.json",
+  "operation_catalogue": "operations.json",
+  "qualification": "qualification.json",
+  "rule_count": "30",
+  "rules": [
+    {
+      "id": "SG-01",
+      "enforcement": "mandatory",
+      "stages": [
+        "parse_import"
+      ],
+      "gate_refs": [
+        "Q-ADAPTER"
+      ],
+      "predicate": "Before parsing authority-bearing fields: UTF-8 input <=5242880 bytes; depth<=32; ordinary arrays<=256, record array<=1000, event/observation arrays<=4096; decoded RuntimeCall<=131072 bytes. Reject duplicate keys, invalid Unicode, nonfinite values, unknown fields/schema/version and excessive allocations. Register local schema URNs; never fetch a schema, endpoint, URL or code instruction from the import.",
+      "on_failure": "Reject import before wallet access; retain only inert diagnostic provenance if the user elects to keep it. Do not truncate signed/hashed authoring data.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-02",
+      "enforcement": "mandatory",
+      "stages": [
+        "parse_import",
+        "seal_record"
+      ],
+      "gate_refs": [
+        "Q-ADAPTER"
+      ],
+      "predicate": "Record digest is SHA256(RFC8785 JCS(record minus exact top-level digest only)); nested digests remain. Validate exact canonical decimal strings for instance integers, bool/null as their types, byte-string lengths/casing, and metadata/ABI width bounds. Original wallet request is preserved as originalSignPayloadJcsUtf8: native JSON numbers inside the string are unchanged. Its UTF-8 SHA256 must equal signPayloadSha256.",
+      "on_failure": "Reject ambiguous representation/digest mismatch. A digest is consistency evidence, never author authentication.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-03",
+      "enforcement": "mandatory",
+      "stages": [
+        "import",
+        "reconstruct",
+        "prepare_wallet"
+      ],
+      "gate_refs": [
+        "Q-ADAPTER",
+        "Q-RUNTIME"
+      ],
+      "predicate": "Only fourteen IDs in operations.enabled_business_operation_ids can enter Intent. Four read ports and FIRST/FINAL wrapper templates are not business intents. RequestChanges, release, reset/remove-all/re-add, pre-map normalization, kill_pure, hash-only approvals and arbitrary Utility/call-builder branches cannot be encoded for signing in this profile. GRC-GRANT-RECLAIM and GRC-VESTING-VEST are also non-authorable from every normal, advanced, imported and recovery surface; retain external source-history decoding only.",
+      "on_failure": "UnsupportedOperation; quarantine old source records. No acknowledgement or gate override enables them.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-04",
+      "enforcement": "mandatory",
+      "stages": [
+        "profile_accept",
+        "snapshot",
+        "pre_wallet",
+        "pre_broadcast"
+      ],
+      "gate_refs": [
+        "Q-RUNTIME",
+        "Q-ADAPTER",
+        "Q-REVIVE-API"
+      ],
+      "predicate": "Compare exact genesis, raw metadata SHA256, :code BLAKE2-256, generated decoder identity and API codec artifacts independently of specVersion or Dedot caches. Bind raw metadata convention explicitly. Execution/post-state/API contexts must match their ReadAnchor IDs and evidence. Advertised spec3002 equality does not reconcile the two published hashes.",
+      "on_failure": "ProfileStale or UnresolvedBinding; freeze new app sends. Already broadcast execution remains possible and must be reconciled.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-05",
+      "enforcement": "mandatory",
+      "stages": [
+        "profile_accept",
+        "estimate",
+        "read_contract"
+      ],
+      "gate_refs": [
+        "Q-REVIVE-API"
+      ],
+      "predicate": "ReviveApi has exact target-advertised version2, trait, runtime implementation, concrete SCALE input/output codecs, method manifest, runtime code/source link and metadata-bound registry. Q-REVIVE-API acceptance requires each qualified ApiBinding hashes equal its ChainProfile. Decode success alone, newer upstream call_versioned V1 and guessed string types cannot satisfy this.",
+      "on_failure": "RuntimeApiUnbound; no fallback API, transport or client. Native-only actions use their own stage gates and cannot assert grant readiness.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-06",
+      "enforcement": "mandatory",
+      "stages": [
+        "snapshot",
+        "receipt",
+        "resume"
+      ],
+      "gate_refs": [
+        "Q-RUNTIME",
+        "Q-RECEIPTS"
+      ],
+      "predicate": "One stable finalized block for each combined snapshot. Initial profile refuses new post-state/API snapshots at a runtime-change boundary. Individual at-block native queries use the accepted registry; no historical queryMulti until separately qualified. A later stable block cannot replace required missing same-block completion evidence.",
+      "on_failure": "ObservationUnavailable or ReceiptUnresolved; preserve raw evidence and requalify correct contexts.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-07",
+      "enforcement": "mandatory",
+      "stages": [
+        "intent",
+        "prepare_wallet",
+        "certificate"
+      ],
+      "gate_refs": [
+        "Q-READINESS",
+        "Q-INVENTORY"
+      ],
+      "predicate": "Canonical raw AccountId32 identities precede SS58 display/sort. A/B/C/D are distinct; M0 derives from sorted A/B/C threshold2, M1 from A/B/D threshold2, and they differ. Required signer arrays match real participant bindings. M0 demonstration actions use A then B; M1 removal and M1 continuation each use A then D. Native alternative pairs remain possible outside the app but do not pass demo criteria.",
+      "on_failure": "IdentityMismatch or DemonstrationParticipationIncomplete; no signer substitution. Do not claim independent custody from distinct account bytes.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-08",
+      "enforcement": "mandatory",
+      "stages": [
+        "snapshot",
+        "intent",
+        "pre_wallet",
+        "receipt"
+      ],
+      "gate_refs": [
+        "Q-MAPPING",
+        "Q-CURRENCY"
+      ],
+      "predicate": "For P and direct Revive F/R origins support only normal non-EE AccountId32 with qualified AutoMap=false. h=last20(keccak256(raw32)); finalized OriginalAccount[h]==account and effective reverse==account; actual hold, liveness and source-bound lifecycle evidence agree at anchor. EE suffix12 is UnsupportedMappingBranch; source EE absence can roundtrip legitimately but is outside this profile. M0/M1 and native-only signers need no individual mapping merely to dispatch the native wrapper.",
+      "on_failure": "Absent/Conflicting/Unavailable mapping blocks dependent grant operations; UnsupportedMappingBranch stops this profile. Never call EE unmapped or use dry-run mapping as persistent evidence.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-09",
+      "enforcement": "mandatory",
+      "stages": [
+        "setup_eligibility"
+      ],
+      "gate_refs": [
+        "Q-MAPPING",
+        "Q-FUNDING"
+      ],
+      "predicate": "Native top-ups and map_account require their source/capability/payer input checks, not their own future outputs. Missing mapping does not block native funding needed for mapping. Grant escrow funding, payout and business Revive calls do require persisted mapping. Grant creation validates intended policy before grant exists; observed round0 eligibility is an output.",
+      "on_failure": "Explain the missing input and the exact authorized prerequisite. No circular setup gate or automatic funding/mapping action.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-10",
+      "enforcement": "mandatory",
+      "stages": [
+        "snapshot",
+        "rotation",
+        "receipt",
+        "certificate"
+      ],
+      "gate_refs": [
+        "Q-CURRENCY",
+        "Q-INVENTORY"
+      ],
+      "predicate": "Accounting buckets are disjoint. pureBackedLiabilitiesNative=sum(P reason holds)+sum(P named reserves)+other traced P reserved liabilities+P proxy increment. Do not add recorded proxy deposit D or total_balance_on_hold. Reconciled requires complete creation/adjustment provenance, nonnull creator current reserve, unchanged constants/currency instance, aggregate reserved minus those liabilities=unexplained delta0, and traced creator historical D intact. Unavailable data remains null/unavailable, never guessed zero.",
+      "on_failure": "AccountingUnreconciled; stop rotation/continuity even when dispatch succeeded. No top-up or reset automatically repairs attribution.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-11",
+      "enforcement": "mandatory",
+      "stages": [
+        "phase1",
+        "phase2",
+        "receipt"
+      ],
+      "gate_refs": [
+        "Q-CURRENCY",
+        "Q-INVENTORY"
+      ],
+      "predicate": "Clean selected trace: creator M0 reserves D=B+f; P records D. Mapping yields P reservedH. Adding M1 changes recorded D to D+f and P reservedH to H+f. Exact M0 removal changes recorded D+f to D and P reservedH+f to H. M0 historical D remains. Check actual unreserve amount, hold reasons and provenance; ignored source shortfall cannot be inferred away.",
+      "on_failure": "Unexpected reserve delta or missing backing prevents successful handover. Never require P.reserved>=H+recordedD for this unnormalized selected trace.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-12",
+      "enforcement": "mandatory",
+      "stages": [
+        "phase1",
+        "phase2",
+        "pre_wallet",
+        "receipt"
+      ],
+      "gate_refs": [
+        "Q-INVENTORY",
+        "Q-RECEIPTS"
+      ],
+      "predicate": "Before add require exact {(M0,Any,0)}; before remove require exact {(M0,Any,0),(M1,Any,0)}; after remove require exact {(M1,Any,0)} from full inventory at stated finalized anchor. Exact remove is not CAS. Any extra/type/delay mismatch -> authority UnexpectedSet; after native removal this maps to workflow ConfigurationDiverged.",
+      "on_failure": "Keep historical removal receipt, block M1-only/continuity claim and further standard progression. No sweep/fullreset fallback.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-13",
+      "enforcement": "mandatory",
+      "stages": [
+        "encode",
+        "reconstruct",
+        "pre_wallet"
+      ],
+      "gate_refs": [
+        "Q-ADAPTER",
+        "Q-RUNTIME",
+        "Q-CONTRACT"
+      ],
+      "predicate": "Intent, operation catalogue, path, controller, signer roles, callTree and encoded bytes must agree. Rebuild every native call from accepted metadata then decode/re-encode and compare exact bytes. ABI child and Revive.data must match accepted ABI, contract address and intent fields. Proxy.real=P, force=Some(Any); M0/M1 chosen by operation. Inner hash=BLAKE2-256 exact inner RuntimeCall; record digest and full extrinsic hash are different.",
+      "on_failure": "CallMismatch; no arbitrary target, child, convenience hook or metadata index from an import. Do not silently normalize a reviewed call.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-14",
+      "enforcement": "mandatory",
+      "stages": [
+        "encode",
+        "estimate",
+        "pre_wallet"
+      ],
+      "gate_refs": [
+        "Q-ADAPTER",
+        "Q-FUNDING",
+        "Q-REVIVE-API"
+      ],
+      "predicate": "All non-funding/non-grant-create operation values are0. Native funding values are positive. CreateGrant valueNative equals sum(exact ABI amounts)/qualified ratio10000, with exact divisibility, positive uint128 amounts, uint64 deadlines, uint32 vesting and target minima/capacity. Revive Weight has separate refTime/proofSize and bounded storage limit; as_multi max_weight covers the entire inner native call. Nonapplicable resources are null, not invented zero estimates. Outer fee budget is local policy, never a universal chain cap.",
+      "on_failure": "ResourceMismatch or InsufficientLiquidity; a change to Revive weight/storage/value/data changes inner bytes and requires new proposal/approvals. A changed outer fee/era/max_weight requires fresh human review without silently invalidating or reusing the wrong native generation.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-15",
+      "enforcement": "mandatory",
+      "stages": [
+        "grant_create",
+        "grant_submit",
+        "grant_approve",
+        "rotation"
+      ],
+      "gate_refs": [
+        "Q-GRANT-SCOPE",
+        "Q-CONTRACT"
+      ],
+      "predicate": "Fixed policy: two milestones, two distinct direct reviewers, threshold2, token0, metrics0, m0 vested and m1 unlocked. Creation validates the authored fixed policy before the grant exists; observed grant eligibility is its finalized output. Submission, reviewer approval and rotation require observed round0 EligibleSingleRound, applicable state/role/deadline, complete relevant history and intended evidence. Exactly one intended submission per milestone. Local expectedRound/evidence digest/TTL are not ABI enforcement. Any confirmed change request, round>0 or executed conflicting/preemptive business intent -> ScopeBreached.",
+      "on_failure": "Disable new grant lifecycle writes/rotation progression. ReconciliationRequired for uncertainty; no return from ScopeBreached by dismissal/import. Only the narrowly qualified cancellation or post-proof direct vest_other exceptions in SG-26 remain.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-16",
+      "enforcement": "mandatory",
+      "stages": [
+        "grant_submit",
+        "grant_approve",
+        "resume"
+      ],
+      "gate_refs": [
+        "Q-GRANT-SCOPE",
+        "Q-RECEIPTS"
+      ],
+      "predicate": "A known second live conflicting native proposal, uncertain direct signed attempt or missing relevant history causes ReconciliationRequired. First profile cannot prove global exclusivity or stop future external signers. Native stored proposals do not expire with app TTL or original outer era. Stopping a browser/local deletion is not revocation.",
+      "on_failure": "Stop new signatures/sends and identify residual native proposal or direct packet separately. Only authoritative reconciliation can restore eligibility when no confirmed breach occurred.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-17",
+      "enforcement": "mandatory",
+      "stages": [
+        "pre_wallet",
+        "receipt"
+      ],
+      "gate_refs": [
+        "Q-MAPPING",
+        "Q-CONTRACT",
+        "Q-RECEIPTS"
+      ],
+      "predicate": "Funder create and R1/R2 approve are direct native Revive calls by the chosen mapped individual. Controller=null, one signer, no beneficiary Multisig/Proxy layer, no native proposal deposit/timepoint. Effective contract sender is h(actual native signer). Reviewer membership comes from known creation provenance plus isReviewer checks; no invented getReviewers getter or pending native multisig for these direct calls. External reclaim source semantics remain decodable, but no first-profile authoring route exists.",
+      "on_failure": "ActorPathMismatch. Native multisig reviewers/EVM-wallet substitutions unsupported first profile; never wrap their calls through P.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-18",
+      "enforcement": "mandatory",
+      "stages": [
+        "wallet_request",
+        "signature_return",
+        "broadcast"
+      ],
+      "gate_refs": [
+        "Q-WALLET",
+        "Q-ADAPTER"
+      ],
+      "predicate": "Before wallet invocation require the confirmed durable full LocalOperationProgress.reviewedSigningContext and all SG-30 equalities. Journal request context before explicit wallet prompt. Request native signPayload through signature-only facade with withSignedTransaction=false; reject returned signedTransaction. Compare signer, outer call, nonce, era, tip/native fee asset, extrinsic version and ordered extras against review; separately verify additional-signed genesis/spec/tx/version/metadata context. Signatures and any hashed-payload threshold behavior must match the qualified wallet/runtime. Unknown extensions refused.",
+      "on_failure": "GuardRefused or WalletOutcomeUnknown with preserved request context. Never rawSign, automatic new nonce, account switch or hidden resign. Do not manufacture a SignedAttempt before exact bytes/hash exist.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-19",
+      "enforcement": "mandatory",
+      "stages": [
+        "signature_return",
+        "broadcast",
+        "resume"
+      ],
+      "gate_refs": [
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS"
+      ],
+      "predicate": "Persist verified exact signed bytes/hash/context as local_journal SignedAttempt before a separate explicit send. Persistence failure prevents app broadcast. Timeout/disconnect stays submission_unknown until hash/nonce/era/proposal/postconditions reconcile. Manual identical-byte rebroadcast requires explicit action, identical hash/bytes, valid era, same accepted profile and no contradictory inclusion/nonce evidence; it never changes a field.",
+      "on_failure": "No automatic send/rebroadcast/new signature. Imported redacted records cannot supply broadcast bytes. If reconciliation remains inconclusive retain unknown.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-20",
+      "enforcement": "mandatory",
+      "stages": [
+        "multisig_first",
+        "multisig_final"
+      ],
+      "gate_refs": [
+        "Q-RECEIPTS",
+        "Q-FUNDING",
+        "Q-INVENTORY"
+      ],
+      "predicate": "FIRST derives full-call as_multi with threshold2, sorted full members excluding actual signer, None timepoint and exact inner bytes. Await finalized native NewMultisig and stored proposal before FINAL. FINAL uses authoritative stored height/index/clockDomain, distinct actual member and same bytes/hash. Native key is (M,callHash); generation additionally includes timepoint. Never infer timepoint from header height or approvals from local acknowledgements.",
+      "on_failure": "Reconcile existing proposal; duplicate first/old generation cannot create false readiness. Pre-dispatch failure may preserve; dispatch entry can consume even when nested action fails.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-21",
+      "enforcement": "mandatory",
+      "stages": [
+        "cancel",
+        "import_legacy_cancel",
+        "receipt"
+      ],
+      "gate_refs": [
+        "Q-ADAPTER",
+        "Q-RECEIPTS"
+      ],
+      "predicate": "Cancel intent binds target controller/hash/timepoint/depositor; only original depositor may sign. Frozen executable bytes are direct cancel_as_multi, controller=null, requiredSigners=[depositor]. Any legacy CANCELLATION_TARGET bytes move to inert originalTargetCallBytes and never become executable cancellation bytes. Current target state must be reobserved with clockDomain. Cancellation receipt uses targetProposalAfter, not an invented multisig execution of cancel.",
+      "on_failure": "No depositor -> cancellation unavailable; quorum cannot replace depositor. Absent storage without attribution is absent_unexplained, not successful cancellation. No substitution for grant-round invalidation.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-22",
+      "enforcement": "mandatory",
+      "stages": [
+        "receipt"
+      ],
+      "gate_refs": [
+        "Q-RECEIPTS",
+        "Q-CONTRACT"
+      ],
+      "predicate": "Correlate exact signed native extrinsic bytes/hash, finalized block and ApplyExtrinsic index; expected closed call tree, matching M/hash/timepoint/executor, Proxy sequence, Revive result and expected ABI emitter. SystemSuccess plus MultisigExecuted Ok plus ProxyExecuted Err is failed business effect. No Utility.BatchCompleted expected. Direct F/R has no Multisig/Proxy layer. First approval businessEffect=not_attempted.",
+      "on_failure": "Dispatch failure, inner failure, configuration divergence and unresolved evidence stay separate. Finalized outer success cannot create a continuity certificate.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-23",
+      "enforcement": "mandatory",
+      "stages": [
+        "receipt",
+        "certificate"
+      ],
+      "gate_refs": [
+        "Q-GRANT-SCOPE",
+        "Q-CONTINUITY",
+        "Q-RECEIPTS"
+      ],
+      "predicate": "Determine business round at the submission/approval event from complete ordered relevant history or qualified pre-block state plus all intervening events. MilestoneSubmitted does not encode round. Intended round0 M1 submit then same-block Released/Open retains historical proof; prior ChangesRequested then stale submit is context_mismatch. Final getter alone is insufficient.",
+      "on_failure": "Unresolved history -> incomplete proof; preceding scope change -> failed intended continuation. CurrentScope/CurrentStateDrift shown independently from historical verdict.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-24",
+      "enforcement": "mandatory",
+      "stages": [
+        "certificate"
+      ],
+      "gate_refs": [
+        "Q-CONTINUITY",
+        "Q-READINESS",
+        "Q-VESTING"
+      ],
+      "predicate": "Verified continuity binds same P,h(P),contract,grantId,grantee,normal roundtrip, exact authority at stated anchors, reconciled backing and original m0 vesting tuple/multiplicity/provenance. Require separate removal A-first/D-final and continuation A-first/D-final receipts/proposal generations. Same controller pair in one operation cannot satisfy both. Vesting natural block accrual is allowed; no frozen computed locked-balance comparison or permanent vector-index identity.",
+      "on_failure": "Incomplete/failed certificate with missing criteria; no reviewer-payment/legal-consent/independent-custody inference. M0 preemptive m1 submit or vest_other cannot substitute for M1 submission.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-25",
+      "enforcement": "mandatory",
+      "stages": [
+        "export",
+        "import"
+      ],
+      "gate_refs": [
+        "Q-ADAPTER",
+        "Q-RECEIPTS"
+      ],
+      "predicate": "Every portable SignedAttempt has null signedExtrinsicBytes, portable_export scope and explicit omission reason; new recordId/digest and derivedFromRecordDigest. Clone/remap dependent receipts/certificates transitively; retain identity map. No signed packets including finalized records or local pre-wallet records. Resolve every internal record reference or mark external evidence explicitly; imported accepted/approved/passed claims are untrusted.",
+      "on_failure": "Reject portable local_journal or any nonnull signed bytes. No signed-packet recovery export. Import cannot authorize or automatically rebroadcast.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-26",
+      "enforcement": "mandatory",
+      "stages": [
+        "incident_recovery"
+      ],
+      "gate_refs": [
+        "Q-GRANT-SCOPE",
+        "Q-CONTRACT",
+        "Q-VESTING",
+        "Q-RECEIPTS"
+      ],
+      "predicate": "ScopeBreached/Closed allows read/reconcile/export and separately reviewed exact native cancellation by the actual original depositor at the observed proposal generation. Optional direct GRC-VESTING-VEST-OTHER is eligible only after an independently verified historical ContinuityCertificate for the required A+D removal and separate M1 grant submission and a completed strict comparison interval, with its own current profile/signer/fee/vesting guards. An abandoned/failed comparison does not enable vest_other. GRANT-RECLAIM, proxied VESTING-VEST, requestChanges, release, ordinary funding/rotation/submission/approval remain non-authorable in the breached workspace. External reclaim/vest observations remain decodable. No recovery operation revokes other pending proposals or earns continuity credit.",
+      "on_failure": "Refuse operation preparation and wallet request; retain historical evidence and show the exact scope or post-proof blocker.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-27",
+      "enforcement": "mandatory",
+      "stages": [
+        "text_render",
+        "evidence_authoring"
+      ],
+      "gate_refs": [
+        "Q-USABILITY",
+        "Q-CONTRACT"
+      ],
+      "predicate": "Evidence authored by the app <=1024 UTF-8 bytes; input char count is not byte count. RequestChanges authoring absent. Historical reason preview512 bytes and evidence preview1024 are display limits only; retain complete raw external event evidence and label truncation. External oversized text does not invalidate a real source event. Treat labels/URLs/text as inert; no auto-open/fetch.",
+      "on_failure": "Reject oversized authoring without truncating semantic intent. Render external text accessibly with explicit full-evidence access; never execute/import instructions from content.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-28",
+      "enforcement": "mandatory",
+      "stages": [
+        "gate_evaluation",
+        "release"
+      ],
+      "gate_refs": [
+        "Q-RUNTIME",
+        "Q-USABILITY",
+        "Q-CONTINUITY"
+      ],
+      "predicate": "Capability/source profile acceptance, current input predicates, finalized operation outputs and product-release evidence are separate stages. Top-level ChainProfile accepted does not pass all gates. Q-CONTINUITY is after M1 submission, never a circular precondition. All supplied target tests/gates remain not_executed/not_qualified. Document-integrity checks confer no runtime capability. GateRecord is keyed by id,stage,subject and anchor context. ChainProfile.gateRecords holds profile_capability only; Snapshot.gateAssessments holds action_input/finalized_output. Stage acceptance never leaks into another stage; current-input subjects and anchors must match the action. Receipt postconditions supply outputs, not premature prerequisite passes.",
+      "on_failure": "Stop at the actual missing stage. Do not rewrite source deductions or authored fixtures as observed target evidence.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-29",
+      "enforcement": "mandatory",
+      "stages": [
+        "seal_record",
+        "import",
+        "resume",
+        "prepare_wallet"
+      ],
+      "gate_refs": [
+        "Q-ADAPTER"
+      ],
+      "predicate": "Apply semantic_intent_identity exactly. Require localContractRevision grc-v2-local-1, positive intentRevision, recomputed sealed semanticIntentDigest and conflict-free intentId/revision binding. Full record digest still covers every field except its own exact top-level digest; observations never mutate a record or retarget an attempt.",
+      "on_failure": "Quarantine as UnsupportedContractRevision, SemanticIntentDigestMismatch or SemanticIntentConflict; no wallet/broadcast; preserve all competing original records.",
+      "status": "specified_not_executed"
+    },
+    {
+      "id": "SG-30",
+      "enforcement": "mandatory",
+      "stages": [
+        "prepare_wallet",
+        "wallet_request",
+        "signature_return",
+        "resume"
+      ],
+      "gate_refs": [
+        "Q-ADAPTER",
+        "Q-WALLET"
+      ],
+      "predicate": "Before invoking the wallet, atomically commit WalletRequested LocalOperationProgress with the complete ReviewedSigningContext including exact originalSignPayloadJcsUtf8, nonce, era, mortalityBlockHash, exact outerCallBytes and additionalSignedPayloadBytes. Require durable commit acknowledgment, not an in-memory write promise. Verify progress.requestId=context.requestId; requestedSigner=context.signer; reviewedRequestDigest=context.signPayloadSha256=SHA256(UTF8(originalSignPayloadJcsUtf8)); outerCallSha256=SHA256(decoded outerCallBytes), distinct from context.outerCallHash=blake2_256(decoded outerCallBytes). Resolve envelopeDigest to the exact immutable envelope; intentId/profileId/profileDigest and all runtime/profile fields must agree with that envelope and accepted ChainProfile. Strictly parse embedded wallet JSON preserving numeric types, reject duplicate/prototype keys and invalid Unicode, and require JCS(parse(string)) equals the stored string. Extracted request fields, native extra and additional-signed context must agree with the retained original request and exact qualified codecs. Invoke signPayload using that exact parsed JSON value, not a reconstructed approximation. Rejection, guard refusal and unknown outcome retain the complete immutable context and no signed hash; only verified returned signed bytes permit SignedAttemptRecorded. A new request/context uses a new journalId/requestId. Crash after durable WalletRequested but before invocation is conservatively WalletOutcomeUnknown unless independently resolved; never auto-reprompt, invent a transaction hash, rebuild or resign. SignedAttempt must retain this same context and exact envelope reference.",
+      "on_failure": "Persistence/context mismatch means zero wallet calls. Unknown outcome remains hashless with retained request and explicit reconciliation; no automatic retry.",
+      "status": "specified_not_executed"
+    }
+  ],
+  "localContractRevision": "grc-v2-local-1",
+  "semantic_intent_identity": {
+    "algorithm": "lowercase unprefixed SHA256(UTF8(RFC8785 JCS(projection)))",
+    "projection_members": {
+      "domain": {
+        "literal": "grc.semantic-intent:1"
+      },
+      "localContractRevision": {
+        "pointer": "/localContractRevision"
+      },
+      "intentId": {
+        "pointer": "/intent/intentId"
+      },
+      "intentRevision": {
+        "pointer": "/intent/intentRevision"
+      },
+      "operationId": {
+        "pointer": "/intent/operationId"
+      },
+      "profileId": {
+        "pointer": "/intent/profileId"
+      },
+      "profileDigest": {
+        "pointer": "/intent/profileDigest"
+      },
+      "authorActor": {
+        "pointer": "/intent/authorActor"
+      },
+      "parameters": {
+        "pointer": "/intent/parameters"
+      },
+      "expectedAuthority": {
+        "pointer": "/intent/expectedState/authority"
+      },
+      "signingPath": {
+        "pointer": "/signingPath"
+      },
+      "controller": {
+        "pointer": "/controller"
+      },
+      "requiredSigners": {
+        "pointer": "/requiredSigners"
+      },
+      "participants": {
+        "pointer": "/participants"
+      },
+      "innerRuntimeCallBytes": {
+        "pointer": "/innerRuntimeCallBytes"
+      },
+      "innerRuntimeCallHash": {
+        "pointer": "/innerRuntimeCallHash"
+      },
+      "innerResources": {
+        "object": {
+          "valueNative": {
+            "pointer": "/resources/valueNative"
+          },
+          "reviveWeight": {
+            "pointer": "/resources/reviveWeight"
+          },
+          "storageDepositLimitNative": {
+            "pointer": "/resources/storageDepositLimitNative"
+          }
+        }
+      },
+      "expectedGrant": {
+        "null_if_pointer_null": "/intent/expectedState/grantContext",
+        "otherwise_object": {
+          "grantId": {
+            "pointer": "/intent/expectedState/grantContext/grantId"
+          },
+          "milestoneIndex": {
+            "pointer": "/intent/expectedState/grantContext/milestoneIndex"
+          },
+          "reviewedExpectedRound": {
+            "pointer": "/intent/expectedState/grantContext/reviewedExpectedRound"
+          },
+          "roundBinding": {
+            "pointer": "/intent/expectedState/grantContext/roundBinding"
+          },
+          "observedMilestoneState": {
+            "pointer": "/intent/expectedState/grantContext/observedMilestoneState"
+          },
+          "deadlineUnixSeconds": {
+            "pointer": "/intent/expectedState/grantContext/deadlineUnixSeconds"
+          },
+          "evidenceSha256": {
+            "pointer": "/intent/expectedState/grantContext/evidenceSha256"
+          }
+        }
+      }
+    },
+    "projection_rules": [
+      "The projection is exactly the object above, with the given member names; pointer/object/literal directives are specification notation and are not included in the hashed value. Resolve every pointer without default values.",
+      "expectedGrant is JSON null only when the referenced grantContext is null; otherwise construct precisely the listed members. Preserve JSON types, array order and explicit nulls. No Unicode normalization.",
+      "Parameters and participants are copied in full, including originalTargetCallBytes for cancellation: those target bytes remain inert and never replace the executing cancel call.",
+      "observedMilestoneState in expectedGrant binds the reviewed precondition. Fresh current state belongs in Snapshot/observations; rewriting the reviewed predicate changes the plan.",
+      "Exclude every other envelope member: recordId, digest, status, anchor, derivedFromRecordDigest, evidence, summaryText, requiredGateIds and callTree; exclude expectedState.snapshotDigest/localReviewExpiresAtUnixSeconds/localExpiryRevokesNativeProposal and fresh grant observedRound/scopeStatus/historyComplete/evidence; exclude outer fee estimates/budget, multisigInnerMaxWeight and estimationEvidence.",
+      "Excluded callTree, summary and gate lists are never trusted shortcuts: independently derive them from the canonical catalogue and compare exact bytes under SG-13 before any request. Changes to excluded outer-attempt values require renewed exact wallet review and context, not mutation of an existing request."
+    ],
+    "conflict_key": [
+      "intentId",
+      "intentRevision"
+    ],
+    "conflict_rule": "Within all locally held or imported sealed envelopes, the same intentId and intentRevision must have one semanticIntentDigest and the same independently recomputed projection. Different content under that key is quarantined as SemanticIntentConflict, never last-writer-wins. An importer cannot clear a conflict by supplying a claimed digest.",
+    "revision_rule": "Assign first sealed revision 1. Changed semantic content requires a strictly higher positive decimal intentRevision for that intentId, or a new intentId with supersedesIntentId lineage. Old revisions, requests, native proposal generations and approvals remain immutable; revision increment does not revoke them or carry approvals to changed bytes. No global uniqueness or exclusivity is claimed.",
+    "observation_rule": "Observation/status/review-time refresh appends a new full recordId/digest/derivedFromRecordDigest while retaining the same semantic digest if the projection is unchanged. SignedAttempt.envelopeDigest and LocalOperationProgress.envelopeDigest always identify the exact reviewed immutable envelope, not a moving latest pointer.",
+    "draft_rule": "An unsealed draft may have semanticIntentDigest=null and cannot prompt a wallet. Before frozen/approved or any signing, seal and recompute the semantic digest, validate all typed bytes and reject conflicts. Once a key is sealed it cannot be reused with changed content, even if later displayed as draft.",
+    "revision_compatibility": "Missing or unknown localContractRevision is nonexecutable migration input, even when schemaVersion is 2. Rebuild with new identities/digests and provenance; no inferred approval."
+  }
+}

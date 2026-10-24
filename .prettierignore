@@ -1,0 +1,14 @@
+node_modules
+.agent-workspace
+private-docs
+packages/contracts/schema
+packages/contracts/generated
+packages/native-adapter/generated
+packages/native-adapter/metadata
+contracts/artifacts
+infra/local/patches
+packages/fixtures/captured
+package-lock.json
+dist
+artifacts
+.local-state

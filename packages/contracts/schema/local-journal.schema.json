@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:grc:local-journal:1",
+  "$ref": "urn:grc:contracts:2#/$defs/LocalOperationProgress",
+  "description": "Local UI journal only; not an eighth canonical portable record. Never infer a signed hash from this record. Register contracts.schema.json under its urn:grc:contracts:2 ID; never fetch network schema references.",
+  "localContractRevision": "grc-v2-local-1"
+}

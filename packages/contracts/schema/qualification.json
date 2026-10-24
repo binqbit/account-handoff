@@ -1,0 +1,760 @@
+{
+  "format_version": "2.0.0",
+  "document_kind": "proposed_qualification_manifest",
+  "research_date": "2026-10-23",
+  "project": "Grant Recipient Continuity",
+  "name_status": "provisional",
+  "scope": {
+    "source_research_completed": true,
+    "application_implemented": false,
+    "target_qualified": false,
+    "rpc_used": false,
+    "wallet_connected": false,
+    "transactions_executed": false,
+    "tests_executed": false,
+    "live_execution_authorized_by_this_document": false,
+    "integration_status": "research_only_not_implemented_not_target_qualified"
+  },
+  "decision": {
+    "rotation": "restricted_add_M1_then_remove_M0",
+    "required_demo_signers": [
+      "A",
+      "D"
+    ],
+    "full_reset_enabled": false,
+    "fixed_target_contract": null,
+    "runtime_agent_or_llm": false,
+    "backend_required": false,
+    "optional_indexer": "read_only_deferred",
+    "required_demo_signers_applies_to": [
+      "GRC-ROTATION-REMOVE-M0",
+      "GRC-GRANT-SUBMIT-M1"
+    ],
+    "first_build_mode": "CONTROLLED_SINGLE_ROUND_DEMONSTRATOR",
+    "grant_policy_id": "vestry-single-round-demo-v1",
+    "mapping_branch": "normal_non_EE_suffixed_AccountId32",
+    "auto_map": false,
+    "request_changes_enabled": false,
+    "resubmission_enabled": false,
+    "release_authoring_enabled": false,
+    "canonical_record_schema_version": "2",
+    "framework": "TypeScript_React_Vite"
+  },
+  "candidate_dependencies": {
+    "dedot": {
+      "version": "1.4.0",
+      "commit": "ea82d26d46eec338a3614e611982085a2fb2974c",
+      "artifact_integrity": null,
+      "transitive_lockfile": null
+    },
+    "viem": {
+      "version": "2.40.3",
+      "commit": "8c7ec828010b9adb2f4911b7edc6e5133ed9017c",
+      "purpose": "ABI encoding/decoding only"
+    },
+    "subwallet": {
+      "version": "1.3.90",
+      "commit": "1f9b2a4cb6fea68193e5e012dcca7284a1dd0d80",
+      "installed_build_verified": false
+    },
+    "papi": {
+      "version": "3.3.0",
+      "commit": "81eb01dd498c388737cf582fa5f726c190e9b3d8",
+      "selected": false
+    }
+  },
+  "source_pins": {
+    "native_sdk": "477b53f040f1a45f3567fb37435e2c0ef7476221",
+    "revive_vesting_sdk": "b76182dd335abcc07b0ff876d4889416a4c08ab7",
+    "vestry": "1c09ff369d53155487f3dd84d97ee6fd53a94902",
+    "dedot": "ea82d26d46eec338a3614e611982085a2fb2974c",
+    "viem": "8c7ec828010b9adb2f4911b7edc6e5133ed9017c",
+    "subwallet": "1f9b2a4cb6fea68193e5e012dcca7284a1dd0d80",
+    "papi_comparison_only": "81eb01dd498c388737cf582fa5f726c190e9b3d8"
+  },
+  "candidate_chain": {
+    "name": "Portaldot V3 testnet",
+    "endpoint_documentation_only": "wss://test-node-v3.portaldot.dev",
+    "endpoint_contacted": false,
+    "genesis_author_reported": "0xd4f9acbcf7f52388d8b095abe3c198d19fc510e0343e643e87cfbccb155283bd",
+    "spec_name_author_reported": "portaldot-v3",
+    "spec_version_author_reported": "3002",
+    "transaction_version_author_reported": "2",
+    "metadata_version_author_reported": "14",
+    "accepted_metadata_hash": null,
+    "accepted_runtime_code_hash": null,
+    "contract_address": null,
+    "contract_runtime_code_hash": null,
+    "transport_candidate": "dedot_explicit_legacy",
+    "auto_fallback_enabled": false,
+    "runtime_api_candidates": [
+      {
+        "name": "ReviveApi",
+        "version": "2",
+        "codec_binding": null
+      },
+      {
+        "name": "TransactionPaymentApi",
+        "version": "4",
+        "target_binding_verified": false
+      },
+      {
+        "name": "TransactionPaymentCallApi",
+        "version": "3",
+        "target_binding_verified": false
+      }
+    ]
+  },
+  "published_observations": [
+    {
+      "author": "PRT",
+      "revision": "cab6f8e15b85b9297f3c23858a8eb644c4e4ff60",
+      "url": "https://github.com/Venkat5599/PRT/blob/cab6f8e15b85b9297f3c23858a8eb644c4e4ff60/examples/mainnet-vs-v3/compare.json",
+      "metadata_sha256": "5f33dd90fab35fa3c5430b0cf9da54eb2d885423df20a5097baae501c485a7ad",
+      "metadata_size_bytes": "561916",
+      "evidence_kind": "author_published_snapshot",
+      "independently_reproduced": false
+    },
+    {
+      "author": "Plumbline",
+      "revision": "7fd4192e6d8a3f8cc19f046f21f18e4370fc62c9",
+      "url": "https://github.com/edycutjong/portaldot-hackathon-2026-plumbline-edycu/blob/7fd4192e6d8a3f8cc19f046f21f18e4370fc62c9/evidence/ledger_v3.json",
+      "captured_at": "2026-10-19T18:15:54Z",
+      "block_hash": "0x80f9dc0b4a2d666ca5bc69845fe41b6096134fbaec0f77f292fc544147884892",
+      "runtime_code_hash": "0xedc03c9dc81d39fea5c02893cc34cf2ec898d55d7ee8f8e89eb27597a724c7c2",
+      "metadata_sha256": "381014358cc17ba6274f4de8e54846534f0986f311e27ac696cbd8af5696394c",
+      "evidence_kind": "author_published_cached_snapshot",
+      "mapping_execution_receipts": null,
+      "independently_reproduced": false
+    }
+  ],
+  "unresolved_conflicts": [
+    {
+      "id": "C-METADATA",
+      "status": "unresolved",
+      "description": "Two author snapshots advertise spec3002 but different metadata hashes. Neither is accepted. Establish raw-byte/hash encoding and capture provenance before deciding why."
+    },
+    {
+      "id": "C-IVESTING",
+      "status": "source_inconsistency",
+      "description": "Inspected IVesting.sol constant ...0902 conflicts with external precompile address construction ...09020000. Target registration must be proven; use source-backed external candidate 0x0000000000000000000000000000000009020000 only after qualification."
+    }
+  ],
+  "provider_capabilities_to_qualify": [
+    "rpc_methods",
+    "chain_getBlockHash",
+    "chain_getFinalizedHead",
+    "chain_getHeader",
+    "chain_getBlock",
+    "chain_subscribeFinalizedHeads",
+    "state_getRuntimeVersion",
+    "state_getMetadata",
+    "state_getStorage",
+    "state_call",
+    "author_submitAndWatchExtrinsic",
+    "author_unwatchExtrinsic"
+  ],
+  "candidate_fixture": {
+    "status": "proposed_not_created",
+    "actors": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "F",
+      "R1",
+      "R2",
+      "S",
+      "M0",
+      "M1",
+      "P"
+    ],
+    "account_class": "normal_non_EE_suffixed_AccountId32",
+    "M0": {
+      "members": [
+        "A",
+        "B",
+        "C"
+      ],
+      "threshold": "2"
+    },
+    "M1": {
+      "members": [
+        "A",
+        "B",
+        "D"
+      ],
+      "threshold": "2"
+    },
+    "grant": {
+      "address": null,
+      "grant_id": null,
+      "grantee": "h(P)",
+      "token": "0x0000000000000000000000000000000000000000",
+      "reviewers": [
+        "h(R1)",
+        "h(R2)"
+      ],
+      "review_threshold": "2",
+      "metrics_disabled": true,
+      "native_evm_ratio_candidate": "10000",
+      "native_decimals_candidate": "14",
+      "milestones": [
+        {
+          "index": "0",
+          "amount_evm": "18000000000000000000",
+          "amount_native": "1800000000000000",
+          "vesting_blocks": "1800",
+          "per_block_native": "1000000000000",
+          "deadline_unix_seconds": null,
+          "label": "18 tPOT proposed native vested baseline"
+        },
+        {
+          "index": "1",
+          "amount_evm": "12000000000000000000",
+          "amount_native": "1200000000000000",
+          "vesting_blocks": "0",
+          "deadline_unix_seconds": null,
+          "label": "12 tPOT proposed unlocked continuation milestone"
+        }
+      ],
+      "total_native_funding_value": "3000000000000000",
+      "initial_round": "0",
+      "flow_policy_id": "vestry-single-round-demo-v1"
+    },
+    "fee_quote": null,
+    "duration_seconds": null,
+    "warning": "Amounts require target minimum/capacity/ratio verification. Deadlines and active-schedule buffer chosen during later authorized setup. No live identifiers or signable bytes. Supersedes the earlier UX 40/60/1000-block fixture and all synthetic fixed dates.",
+    "actor_aliases": {
+      "S": "Sponsor"
+    }
+  },
+  "gates": [
+    {
+      "id": "Q-RUNTIME",
+      "title": "Exact network and runtime identity",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "Published spec number and source pins do not identify a deployed implementation.",
+      "required_evidence": [
+        "Accepted genesis, runtime code identity, source/build relationship, raw metadata bytes and hash",
+        "Reconcile divergent published metadata hashes without assuming a normalization",
+        "All native call, event, storage and signed-extension shapes; configured block-number providers",
+        "SHA256 of exact SCALE metadata bytes with no hex-string normalization; independently retained raw capture and block/context provenance",
+        "Runtime :code BLAKE2-256 and decoder/type artifact digest checked independently of SDK specVersion caches, including reconnect and at(B)",
+        "Separate execution, post-state and runtime-API contexts; no metadata merge solely because spec3002 agrees"
+      ],
+      "refusal_rules": [
+        "No unreviewed metadata/runtime change",
+        "No upgrade-boundary signing"
+      ],
+      "applies_to": [
+        "all_chain_operations"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-CURRENCY",
+      "title": "Reserve and hold composition",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "Conditional source composition establishes a risk, not target behavior.",
+      "required_evidence": [
+        "Proxy Currency, Revive Currency, Balances instance and hold backing configuration at accepted runtime",
+        "Canonical Pure creation deposit payer and every later reserve adjustment",
+        "Existential/liveness, lock/freeze, hold/release and deposit-constant behavior",
+        "Typed split ledger: recorded proxy D, creator-funded historical D, P-funded increment f, individual holds, named/other liabilities, aggregate reserved and unexplained delta",
+        "Do not count total_balance_on_hold again or place contract-held storage liabilities in P holds; only intact source-qualified provenance permits exact refund expectation"
+      ],
+      "refusal_rules": [
+        "Disable full_reset independently of qualification",
+        "Block unexplained history, unknown holds or deposit constants changed since creation"
+      ],
+      "applies_to": [
+        "pure_setup",
+        "mapping",
+        "rotation",
+        "liquidity"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-MAPPING",
+      "title": "Actual mapped identity",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "Normal mapper source exists; target P mapping and hooks are unproven.",
+      "required_evidence": [
+        "Normal non-EE AccountId32 profile",
+        "Finalized h(P) and OriginalAccount[h(P)] == P",
+        "Reasoned mapping hold and backing; liveness/unmapping/reaping policy",
+        "Direct F/R actor mapping equality",
+        "Qualified explicit manual mapping and AutoMap=false configuration",
+        "Normal-only OriginalAccount equality plus effective reverse equality and native-origin to Revive caller qualification; general EE absence can be valid outside this profile"
+      ],
+      "refusal_rules": [
+        "Successful simulation is insufficient",
+        "Exclude stateless EE P and direct F/R as UnsupportedMappingBranch; do not label them unmapped",
+        "Missing persistent mapping blocks grant escrow funding/payout and dependent Revive business calls; native top-up and explicit mapping are prerequisites, not circularly blocked outputs"
+      ],
+      "applies_to": [
+        "grant_create",
+        "beneficiary_calls",
+        "reviewer_calls",
+        "continuity"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-REVIVE-API",
+      "title": "Exact native contract call and runtime API",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "Candidate metadata V14 omits API type definitions; advertised ReviveApi version is 2.",
+      "required_evidence": [
+        "Actual target ReviveApi@2 trait, runtime implementation and concrete codecs",
+        "Native Revive.call field order, value units, Weight and storage-deposit semantics",
+        "State_call encode/decode fixtures at exact finalized anchor after authorization",
+        "P-origin simulation and direct F/R-origin simulation; ephemeral simulation effects documented"
+      ],
+      "refusal_rules": [
+        "No guessed string codecs",
+        "No newer upstream API substitution",
+        "No Solidity convenience beforeSign hook"
+      ],
+      "applies_to": [
+        "grant_read",
+        "grant_write",
+        "estimation"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-VESTING",
+      "title": "Native payout, clock and schedule",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "Upstream precompile and Vesting source read; exact target registration unknown.",
+      "required_evidence": [
+        "External precompile 0x0000000000000000000000000000000009020000 and ABI confirmed in target configuration",
+        "Native/EVM ratio, native decimals, MinVestedTransfer, MaxVestingSchedules",
+        "Vesting BlockNumberProvider and Revive block.number agree",
+        "Payout evidence lands at Vesting[P] with correct raw tuple and multiplicity"
+      ],
+      "refusal_rules": [
+        "Reject wrong ...0902 constant",
+        "No clock-domain guessing",
+        "Block expired/cleaned tuple as current active continuity fixture"
+      ],
+      "applies_to": [
+        "milestone0_release",
+        "vesting",
+        "continuity"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-CONTRACT",
+      "title": "Bound grant deployment",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "Pinned Vestry source is inspected; deployed source/ABI/bytecode binding missing.",
+      "required_evidence": [
+        "Exact deployment address and runtime code hash",
+        "ABI digest, compiler recipe, artifact identity and source relationship",
+        "Grant/milestone/reviewer getters and native ContractEmitted event decode",
+        "MIT attribution retained when adapting; package ISC inconsistency resolved for redistributed parts"
+      ],
+      "refusal_rules": [
+        "No updateGrantee invented",
+        "Metric disabled and native token only",
+        "No substitute deployment without reviewed new binding",
+        "Only unchanged pinned Vestry single-round demonstrator; no recurring real grants or imported requestChanges/release authoring",
+        "Grant grantee fixed to h(P) at creation; no forwarding wrapper changes msg.sender"
+      ],
+      "applies_to": [
+        "grant_read",
+        "grant_write",
+        "continuity"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-ADAPTER",
+      "title": "Pinned modern browser adapter",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "Dedot/viem source candidates selected; no npm artifact or lockfile verification performed.",
+      "required_evidence": [
+        "dedot1.4.0 and viem2.40.3 artifact integrity and exact transitive lock",
+        "Generated native types bound to accepted metadata hash",
+        "Explicit legacy transport capabilities and history retention",
+        "Call bytes/hash, disposable fee estimation, individual historical reads, context-separated readers",
+        "Exact per-operation closed call grammar and non-specVersion-only registry/cache separation",
+        "Local durable signed-byte journal and redacted portable graph transformation verified separately"
+      ],
+      "refusal_rules": [
+        "No implicit cross-transport fallback",
+        "No @polkadot/api chain-client fallback",
+        "No historical queryMulti until separately qualified"
+      ],
+      "applies_to": [
+        "native_read",
+        "native_build",
+        "native_send"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-WALLET",
+      "title": "Human native signature path",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "SubWallet1.3.90 source candidate; no installed-wallet exercise.",
+      "required_evidence": [
+        "Observed installed wallet/version, explicit account selection, native signing type and network handling",
+        "Signature-only signPayload request; altered signedTransaction refused",
+        "Reviewed original signing context plus decoded signed bytes, signer/call/extras consistency",
+        "Reject change-account, watch-only, unsupported hardware/EVM-only, signature rejection cases"
+      ],
+      "refusal_rules": [
+        "No rawSign fallback",
+        "No app/server keys",
+        "No automatic prompt, resign or account substitution"
+      ],
+      "applies_to": [
+        "all_signing"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-RECEIPTS",
+      "title": "Finalized native evidence and history",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "Nested success masking and source receipt semantics known; target history/codecs not tested.",
+      "required_evidence": [
+        "Exact extrinsic body/hash/index correlation and ApplyExtrinsic event selection",
+        "Deepest relevant Proxy/Multisig/Revive/contract outcome and postconditions",
+        "Same finalized native block for contract and native reads",
+        "Reorg/reconnect/pruning behavior; execution/post-state/API decoder separation",
+        "Contract event emission retained; no required EVM tx hash"
+      ],
+      "refusal_rules": [
+        "SystemSuccess alone insufficient",
+        "Upgrade-after-broadcast can leave unresolved evidence",
+        "Provider disagreement blocks writes"
+      ],
+      "applies_to": [
+        "completion",
+        "continuity",
+        "recovery"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-INVENTORY",
+      "title": "Dedicated authority and deposit history",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "Chosen restriction; no target inventory inspected.",
+      "required_evidence": [
+        "Before phase1 exact M0/Any/0; before phase2 exact M0+M1/Any/0",
+        "Canonical creation and deposit history; no unexpected delegates/delays/slashes",
+        "Known pending proposals/announcements and independent contract allowances/recovery/admin routes",
+        "External consent requirements documented without claiming on-chain proof"
+      ],
+      "refusal_rules": [
+        "UnexpectedSet blocks standard path",
+        "No automatic sweep",
+        "No CAS or freeze claim"
+      ],
+      "applies_to": [
+        "rotation",
+        "continuity"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-FUNDING",
+      "title": "Payer-specific operational liquidity",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "No measured current fee quote; candidate constants only.",
+      "required_evidence": [
+        "Sponsor transfer intentions; M0 creator reserve",
+        "A/B/D outer fees and first-approver multisig reserves",
+        "P liveness, mapping hold, incremental ProxyDepositFactor, native value and storage contribution",
+        "F/R liveness, mapping, fees, storage plus F escrow",
+        "Separate holder/refund-owner ledgers and locked grant balance"
+      ],
+      "refusal_rules": [
+        "Fee budget local policy only",
+        "Locked face value not spendable budget",
+        "No claim that topup repairs full-reset backing"
+      ],
+      "applies_to": [
+        "funding",
+        "all_writes"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-READINESS",
+      "title": "Actual replacement signer and authorized roles",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "M1 derivation alone proves no signing availability.",
+      "required_evidence": [
+        "Distinct normalized A/B/C/D identities, M0/M1 recomputed",
+        "Actual A+D path for phase2 and milestone1 in authorized demo",
+        "B availability separately disclosed; independent custody separately evidenced if claimed",
+        "Healthy legitimate old quorum; reviewer/funder roles unchanged"
+      ],
+      "refusal_rules": [
+        "A+B alone not D proof",
+        "No quorum-loss recovery claim"
+      ],
+      "applies_to": [
+        "rotation",
+        "continuity"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "finalized_effect_evidence"
+      ]
+    },
+    {
+      "id": "Q-CONTINUITY",
+      "title": "Attributed next application action",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "No target fixture or successful action exists from this research.",
+      "required_evidence": [
+        "Baseline m0 released and active tuple at P; m1 Open",
+        "Exact M1Only plus P/h(P)/reverse map/grantee retained",
+        "Separately proven A+D removal and A+D intended round-zero M1 milestone1 submission, deepest results and causal ordered event transition",
+        "Tuple and backing invariants at before/after checkpoints; current drift separated",
+        "Same-block later release/change request retained as later current state; prior round change fails intended context; no quiet final Submitted requirement"
+      ],
+      "refusal_rules": [
+        "Changed proxy list alone incomplete",
+        "Already Submitted without M1 receipt not proof",
+        "No unlocked or alternate-beneficiary substitute"
+      ],
+      "applies_to": [
+        "outcome_certificate"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "outcome_after_finalized_M1_submission"
+      ]
+    },
+    {
+      "id": "Q-USABILITY",
+      "title": "Understandable and accessible task completion",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "UI contract proposed; no prototype or user trials.",
+      "required_evidence": [
+        "Keyboard and screen-reader task path; text status and stable focus",
+        "Clear full-authority, two signing requests, budgets, deadline and dual-control explanations",
+        "Recovery tasks including rejection, unknown outcome and imported envelope",
+        "Baseline comparison against existing wallet/manual grant route"
+      ],
+      "refusal_rules": [
+        "No claimed demand, speed or error-rate benefit without observation"
+      ],
+      "applies_to": [
+        "release_readiness"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "release_readiness"
+      ]
+    },
+    {
+      "id": "Q-GRANT-SCOPE",
+      "title": "Controlled single-round business context",
+      "status": "not_qualified",
+      "evidence_status": "target_unverified",
+      "current_basis": "Pinned Vestry does not enforce expected round/evidence nonce. This proposed release boundary permits only a controlled two-milestone single-round demonstrator.",
+      "required_evidence": [
+        "Exactly two native-token milestones and two direct mapped reviewers; metrics disabled; grant originally h(P)",
+        "Round zero and complete relevant event/attempt/proposal history before each new submission/approval",
+        "First submission per milestone and intended evidence; no confirmed external change request or conflicting executed business intent",
+        "Explicit distinction between client review expiry, native proposal lifetime and direct transaction mortality",
+        "Recovery actions separately assessed after scope breach; historical proof preserved"
+      ],
+      "refusal_rules": [
+        "No requestChanges/resubmission/release authoring",
+        "ScopeBreached is sticky for the grant under this profile",
+        "Missing or uncertain history -> ReconciliationRequired, not proof of absence",
+        "No assertion that local scope controls prevent external execution or revoke stale proposals",
+        "Recurring/asynchronous real-grant release blocked until separate on-chain freshness design and qualification"
+      ],
+      "applies_to": [
+        "grant_creation",
+        "grant_submission",
+        "direct_reviewer_approval",
+        "demo_rotation",
+        "external_reclaim_history_observation",
+        "continuity_context"
+      ],
+      "passed_evidence": [],
+      "test_execution": "not_executed",
+      "evaluation_stages": [
+        "profile_before_dependent_action",
+        "fresh_action_preconditions",
+        "causal_finalized_context",
+        "current_drift"
+      ]
+    }
+  ],
+  "gate_aliases": {
+    "Q-VR-MAPPING": [
+      "Q-MAPPING"
+    ],
+    "Q-VR-CALL": [
+      "Q-REVIVE-API",
+      "Q-ADAPTER",
+      "Q-RECEIPTS"
+    ],
+    "Q-VR-PRECOMPILE": [
+      "Q-VESTING"
+    ],
+    "Q-VR-CLOCK": [
+      "Q-VESTING"
+    ],
+    "Q-VR-CONTRACT": [
+      "Q-CONTRACT"
+    ],
+    "Q-VR-READBACK": [
+      "Q-RECEIPTS"
+    ],
+    "Q-VR-LIQUIDITY": [
+      "Q-CURRENCY",
+      "Q-FUNDING"
+    ],
+    "Q-VR-CONTINUATION": [
+      "Q-CONTINUITY"
+    ]
+  },
+  "full_reset": {
+    "status": "policy_disabled",
+    "reason": "Under inspected shared Balances composition full reset rematerializes proxy deposit on P after unreserving across P-held mapping backing. Atomicity does not repair successful accounting mismatch.",
+    "conditional_formula": {
+      "starting_reserved": "H + PD_factor",
+      "recorded_proxy_deposit": "PD_base + 2*PD_factor",
+      "ending_reserved": "max(H, PD_base + PD_factor)",
+      "ending_liabilities": "H + PD_base + PD_factor",
+      "backing_shortfall": "min(H, PD_base + PD_factor)",
+      "variable_definitions": {
+        "PD_base": "ProxyDepositBase in qualified native units",
+        "PD_factor": "ProxyDepositFactor in qualified native units; not funder actor F",
+        "H": "Recognized P-held reasoned liabilities sharing the inspected aggregate reserved backing. Excludes contract-held storage contributions merely funded by P. Canonical fixture has no unexplained unrelated reserves."
+      }
+    },
+    "runtime_vulnerability_observed": false,
+    "can_enable_by_topup": false,
+    "can_enable_by_generic_continue": false,
+    "isolated_regression_spec_only": true
+  },
+  "references": {
+    "architecture": "architecture-contract.json",
+    "integration": "../private/final-integration-addendum.md",
+    "migration": "../private/migration-and-acceptance-deltas.md",
+    "validation": "test-cases.json",
+    "integration_acceptance": "acceptance-deltas.json",
+    "source_ledger": "../sources/integration-source-ledger.md",
+    "native_architecture_basis": "input:native/reports/01-chosen-architecture.md",
+    "native_adapter_basis": "input:native/reports/04-modern-adapter.md",
+    "native_validation_basis": "input:native/reports/06-validation-recovery-and-build-order.md"
+  },
+  "gate_evaluation": {
+    "rule": "Evaluate gate evidence components by operation stage. A gate reference identifies an obligation domain, not a requirement that the operation already produced its own effects. Detailed preconditions in operations.json govern before signing; its produces_evidence_for_gate_refs are after-finality outputs.",
+    "profile_components": "Exact source/configuration/decoder/wallet capability must be accepted before any dependent signing.",
+    "checkpoint_components": "Actual authority, mapping when required by the action, liquidity, deadlines and existing proposal are freshly read for that action. Past acceptance does not imply current state.",
+    "setup_outputs": "Recipient funding, Pure existence, actual mapping and grant initialization are outputs of their setup actions; source semantics and donor/payer affordability must be accepted beforehand.",
+    "readiness": "Pre-sign identity, legitimacy and signer capability checks precede execution. A+D removal and milestone1 receipts are produced evidence, not prerequisites to executing those exact operations.",
+    "continuity": "Q-CONTINUITY is evaluated after the required attributed M1 submission. It never gates that submission by requiring prior continuity success.",
+    "release": "Q-USABILITY is product-release evidence, not a native protocol precondition. Read-only evidence gathering may proceed with unknowns explicitly marked.",
+    "status": "All target evidence components remain unqualified in this research.",
+    "scope": "Q-GRANT-SCOPE creation checks policy before grant exists and verifies real round0 after finality. Exact native cancellation and optional direct vest_other after independent historical continuity proof have separate predicates. External reclaim/proxied vest are observation-only; scope breach never widens authority."
+  },
+  "deferred_outside_bounded_integration": [
+    "Hackathon schedule/eligibility not re-decided; earlier deadline research remains separate and is not an execution gate for this dossier."
+  ],
+  "localContractRevision": "grc-v2-local-1"
+}

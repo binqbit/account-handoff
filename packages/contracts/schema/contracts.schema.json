@@ -1,0 +1,7315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:grc:contracts:2",
+  "title": "Grant Recipient Continuity \u2014 integrated native records v2",
+  "description": "Proposed documentation contract. Seven canonical record kinds. Shape validation does not qualify a target, verify hashes, authorize signing, or replace machine/semantic-guards.json. No executable record instances are supplied.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/ChainProfile"
+    },
+    {
+      "$ref": "#/$defs/Snapshot"
+    },
+    {
+      "$ref": "#/$defs/FrozenEnvelope"
+    },
+    {
+      "$ref": "#/$defs/NativeProposal"
+    },
+    {
+      "$ref": "#/$defs/SignedAttempt"
+    },
+    {
+      "$ref": "#/$defs/ReceiptBundle"
+    },
+    {
+      "$ref": "#/$defs/ContinuityCertificate"
+    }
+  ],
+  "$defs": {
+    "Decimal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$"
+    },
+    "Sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "Hash32": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{64}$"
+    },
+    "AccountId32": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{64}$"
+    },
+    "H160": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{40}$"
+    },
+    "HexBytes": {
+      "type": "string",
+      "pattern": "^0x([0-9a-f]{2})*$"
+    },
+    "DataValue": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DataValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/DataValue"
+          }
+        }
+      ]
+    },
+    "EvidenceRef": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "source",
+            "local_artifact",
+            "native_chain",
+            "author_published"
+          ]
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "sourceId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contentSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "locator",
+        "sourceId",
+        "contentSha256"
+      ],
+      "additionalProperties": false
+    },
+    "Weight": {
+      "type": "object",
+      "properties": {
+        "refTime": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "proofSize": {
+          "$ref": "#/$defs/Decimal"
+        }
+      },
+      "required": [
+        "refTime",
+        "proofSize"
+      ],
+      "additionalProperties": false
+    },
+    "ReadAnchor": {
+      "type": "object",
+      "properties": {
+        "blockHash": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "blockNumber": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "finalized": {
+          "const": true
+        },
+        "executionRuntimeId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "postStateRuntimeId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "apiRuntimeId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "providerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "contextBindings": {
+          "type": "object",
+          "properties": {
+            "execution": {
+              "$ref": "#/$defs/RuntimeContext"
+            },
+            "postState": {
+              "$ref": "#/$defs/RuntimeContext"
+            },
+            "runtimeApi": {
+              "$ref": "#/$defs/RuntimeContext"
+            }
+          },
+          "required": [
+            "execution",
+            "postState",
+            "runtimeApi"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "blockHash",
+        "blockNumber",
+        "finalized",
+        "executionRuntimeId",
+        "postStateRuntimeId",
+        "apiRuntimeId",
+        "providerId",
+        "contextBindings"
+      ],
+      "additionalProperties": false,
+      "description": "A finalized anchor. The three context IDs must match the corresponding complete context bindings. Initial profile admits new action snapshots only at a stable reviewed block; upgrade-block receipt evidence can remain unresolved."
+    },
+    "Timepoint": {
+      "type": "object",
+      "properties": {
+        "height": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "index": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "clockDomain": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "height",
+        "index",
+        "clockDomain"
+      ],
+      "additionalProperties": false
+    },
+    "Controller": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccountId32"
+          },
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true
+        },
+        "threshold": {
+          "const": "2"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "M0",
+            "M1"
+          ]
+        }
+      },
+      "required": [
+        "account",
+        "members",
+        "threshold",
+        "role"
+      ],
+      "additionalProperties": false
+    },
+    "VestingTuple": {
+      "type": "object",
+      "properties": {
+        "locked": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "perBlock": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "startingBlock": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "clockDomain": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "locked",
+        "perBlock",
+        "startingBlock",
+        "clockDomain"
+      ],
+      "additionalProperties": false
+    },
+    "Observation": {
+      "type": "object",
+      "properties": {
+        "availability": {
+          "type": "string",
+          "enum": [
+            "observed",
+            "absent",
+            "unavailable",
+            "not_requested"
+          ]
+        },
+        "value": {
+          "$ref": "#/$defs/DataValue"
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReadAnchor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decoderId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "availability",
+        "value",
+        "anchor",
+        "decoderId",
+        "evidence",
+        "errorCode"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "availability": {
+                "enum": [
+                  "absent",
+                  "unavailable",
+                  "not_requested"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "availability": {
+                "enum": [
+                  "observed",
+                  "absent"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "anchor": {
+                "$ref": "#/$defs/ReadAnchor"
+              },
+              "decoderId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "GateRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/GateId"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_qualified",
+            "accepted",
+            "blocked",
+            "stale"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "profile_capability",
+            "action_input",
+            "finalized_output",
+            "product_release"
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReadAnchor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "evidence",
+        "reason",
+        "stage",
+        "subject",
+        "anchor"
+      ],
+      "additionalProperties": false,
+      "description": "A domain assessment at one stage and subject, not a blanket pass of all prerequisites or future outputs. Profile capability acceptance is separate from current action input and finalized output.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "accepted"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "accepted"
+              },
+              "stage": {
+                "enum": [
+                  "action_input",
+                  "finalized_output"
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "stage"
+            ]
+          },
+          "then": {
+            "properties": {
+              "anchor": {
+                "$ref": "#/$defs/ReadAnchor"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ApiBinding": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "version": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "unknown",
+            "source_candidate",
+            "qualified"
+          ]
+        },
+        "codecArtifactSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "boundRuntimeCodeHash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "boundMetadataSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "methodManifestSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "traitSourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "runtimeImplementationEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "methods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiMethodBinding"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "status",
+        "codecArtifactSha256",
+        "sourceEvidence",
+        "boundRuntimeCodeHash",
+        "boundMetadataSha256",
+        "methodManifestSha256",
+        "traitSourceEvidence",
+        "runtimeImplementationEvidence",
+        "methods"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "ReviveApi"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "2"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "qualified"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "codecArtifactSha256": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "boundRuntimeCodeHash": {
+                "$ref": "#/$defs/Hash32"
+              },
+              "boundMetadataSha256": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "methodManifestSha256": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "sourceEvidence": {
+                "minItems": 1
+              },
+              "traitSourceEvidence": {
+                "minItems": 1
+              },
+              "runtimeImplementationEvidence": {
+                "minItems": 1
+              },
+              "methods": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CallTree": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Tree_Transfer"
+        },
+        {
+          "$ref": "#/$defs/Tree_CreatePure"
+        },
+        {
+          "$ref": "#/$defs/Tree_MapAccount"
+        },
+        {
+          "$ref": "#/$defs/Tree_AddProxy"
+        },
+        {
+          "$ref": "#/$defs/Tree_RemoveProxy"
+        },
+        {
+          "$ref": "#/$defs/Tree_Vest"
+        },
+        {
+          "$ref": "#/$defs/Tree_VestOther"
+        },
+        {
+          "$ref": "#/$defs/Tree_Cancel"
+        },
+        {
+          "$ref": "#/$defs/Tree_AbiCreate"
+        },
+        {
+          "$ref": "#/$defs/Tree_AbiSubmit"
+        },
+        {
+          "$ref": "#/$defs/Tree_AbiApprove"
+        },
+        {
+          "$ref": "#/$defs/Tree_AbiReclaim"
+        },
+        {
+          "$ref": "#/$defs/Tree_ReviveCreate"
+        },
+        {
+          "$ref": "#/$defs/Tree_ReviveSubmit"
+        },
+        {
+          "$ref": "#/$defs/Tree_ReviveApprove"
+        },
+        {
+          "$ref": "#/$defs/Tree_ReviveReclaim"
+        },
+        {
+          "$ref": "#/$defs/Tree_ProxyMap"
+        },
+        {
+          "$ref": "#/$defs/Tree_ProxyAdd"
+        },
+        {
+          "$ref": "#/$defs/Tree_ProxyRemove"
+        },
+        {
+          "$ref": "#/$defs/Tree_ProxySubmit"
+        },
+        {
+          "$ref": "#/$defs/Tree_ProxyVest"
+        }
+      ],
+      "description": "Closed descriptive grammar; no Utility, generic forwarding, hash-only approval, requestChanges, release, remove_proxies or kill_pure. Semantic guards compare values, role bindings, exact metadata-encoded bytes and ABI data; structural validity alone cannot authorize."
+    },
+    "Intent": {
+      "type": "object",
+      "properties": {
+        "intentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "operationId": {
+          "$ref": "#/$defs/EnabledOperationId"
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "authorActor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/DataValue"
+          }
+        },
+        "expectedState": {
+          "$ref": "#/$defs/ExpectedState"
+        },
+        "supersedesIntentId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "profileDigest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "intentRevision": {
+          "$ref": "#/$defs/PositiveDecimal",
+          "description": "Semantic plan revision, not a mutable observation counter. See SG-29. First sealed revision is 1; changed semantic content requires a higher revision or new intentId."
+        }
+      },
+      "required": [
+        "intentId",
+        "operationId",
+        "profileId",
+        "authorActor",
+        "parameters",
+        "expectedState",
+        "supersedesIntentId",
+        "profileDigest",
+        "intentRevision"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-FUND-M0"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_SETUP_FUND_M0"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-FUND-ACTOR"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_SETUP_FUND_ACTOR"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-CREATE-PURE"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_SETUP_CREATE_PURE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-FUND-P"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_SETUP_FUND_P"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-MAP-P"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_SETUP_MAP_P"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-MAP-ACTOR"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_SETUP_MAP_ACTOR"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-GRANT-CREATE"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_GRANT_CREATE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-GRANT-SUBMIT-M0"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_GRANT_SUBMIT_M0"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-GRANT-SUBMIT-M1"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_GRANT_SUBMIT_M1"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-GRANT-APPROVE"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_GRANT_APPROVE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-ROTATION-ADD-M1"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_ROTATION_ADD_M1"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-ROTATION-REMOVE-M0"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_ROTATION_REMOVE_M0"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-VESTING-VEST-OTHER"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_VESTING_VEST_OTHER"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-MULTISIG-CANCEL"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/Params_GRC_MULTISIG_CANCEL"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ResourceBounds": {
+      "type": "object",
+      "properties": {
+        "valueNative": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "reviveWeight": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Weight"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "storageDepositLimitNative": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "multisigInnerMaxWeight": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Weight"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outerFeeEstimateNative": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outerFeeLocalBudgetNative": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "feeBudgetIsChainEnforcedCap": {
+          "const": false
+        },
+        "estimationEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        }
+      },
+      "required": [
+        "valueNative",
+        "reviveWeight",
+        "storageDepositLimitNative",
+        "multisigInnerMaxWeight",
+        "outerFeeEstimateNative",
+        "outerFeeLocalBudgetNative",
+        "feeBudgetIsChainEnforcedCap",
+        "estimationEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "LayerResult": {
+      "type": "object",
+      "properties": {
+        "layer": {
+          "type": "string",
+          "enum": [
+            "System",
+            "Multisig",
+            "Proxy",
+            "Revive",
+            "Contract",
+            "Vesting"
+          ]
+        },
+        "pathOrdinal": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "result": {
+          "type": "string",
+          "enum": [
+            "success",
+            "failure",
+            "unavailable",
+            "not_applicable"
+          ]
+        },
+        "eventIndices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Decimal"
+          }
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "revertBytes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HexBytes"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "layer",
+        "pathOrdinal",
+        "result",
+        "eventIndices",
+        "error",
+        "revertBytes"
+      ],
+      "additionalProperties": false
+    },
+    "EventRecord": {
+      "type": "object",
+      "properties": {
+        "nativeEventIndex": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "extrinsicIndex": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "pallet": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "event": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "contractEmitter": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/H160"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "abiLogOrdinal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rawEvidence": {
+          "$ref": "#/$defs/EvidenceRef"
+        },
+        "decoded": {
+          "$ref": "#/$defs/DataValue"
+        }
+      },
+      "required": [
+        "nativeEventIndex",
+        "extrinsicIndex",
+        "pallet",
+        "event",
+        "contractEmitter",
+        "abiLogOrdinal",
+        "rawEvidence",
+        "decoded"
+      ],
+      "additionalProperties": false
+    },
+    "Postcondition": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "result": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "failed",
+            "unknown"
+          ]
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReadAnchor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      },
+      "required": [
+        "id",
+        "result",
+        "anchor",
+        "observations",
+        "explanation"
+      ],
+      "additionalProperties": false
+    },
+    "PreservedIdentity": {
+      "type": "object",
+      "properties": {
+        "P": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "hP": {
+          "$ref": "#/$defs/H160"
+        },
+        "grantee": {
+          "$ref": "#/$defs/H160"
+        },
+        "reverseMappingAccount": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "milestone0Tuple": {
+          "$ref": "#/$defs/VestingTuple"
+        },
+        "tupleMultiplicity": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "creationReceipt": {
+          "$ref": "#/$defs/EvidenceRef"
+        },
+        "grantId": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "contractAddress": {
+          "$ref": "#/$defs/H160"
+        },
+        "mappingBranch": {
+          "const": "normal_non_EE"
+        },
+        "originalAccountEntry": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "mappingEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        },
+        "grantCreationReceipt": {
+          "$ref": "#/$defs/EvidenceRef"
+        }
+      },
+      "required": [
+        "P",
+        "hP",
+        "grantee",
+        "reverseMappingAccount",
+        "milestone0Tuple",
+        "tupleMultiplicity",
+        "creationReceipt",
+        "grantId",
+        "contractAddress",
+        "mappingBranch",
+        "originalAccountEntry",
+        "mappingEvidence",
+        "grantCreationReceipt"
+      ],
+      "additionalProperties": false
+    },
+    "ChainProfile": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "2"
+        },
+        "recordId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "kind": {
+          "const": "ChainProfile"
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "revision": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "candidate",
+            "accepted",
+            "blocked",
+            "stale"
+          ]
+        },
+        "genesis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "specName": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "specVersion": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "transactionVersion": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "runtimeCodeHash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "metadataSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "metadataVersion": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "transport": {
+          "const": "dedot_explicit_legacy"
+        },
+        "accountClass": {
+          "const": "normal_non_EE_suffixed_AccountId32"
+        },
+        "apiBindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApiBinding"
+          }
+        },
+        "signedExtensions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "gateRecords": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/GateRecord"
+              },
+              {
+                "properties": {
+                  "stage": {
+                    "const": "profile_capability"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "derivedFromRecordDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "firstBuildMode": {
+          "const": "CONTROLLED_SINGLE_ROUND_DEMONSTRATOR"
+        },
+        "grantPolicyId": {
+          "const": "vestry-single-round-demo-v1"
+        },
+        "mappingPolicy": {
+          "$ref": "#/$defs/MappingPolicy"
+        },
+        "bindingEvidence": {
+          "$ref": "#/$defs/BindingEvidence"
+        },
+        "localContractRevision": {
+          "const": "grc-v2-local-1"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "recordId",
+        "digest",
+        "kind",
+        "profileId",
+        "revision",
+        "status",
+        "genesis",
+        "specName",
+        "specVersion",
+        "transactionVersion",
+        "runtimeCodeHash",
+        "metadataSha256",
+        "metadataVersion",
+        "transport",
+        "accountClass",
+        "apiBindings",
+        "signedExtensions",
+        "gateRecords",
+        "sourceEvidence",
+        "derivedFromRecordDigest",
+        "firstBuildMode",
+        "grantPolicyId",
+        "mappingPolicy",
+        "bindingEvidence",
+        "localContractRevision"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "accepted"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "genesis": {
+                "$ref": "#/$defs/Hash32"
+              },
+              "runtimeCodeHash": {
+                "$ref": "#/$defs/Hash32"
+              },
+              "metadataSha256": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "specVersion": {
+                "$ref": "#/$defs/Decimal"
+              },
+              "transactionVersion": {
+                "$ref": "#/$defs/Decimal"
+              },
+              "sourceEvidence": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "accepted"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "bindingEvidence": {
+                "properties": {
+                  "rawMetadataEvidence": {
+                    "$ref": "#/$defs/EvidenceRef"
+                  },
+                  "rawRuntimeCodeEvidence": {
+                    "$ref": "#/$defs/EvidenceRef"
+                  },
+                  "runtimeSourceBuildRelationship": {
+                    "$ref": "#/$defs/EvidenceRef"
+                  },
+                  "generatedNativeTypesSha256": {
+                    "$ref": "#/$defs/Sha256"
+                  }
+                }
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "specName": {
+                      "const": "account-handoff-local"
+                    }
+                  },
+                  "required": [
+                    "specName"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "metadataVersion": {
+                      "enum": [
+                        "14",
+                        "15",
+                        "16"
+                      ]
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "metadataVersion": {
+                      "const": "14"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "gateRecords": {
+                "contains": {
+                  "properties": {
+                    "id": {
+                      "const": "Q-REVIVE-API"
+                    },
+                    "status": {
+                      "const": "accepted"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "gateRecords"
+            ]
+          },
+          "then": {
+            "properties": {
+              "apiBindings": {
+                "contains": {
+                  "properties": {
+                    "name": {
+                      "const": "ReviveApi"
+                    },
+                    "version": {
+                      "const": "2"
+                    },
+                    "status": {
+                      "const": "qualified"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "version",
+                    "status"
+                  ]
+                },
+                "minContains": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "gateRecords": {
+                "contains": {
+                  "properties": {
+                    "id": {
+                      "const": "Q-CONTRACT"
+                    },
+                    "status": {
+                      "const": "accepted"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "gateRecords"
+            ]
+          },
+          "then": {
+            "properties": {
+              "bindingEvidence": {
+                "properties": {
+                  "abiSha256": {
+                    "$ref": "#/$defs/Sha256"
+                  },
+                  "contractAddress": {
+                    "$ref": "#/$defs/H160"
+                  },
+                  "contractRuntimeCodeHash": {
+                    "$ref": "#/$defs/Hash32"
+                  },
+                  "contractSourceBuildRelationship": {
+                    "$ref": "#/$defs/EvidenceRef"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "gateRecords": {
+                "contains": {
+                  "properties": {
+                    "id": {
+                      "const": "Q-ADAPTER"
+                    },
+                    "status": {
+                      "const": "accepted"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "gateRecords"
+            ]
+          },
+          "then": {
+            "properties": {
+              "bindingEvidence": {
+                "properties": {
+                  "packageLockSha256": {
+                    "$ref": "#/$defs/Sha256"
+                  },
+                  "packageArtifactEvidence": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "gateRecords": {
+                "contains": {
+                  "properties": {
+                    "id": {
+                      "const": "Q-WALLET"
+                    },
+                    "status": {
+                      "const": "accepted"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "gateRecords"
+            ]
+          },
+          "then": {
+            "properties": {
+              "bindingEvidence": {
+                "properties": {
+                  "installedWalletEvidence": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "gateRecords": {
+                "contains": {
+                  "properties": {
+                    "id": {
+                      "const": "Q-MAPPING"
+                    },
+                    "status": {
+                      "const": "accepted"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "gateRecords"
+            ]
+          },
+          "then": {
+            "properties": {
+              "mappingPolicy": {
+                "properties": {
+                  "qualifiedConfigurationEvidence": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "description": "Accepted binds exact runtime identity only. Every operation separately requires its capability and fresh input gate components. Q-REVIVE-API/Q-CONTRACT/Q-WALLET etc cannot be inferred from this top-level status. Setup output gates are evaluated after finality. The narrowly modified account-handoff-local runtime may bind exact metadata versions 14, 15, or 16 with the same full artifact/source evidence. Other first-profile targets retain metadata version 14."
+    },
+    "Snapshot": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "2"
+        },
+        "recordId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "kind": {
+          "const": "Snapshot"
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "anchor": {
+          "$ref": "#/$defs/ReadAnchor"
+        },
+        "completeness": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "incomplete"
+          ]
+        },
+        "pure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AccountId32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observations": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Observation"
+          }
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "derivedFromRecordDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "profileDigest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "grantScope": {
+          "$ref": "#/$defs/GrantFlowScope"
+        },
+        "mapping": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MappingObservation"
+          },
+          "maxItems": 4
+        },
+        "accounting": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AccountingLedger"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "authority": {
+          "$ref": "#/$defs/AuthorityObservation"
+        },
+        "gateAssessments": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/GateRecord"
+              },
+              {
+                "properties": {
+                  "stage": {
+                    "enum": [
+                      "action_input",
+                      "finalized_output"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "localContractRevision": {
+          "const": "grc-v2-local-1"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "recordId",
+        "digest",
+        "kind",
+        "profileId",
+        "anchor",
+        "completeness",
+        "pure",
+        "observations",
+        "sourceEvidence",
+        "derivedFromRecordDigest",
+        "profileDigest",
+        "grantScope",
+        "mapping",
+        "accounting",
+        "authority",
+        "gateAssessments",
+        "localContractRevision"
+      ],
+      "additionalProperties": false
+    },
+    "FrozenEnvelope": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "2"
+        },
+        "recordId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "kind": {
+          "const": "FrozenEnvelope"
+        },
+        "intent": {
+          "$ref": "#/$defs/Intent"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "frozen",
+            "approved",
+            "stale",
+            "superseded"
+          ],
+          "description": "Local immutable revision state; approved means local review, never a count of native approvals."
+        },
+        "anchor": {
+          "$ref": "#/$defs/ReadAnchor"
+        },
+        "signingPath": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "multisig_proxy",
+            "multisig_direct"
+          ]
+        },
+        "controller": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Controller"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requiredSigners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccountId32"
+          },
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true
+        },
+        "callTree": {
+          "$ref": "#/$defs/CallTree"
+        },
+        "innerRuntimeCallBytes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HexBytes"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "innerRuntimeCallHash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resources": {
+          "$ref": "#/$defs/ResourceBounds"
+        },
+        "summaryText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8192
+        },
+        "requiredGateIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GateId"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "derivedFromRecordDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "participants": {
+          "$ref": "#/$defs/ParticipantBindings"
+        },
+        "localContractRevision": {
+          "const": "grc-v2-local-1"
+        },
+        "semanticIntentDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "SHA256 of RFC8785 JCS of the exact semantic projection defined in semantic-guards.json.semantic_intent_identity. Separate from the full immutable record digest. Null only for an unsealed draft."
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "recordId",
+        "digest",
+        "kind",
+        "intent",
+        "status",
+        "anchor",
+        "signingPath",
+        "controller",
+        "requiredSigners",
+        "callTree",
+        "innerRuntimeCallBytes",
+        "innerRuntimeCallHash",
+        "resources",
+        "summaryText",
+        "requiredGateIds",
+        "evidence",
+        "derivedFromRecordDigest",
+        "participants",
+        "localContractRevision",
+        "semanticIntentDigest"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "frozen",
+                  "approved"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "innerRuntimeCallBytes": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/HexBytes"
+                  },
+                  {
+                    "minLength": 6
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "signingPath": {
+                "enum": [
+                  "multisig_proxy",
+                  "multisig_direct"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "controller": {
+                "$ref": "#/$defs/Controller"
+              },
+              "requiredSigners": {
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "frozen",
+                  "approved"
+                ]
+              },
+              "signingPath": {
+                "enum": [
+                  "multisig_proxy",
+                  "multisig_direct"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "innerRuntimeCallHash": {
+                "$ref": "#/$defs/Hash32"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "signingPath": {
+                "const": "direct"
+              }
+            },
+            "required": [
+              "signingPath"
+            ]
+          },
+          "then": {
+            "properties": {
+              "controller": {
+                "const": null
+              },
+              "requiredSigners": {
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "innerRuntimeCallHash": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-SETUP-FUND-M0"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_Transfer"
+              },
+              "signingPath": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-SETUP-FUND-ACTOR"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_Transfer"
+              },
+              "signingPath": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-SETUP-CREATE-PURE"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_CreatePure"
+              },
+              "signingPath": {
+                "const": "multisig_direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-SETUP-FUND-P"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_Transfer"
+              },
+              "signingPath": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-SETUP-MAP-P"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_ProxyMap"
+              },
+              "signingPath": {
+                "const": "multisig_proxy"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-SETUP-MAP-ACTOR"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_MapAccount"
+              },
+              "signingPath": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-GRANT-CREATE"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_ReviveCreate"
+              },
+              "signingPath": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-GRANT-SUBMIT-M0"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_ProxySubmit"
+              },
+              "signingPath": {
+                "const": "multisig_proxy"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-GRANT-SUBMIT-M1"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_ProxySubmit"
+              },
+              "signingPath": {
+                "const": "multisig_proxy"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-GRANT-APPROVE"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_ReviveApprove"
+              },
+              "signingPath": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-ROTATION-ADD-M1"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_ProxyAdd"
+              },
+              "signingPath": {
+                "const": "multisig_proxy"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-ROTATION-REMOVE-M0"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_ProxyRemove"
+              },
+              "signingPath": {
+                "const": "multisig_proxy"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-VESTING-VEST-OTHER"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_VestOther"
+              },
+              "signingPath": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "intent": {
+                "properties": {
+                  "operationId": {
+                    "const": "GRC-MULTISIG-CANCEL"
+                  }
+                },
+                "required": [
+                  "operationId"
+                ]
+              }
+            },
+            "required": [
+              "intent"
+            ]
+          },
+          "then": {
+            "properties": {
+              "callTree": {
+                "$ref": "#/$defs/Tree_Cancel"
+              },
+              "signingPath": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "not": {
+                  "const": "draft"
+                }
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "semanticIntentDigest": {
+                "$ref": "#/$defs/Sha256"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "NativeProposal": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "2"
+        },
+        "recordId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "kind": {
+          "const": "NativeProposal"
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "multisig": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "innerCallHash": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "absent",
+            "present",
+            "executed_consumed",
+            "cancelled",
+            "unknown"
+          ]
+        },
+        "timepoint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Timepoint"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "depositor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AccountId32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approvals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccountId32"
+          },
+          "uniqueItems": true
+        },
+        "depositNative": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "anchor": {
+          "$ref": "#/$defs/ReadAnchor"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "derivedFromRecordDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "profileDigest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "localContractRevision": {
+          "const": "grc-v2-local-1"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "recordId",
+        "digest",
+        "kind",
+        "profileId",
+        "multisig",
+        "innerCallHash",
+        "state",
+        "timepoint",
+        "depositor",
+        "approvals",
+        "depositNative",
+        "anchor",
+        "evidence",
+        "derivedFromRecordDigest",
+        "profileDigest",
+        "localContractRevision"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "present"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "timepoint": {
+                "$ref": "#/$defs/Timepoint"
+              },
+              "depositor": {
+                "$ref": "#/$defs/AccountId32"
+              },
+              "depositNative": {
+                "$ref": "#/$defs/Decimal"
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "executed_consumed",
+                  "cancelled"
+                ]
+              }
+            },
+            "required": [
+              "state"
+            ]
+          },
+          "then": {
+            "properties": {
+              "timepoint": {
+                "$ref": "#/$defs/Timepoint"
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SignedAttempt": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "2"
+        },
+        "recordId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "kind": {
+          "const": "SignedAttempt"
+        },
+        "intentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "envelopeDigest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "signer": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "nonce": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "era": {
+          "$ref": "#/$defs/HexBytes"
+        },
+        "signedExtrinsicHash": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "signedExtrinsicBytes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HexBytes"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bytesOmissionReason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "portable_export_omits_all_signed_packets"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reviewedSigningContext": {
+          "$ref": "#/$defs/ReviewedSigningContext"
+        },
+        "signingContextSha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "signed",
+            "broadcast",
+            "included",
+            "retracted",
+            "finalized",
+            "submission_unknown",
+            "invalid",
+            "dropped"
+          ]
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "derivedFromRecordDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "profileDigest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "recordScope": {
+          "type": "string",
+          "enum": [
+            "local_journal",
+            "portable_export"
+          ]
+        },
+        "localContractRevision": {
+          "const": "grc-v2-local-1"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "recordId",
+        "digest",
+        "kind",
+        "intentId",
+        "envelopeDigest",
+        "profileId",
+        "signer",
+        "nonce",
+        "era",
+        "signedExtrinsicHash",
+        "signedExtrinsicBytes",
+        "bytesOmissionReason",
+        "reviewedSigningContext",
+        "signingContextSha256",
+        "status",
+        "observations",
+        "derivedFromRecordDigest",
+        "profileDigest",
+        "recordScope",
+        "localContractRevision"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "recordScope": {
+                "const": "local_journal"
+              }
+            },
+            "required": [
+              "recordScope"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signedExtrinsicBytes": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/HexBytes"
+                  },
+                  {
+                    "minLength": 4
+                  }
+                ]
+              },
+              "bytesOmissionReason": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "recordScope": {
+                "const": "portable_export"
+              }
+            },
+            "required": [
+              "recordScope"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signedExtrinsicBytes": {
+                "const": null
+              },
+              "bytesOmissionReason": {
+                "const": "portable_export_omits_all_signed_packets"
+              },
+              "derivedFromRecordDigest": {
+                "$ref": "#/$defs/Sha256"
+              }
+            }
+          }
+        }
+      ],
+      "description": "Exists only after exact signed bytes are returned and verified. Durable locally before explicit send. Portable export is a newly identified redacted record; no signed-byte recovery export in first profile. Unknown wallet outcome belongs to LocalOperationProgress until a signed hash is known."
+    },
+    "ReceiptBundle": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "2"
+        },
+        "recordId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "kind": {
+          "const": "ReceiptBundle"
+        },
+        "intentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "signedAttemptId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "extrinsicHash": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "blockHash": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "extrinsicIndex": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "provisional",
+            "finalized_success",
+            "finalized_failure",
+            "unresolved",
+            "retracted"
+          ]
+        },
+        "anchor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReadAnchor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LayerResult"
+          },
+          "minItems": 1
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EventRecord"
+          }
+        },
+        "postconditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Postcondition"
+          }
+        },
+        "proposalAfter": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "present",
+                "consumed",
+                "absent",
+                "unknown"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currentStateDrift": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "derivedFromRecordDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "profileDigest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "operationId": {
+          "$ref": "#/$defs/EnabledOperationId"
+        },
+        "signingPath": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "multisig_direct",
+            "multisig_proxy"
+          ]
+        },
+        "operationPhase": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "multisig_first",
+            "multisig_final",
+            "cancel"
+          ]
+        },
+        "businessEffect": {
+          "type": "string",
+          "enum": [
+            "not_attempted",
+            "historically_verified",
+            "failed",
+            "unknown",
+            "context_mismatch",
+            "configuration_diverged"
+          ]
+        },
+        "causalBusinessContext": {
+          "$ref": "#/$defs/CausalBusinessContext"
+        },
+        "targetProposalAfter": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "present",
+                "cancelled",
+                "absent_unexplained",
+                "unknown"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "localContractRevision": {
+          "const": "grc-v2-local-1"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "recordId",
+        "digest",
+        "kind",
+        "intentId",
+        "profileId",
+        "signedAttemptId",
+        "extrinsicHash",
+        "blockHash",
+        "extrinsicIndex",
+        "status",
+        "anchor",
+        "layers",
+        "events",
+        "postconditions",
+        "proposalAfter",
+        "currentStateDrift",
+        "evidence",
+        "derivedFromRecordDigest",
+        "profileDigest",
+        "operationId",
+        "signingPath",
+        "operationPhase",
+        "businessEffect",
+        "causalBusinessContext",
+        "targetProposalAfter",
+        "localContractRevision"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "finalized_success",
+                  "finalized_failure"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "anchor": {
+                "$ref": "#/$defs/ReadAnchor"
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "signingPath": {
+                "const": "direct"
+              }
+            },
+            "required": [
+              "signingPath"
+            ]
+          },
+          "then": {
+            "properties": {
+              "proposalAfter": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationPhase": {
+                "const": "multisig_first"
+              }
+            },
+            "required": [
+              "operationPhase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "businessEffect": {
+                "const": "not_attempted"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationPhase": {
+                "const": "cancel"
+              }
+            },
+            "required": [
+              "operationPhase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-MULTISIG-CANCEL"
+              },
+              "signingPath": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-MULTISIG-CANCEL"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "operationPhase": {
+                "const": "cancel"
+              },
+              "signingPath": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-FUND-M0"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "direct"
+              },
+              "operationPhase": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-FUND-ACTOR"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "direct"
+              },
+              "operationPhase": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-CREATE-PURE"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "multisig_direct"
+              },
+              "operationPhase": {
+                "type": "string",
+                "enum": [
+                  "multisig_first",
+                  "multisig_final"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-FUND-P"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "direct"
+              },
+              "operationPhase": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-MAP-P"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "multisig_proxy"
+              },
+              "operationPhase": {
+                "type": "string",
+                "enum": [
+                  "multisig_first",
+                  "multisig_final"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-SETUP-MAP-ACTOR"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "direct"
+              },
+              "operationPhase": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-GRANT-CREATE"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "direct"
+              },
+              "operationPhase": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-GRANT-SUBMIT-M0"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "multisig_proxy"
+              },
+              "operationPhase": {
+                "type": "string",
+                "enum": [
+                  "multisig_first",
+                  "multisig_final"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-GRANT-SUBMIT-M1"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "multisig_proxy"
+              },
+              "operationPhase": {
+                "type": "string",
+                "enum": [
+                  "multisig_first",
+                  "multisig_final"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-GRANT-APPROVE"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "direct"
+              },
+              "operationPhase": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-ROTATION-ADD-M1"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "multisig_proxy"
+              },
+              "operationPhase": {
+                "type": "string",
+                "enum": [
+                  "multisig_first",
+                  "multisig_final"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-ROTATION-REMOVE-M0"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "multisig_proxy"
+              },
+              "operationPhase": {
+                "type": "string",
+                "enum": [
+                  "multisig_first",
+                  "multisig_final"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-VESTING-VEST-OTHER"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "direct"
+              },
+              "operationPhase": {
+                "const": "direct"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "const": "GRC-MULTISIG-CANCEL"
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "signingPath": {
+                "const": "direct"
+              },
+              "operationPhase": {
+                "const": "cancel"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operationId": {
+                "not": {
+                  "const": "GRC-MULTISIG-CANCEL"
+                }
+              }
+            },
+            "required": [
+              "operationId"
+            ]
+          },
+          "then": {
+            "properties": {
+              "targetProposalAfter": {
+                "const": null
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "businessEffect": {
+                "const": "historically_verified"
+              }
+            },
+            "required": [
+              "businessEffect"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "finalized_success"
+              }
+            }
+          }
+        }
+      ],
+      "description": "Dispatch success and verified business effect are independent. Direct F/R has no native proposal. Cancellation refers to targetProposalAfter. First-approval receipt cannot establish inner execution. Historical business context uses ordered events, not only final getter state."
+    },
+    "ContinuityCertificate": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "2"
+        },
+        "recordId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "digest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "kind": {
+          "const": "ContinuityCertificate"
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "verified",
+            "incomplete",
+            "failed",
+            "historically_verified_current_drift"
+          ]
+        },
+        "before": {
+          "$ref": "#/$defs/ReadAnchor"
+        },
+        "after": {
+          "$ref": "#/$defs/ReadAnchor"
+        },
+        "identity": {
+          "$ref": "#/$defs/PreservedIdentity"
+        },
+        "M0": {
+          "$ref": "#/$defs/Controller"
+        },
+        "M1": {
+          "$ref": "#/$defs/Controller"
+        },
+        "removalReceiptId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "milestone1SubmissionReceiptId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "criteria": {
+          "type": "object",
+          "properties": {
+            "pureIdentity": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "unknown"
+              ]
+            },
+            "h160Identity": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "unknown"
+              ]
+            },
+            "reverseMapping": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "unknown"
+              ]
+            },
+            "grantBeneficiary": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "unknown"
+              ]
+            },
+            "activeVestingTuple": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "unknown"
+              ]
+            },
+            "backing": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "unknown"
+              ]
+            },
+            "exactNewAuthority": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "unknown"
+              ]
+            },
+            "attributedMilestone1Submission": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "unknown"
+              ]
+            },
+            "removalQuorumAD": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "unknown"
+              ]
+            },
+            "continuationQuorumAD": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "unknown"
+              ]
+            },
+            "singleRoundBusinessContext": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed",
+                "unknown"
+              ]
+            }
+          },
+          "required": [
+            "pureIdentity",
+            "h160Identity",
+            "reverseMapping",
+            "grantBeneficiary",
+            "activeVestingTuple",
+            "backing",
+            "exactNewAuthority",
+            "attributedMilestone1Submission",
+            "removalQuorumAD",
+            "continuationQuorumAD",
+            "singleRoundBusinessContext"
+          ],
+          "additionalProperties": false
+        },
+        "independentCustodyProven": {
+          "type": "boolean"
+        },
+        "BReadinessStatus": {
+          "type": "string",
+          "enum": [
+            "demonstrated",
+            "declared_only",
+            "unknown"
+          ]
+        },
+        "legalOrFunderConsentInferred": {
+          "const": false
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "derivedFromRecordDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "profileDigest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "grantScopeAtSubmission": {
+          "type": "string",
+          "enum": [
+            "EligibleSingleRound",
+            "Unverified",
+            "ScopeBreached",
+            "ReconciliationRequired"
+          ]
+        },
+        "currentGrantScope": {
+          "$ref": "#/$defs/GrantFlowScope"
+        },
+        "removalParticipationEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "continuationParticipationEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "scopeOfProof": {
+          "const": "anchor_specific_native_authority_and_attributed_next_submission_not_reviewer_payment_or_legal_consent"
+        },
+        "localContractRevision": {
+          "const": "grc-v2-local-1"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "recordId",
+        "digest",
+        "kind",
+        "profileId",
+        "verdict",
+        "before",
+        "after",
+        "identity",
+        "M0",
+        "M1",
+        "removalReceiptId",
+        "milestone1SubmissionReceiptId",
+        "criteria",
+        "independentCustodyProven",
+        "BReadinessStatus",
+        "legalOrFunderConsentInferred",
+        "evidence",
+        "derivedFromRecordDigest",
+        "profileDigest",
+        "grantScopeAtSubmission",
+        "currentGrantScope",
+        "removalParticipationEvidence",
+        "continuationParticipationEvidence",
+        "scopeOfProof",
+        "localContractRevision"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "verdict": {
+                "enum": [
+                  "verified",
+                  "historically_verified_current_drift"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "removalReceiptId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "milestone1SubmissionReceiptId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "criteria": {
+                "properties": {
+                  "pureIdentity": {
+                    "const": "passed"
+                  },
+                  "h160Identity": {
+                    "const": "passed"
+                  },
+                  "reverseMapping": {
+                    "const": "passed"
+                  },
+                  "grantBeneficiary": {
+                    "const": "passed"
+                  },
+                  "activeVestingTuple": {
+                    "const": "passed"
+                  },
+                  "backing": {
+                    "const": "passed"
+                  },
+                  "exactNewAuthority": {
+                    "const": "passed"
+                  },
+                  "attributedMilestone1Submission": {
+                    "const": "passed"
+                  },
+                  "removalQuorumAD": {
+                    "const": "passed"
+                  },
+                  "continuationQuorumAD": {
+                    "const": "passed"
+                  },
+                  "singleRoundBusinessContext": {
+                    "const": "passed"
+                  }
+                }
+              },
+              "evidence": {
+                "minItems": 1
+              },
+              "removalParticipationEvidence": {
+                "minItems": 1
+              },
+              "continuationParticipationEvidence": {
+                "minItems": 1
+              },
+              "grantScopeAtSubmission": {
+                "const": "EligibleSingleRound"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "GateId": {
+      "type": "string",
+      "enum": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-VESTING",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-INVENTORY",
+        "Q-FUNDING",
+        "Q-READINESS",
+        "Q-CONTINUITY",
+        "Q-USABILITY",
+        "Q-GRANT-SCOPE"
+      ]
+    },
+    "SignedDecimal": {
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*)$"
+    },
+    "ParticipantBindings": {
+      "type": "object",
+      "properties": {
+        "A": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "B": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "C": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "D": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "F": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "R1": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "R2": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "S": {
+          "$ref": "#/$defs/AccountId32"
+        }
+      },
+      "required": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F",
+        "R1",
+        "R2",
+        "S"
+      ],
+      "additionalProperties": false
+    },
+    "RuntimeContext": {
+      "type": "object",
+      "properties": {
+        "contextId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "genesis": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "runtimeCodeHash": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "metadataSha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "specVersion": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "transactionVersion": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "metadataVersion": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "apiCodecArtifactSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rawEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "contextId",
+        "genesis",
+        "runtimeCodeHash",
+        "metadataSha256",
+        "specVersion",
+        "transactionVersion",
+        "metadataVersion",
+        "apiCodecArtifactSha256",
+        "rawEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "ApiMethodBinding": {
+      "type": "object",
+      "properties": {
+        "methodName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "rpcMethodName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "canonicalSignature": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "inputCodecArtifactSha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "outputCodecArtifactSha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "typeRegistrySha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "methodName",
+        "rpcMethodName",
+        "canonicalSignature",
+        "inputCodecArtifactSha256",
+        "outputCodecArtifactSha256",
+        "typeRegistrySha256",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "MappingPolicy": {
+      "type": "object",
+      "properties": {
+        "supportedBranch": {
+          "const": "normal_non_EE_suffixed_AccountId32"
+        },
+        "autoMap": {
+          "const": false
+        },
+        "explicitMappingRequired": {
+          "const": true
+        },
+        "statelessEEBranchSupported": {
+          "const": false
+        },
+        "reviveOriginRoles": {
+          "const": [
+            "P",
+            "F",
+            "R1",
+            "R2"
+          ]
+        },
+        "controllerOrMemberMappingRequiredForNativeWrapper": {
+          "const": false
+        },
+        "unmappingEnabled": {
+          "const": false
+        },
+        "qualifiedConfigurationEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        }
+      },
+      "required": [
+        "supportedBranch",
+        "autoMap",
+        "explicitMappingRequired",
+        "statelessEEBranchSupported",
+        "reviveOriginRoles",
+        "controllerOrMemberMappingRequiredForNativeWrapper",
+        "unmappingEnabled",
+        "qualifiedConfigurationEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "BindingEvidence": {
+      "type": "object",
+      "properties": {
+        "metadataHashConvention": {
+          "const": "SHA256_of_exact_SCALE_metadata_bytes_without_RPC_hex_text"
+        },
+        "runtimeCodeHashConvention": {
+          "const": "BLAKE2_256_of_exact_runtime_code_storage_bytes"
+        },
+        "rawMetadataEvidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rawRuntimeCodeEvidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "runtimeSourceBuildRelationship": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generatedNativeTypesSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "abiSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contractAddress": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/H160"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contractRuntimeCodeHash": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contractCodeHashConvention": {
+          "const": "must_be_declared_and_qualified_in_contract_artifact_evidence"
+        },
+        "contractSourceBuildRelationship": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "packageLockSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "packageArtifactEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "installedWalletEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        }
+      },
+      "required": [
+        "metadataHashConvention",
+        "runtimeCodeHashConvention",
+        "rawMetadataEvidence",
+        "rawRuntimeCodeEvidence",
+        "runtimeSourceBuildRelationship",
+        "generatedNativeTypesSha256",
+        "abiSha256",
+        "contractAddress",
+        "contractRuntimeCodeHash",
+        "contractCodeHashConvention",
+        "contractSourceBuildRelationship",
+        "packageLockSha256",
+        "packageArtifactEvidence",
+        "installedWalletEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "GrantFlowScope": {
+      "type": "object",
+      "properties": {
+        "policyId": {
+          "const": "vestry-single-round-demo-v1"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "Unverified",
+            "EligibleSingleRound",
+            "ReconciliationRequired",
+            "ScopeBreached",
+            "Closed"
+          ]
+        },
+        "grantId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observedRounds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Decimal"
+          },
+          "maxItems": 2
+        },
+        "historyComplete": {
+          "type": "boolean"
+        },
+        "blockingReasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "causalEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "reconciliationDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "futureExternalActionsPrevented": {
+          "const": false
+        }
+      },
+      "required": [
+        "policyId",
+        "status",
+        "grantId",
+        "observedRounds",
+        "historyComplete",
+        "blockingReasons",
+        "causalEvidence",
+        "reconciliationDigest",
+        "futureExternalActionsPrevented"
+      ],
+      "additionalProperties": false
+    },
+    "MappingObservation": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": [
+            "P",
+            "F",
+            "R1",
+            "R2"
+          ]
+        },
+        "account": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "h160": {
+          "$ref": "#/$defs/H160"
+        },
+        "branch": {
+          "type": "string",
+          "enum": [
+            "normal_non_EE",
+            "stateless_EE",
+            "unknown"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "verified",
+            "absent",
+            "conflicting",
+            "unavailable",
+            "unsupported_branch"
+          ]
+        },
+        "originalAccountEntry": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AccountId32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effectiveReverseAccount": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AccountId32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mappingHoldNative": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "anchor": {
+          "$ref": "#/$defs/ReadAnchor"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        }
+      },
+      "required": [
+        "role",
+        "account",
+        "h160",
+        "branch",
+        "status",
+        "originalAccountEntry",
+        "effectiveReverseAccount",
+        "mappingHoldNative",
+        "anchor",
+        "evidence"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "verified"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "branch": {
+                "const": "normal_non_EE"
+              },
+              "originalAccountEntry": {
+                "$ref": "#/$defs/AccountId32"
+              },
+              "effectiveReverseAccount": {
+                "$ref": "#/$defs/AccountId32"
+              },
+              "mappingHoldNative": {
+                "$ref": "#/$defs/Decimal"
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "branch": {
+                "const": "stateless_EE"
+              }
+            },
+            "required": [
+              "branch"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "unsupported_branch"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ReserveReason": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "amountNative": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "reason",
+        "amountNative",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "AccountingLedger": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "reconciled",
+            "incomplete",
+            "conflicted"
+          ]
+        },
+        "pure": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "creator": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "anchor": {
+          "$ref": "#/$defs/ReadAnchor"
+        },
+        "proxyDepositRecordedNative": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "creatorHistoricalDepositNative": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "creatorCurrentAggregateReservedNative": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pureProxyIncrementNative": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "pureFreeNative": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "pureReservedNative": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "pureFrozenNative": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "pureReasonHolds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReserveReason"
+          }
+        },
+        "pureNamedReserves": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReserveReason"
+          }
+        },
+        "pureOtherTracedReservedLiabilitiesNative": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "pureBackedLiabilitiesNative": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "unexplainedReservedDeltaNative": {
+          "$ref": "#/$defs/SignedDecimal"
+        },
+        "constantSetDigest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "creationProvenance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        },
+        "adjustmentProvenance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "creatorDepositAutomaticallyRefunded": {
+          "const": false
+        },
+        "totalBalanceOnHoldAddedAgain": {
+          "const": false
+        }
+      },
+      "required": [
+        "status",
+        "pure",
+        "creator",
+        "anchor",
+        "proxyDepositRecordedNative",
+        "creatorHistoricalDepositNative",
+        "creatorCurrentAggregateReservedNative",
+        "pureProxyIncrementNative",
+        "pureFreeNative",
+        "pureReservedNative",
+        "pureFrozenNative",
+        "pureReasonHolds",
+        "pureNamedReserves",
+        "pureOtherTracedReservedLiabilitiesNative",
+        "pureBackedLiabilitiesNative",
+        "unexplainedReservedDeltaNative",
+        "constantSetDigest",
+        "creationProvenance",
+        "adjustmentProvenance",
+        "creatorDepositAutomaticallyRefunded",
+        "totalBalanceOnHoldAddedAgain"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "reconciled"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "unexplainedReservedDeltaNative": {
+                "const": "0"
+              },
+              "creatorCurrentAggregateReservedNative": {
+                "$ref": "#/$defs/Decimal"
+              }
+            }
+          }
+        }
+      ],
+      "description": "Split creator-funded D from P-funded incremental f. A recorded proxy deposit is not all P-held. Holds, named reserves and other liabilities must be disjoint source-qualified buckets; total_balance_on_hold is already aggregate reserved. Semantic arithmetic and complete provenance are mandatory."
+    },
+    "ProxyTuple": {
+      "type": "object",
+      "properties": {
+        "delegate": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "proxyType": {
+          "const": "Any"
+        },
+        "delay": {
+          "const": "0"
+        }
+      },
+      "required": [
+        "delegate",
+        "proxyType",
+        "delay"
+      ],
+      "additionalProperties": false
+    },
+    "AuthorityObservation": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "NotCreated",
+            "M0Only",
+            "DualControl",
+            "M1Only",
+            "UnexpectedSet",
+            "Unknown"
+          ]
+        },
+        "fullInventoryObserved": {
+          "type": "boolean"
+        },
+        "tuples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProxyTuple"
+          }
+        },
+        "unsupportedTuplesRaw": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DataValue"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        }
+      },
+      "required": [
+        "state",
+        "fullInventoryObserved",
+        "tuples",
+        "unsupportedTuplesRaw",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "MilestoneInput": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "deadline": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "vestingBlocks": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "metricTarget": {
+          "const": "0x0000000000000000000000000000000000000000"
+        },
+        "metricSelector": {
+          "const": "0x00000000"
+        },
+        "metricMin": {
+          "const": "0"
+        }
+      },
+      "required": [
+        "amount",
+        "deadline",
+        "vestingBlocks",
+        "metricTarget",
+        "metricSelector",
+        "metricMin"
+      ],
+      "additionalProperties": false
+    },
+    "EnabledOperationId": {
+      "type": "string",
+      "enum": [
+        "GRC-SETUP-FUND-M0",
+        "GRC-SETUP-FUND-ACTOR",
+        "GRC-SETUP-CREATE-PURE",
+        "GRC-SETUP-FUND-P",
+        "GRC-SETUP-MAP-P",
+        "GRC-SETUP-MAP-ACTOR",
+        "GRC-GRANT-CREATE",
+        "GRC-GRANT-SUBMIT-M0",
+        "GRC-GRANT-SUBMIT-M1",
+        "GRC-GRANT-APPROVE",
+        "GRC-ROTATION-ADD-M1",
+        "GRC-ROTATION-REMOVE-M0",
+        "GRC-VESTING-VEST-OTHER",
+        "GRC-MULTISIG-CANCEL"
+      ]
+    },
+    "GrantContext": {
+      "type": "object",
+      "properties": {
+        "grantId": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "milestoneIndex": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1"
+          ]
+        },
+        "observedRound": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "reviewedExpectedRound": {
+          "anyOf": [
+            {
+              "const": "0"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "roundBinding": {
+          "const": "client_review_only_not_ABI_enforced"
+        },
+        "observedMilestoneState": {
+          "type": "string",
+          "enum": [
+            "Open",
+            "Submitted",
+            "Released",
+            "Reclaimed"
+          ]
+        },
+        "deadlineUnixSeconds": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "evidenceSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scopeStatus": {
+          "type": "string",
+          "enum": [
+            "EligibleSingleRound",
+            "ReconciliationRequired",
+            "ScopeBreached",
+            "Closed",
+            "Unverified"
+          ]
+        },
+        "historyComplete": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        }
+      },
+      "required": [
+        "grantId",
+        "milestoneIndex",
+        "observedRound",
+        "reviewedExpectedRound",
+        "roundBinding",
+        "observedMilestoneState",
+        "deadlineUnixSeconds",
+        "evidenceSha256",
+        "scopeStatus",
+        "historyComplete",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "ExpectedState": {
+      "type": "object",
+      "properties": {
+        "snapshotDigest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "authority": {
+          "type": "string",
+          "enum": [
+            "NotCreated",
+            "M0Only",
+            "DualControl",
+            "M1Only",
+            "NotApplicable"
+          ]
+        },
+        "grantContext": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GrantContext"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "localReviewExpiresAtUnixSeconds": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "localExpiryRevokesNativeProposal": {
+          "const": false
+        }
+      },
+      "required": [
+        "snapshotDigest",
+        "authority",
+        "grantContext",
+        "localReviewExpiresAtUnixSeconds",
+        "localExpiryRevokesNativeProposal"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_SETUP_FUND_M0": {
+      "type": "object",
+      "properties": {
+        "recipient": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "valueNative": {
+          "$ref": "#/$defs/Decimal"
+        }
+      },
+      "required": [
+        "recipient",
+        "valueNative"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_SETUP_FUND_ACTOR": {
+      "type": "object",
+      "properties": {
+        "recipientRole": {
+          "type": "string",
+          "enum": [
+            "A",
+            "B",
+            "D",
+            "F",
+            "R1",
+            "R2"
+          ]
+        },
+        "recipient": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "valueNative": {
+          "$ref": "#/$defs/Decimal"
+        }
+      },
+      "required": [
+        "recipientRole",
+        "recipient",
+        "valueNative"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_SETUP_CREATE_PURE": {
+      "type": "object",
+      "properties": {
+        "pureIndex": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "proxyType": {
+          "const": "Any"
+        },
+        "delay": {
+          "const": "0"
+        }
+      },
+      "required": [
+        "pureIndex",
+        "proxyType",
+        "delay"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_SETUP_FUND_P": {
+      "type": "object",
+      "properties": {
+        "pure": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "valueNative": {
+          "$ref": "#/$defs/Decimal"
+        }
+      },
+      "required": [
+        "pure",
+        "valueNative"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_SETUP_MAP_P": {
+      "type": "object",
+      "properties": {
+        "pure": {
+          "$ref": "#/$defs/AccountId32"
+        }
+      },
+      "required": [
+        "pure"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_SETUP_MAP_ACTOR": {
+      "type": "object",
+      "properties": {
+        "actorRole": {
+          "type": "string",
+          "enum": [
+            "F",
+            "R1",
+            "R2"
+          ]
+        },
+        "account": {
+          "$ref": "#/$defs/AccountId32"
+        }
+      },
+      "required": [
+        "actorRole",
+        "account"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_GRANT_CREATE": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "$ref": "#/$defs/H160"
+        },
+        "granteeH160": {
+          "$ref": "#/$defs/H160"
+        },
+        "token": {
+          "const": "0x0000000000000000000000000000000000000000"
+        },
+        "reviewers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/H160"
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true
+        },
+        "threshold": {
+          "const": "2"
+        },
+        "milestones": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/MilestoneInput"
+                },
+                {
+                  "properties": {
+                    "vestingBlocks": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]*$"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/MilestoneInput"
+                },
+                {
+                  "properties": {
+                    "vestingBlocks": {
+                      "const": "0"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "contract",
+        "granteeH160",
+        "token",
+        "reviewers",
+        "threshold",
+        "milestones"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_GRANT_SUBMIT_M0": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "$ref": "#/$defs/H160"
+        },
+        "grantId": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "index": {
+          "const": "0"
+        },
+        "evidence": {
+          "type": "string",
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "contract",
+        "grantId",
+        "index",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_GRANT_SUBMIT_M1": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "$ref": "#/$defs/H160"
+        },
+        "grantId": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "index": {
+          "const": "1"
+        },
+        "evidence": {
+          "type": "string",
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "contract",
+        "grantId",
+        "index",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_GRANT_APPROVE": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "$ref": "#/$defs/H160"
+        },
+        "grantId": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "index": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1"
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "grantId",
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_GRANT_RECLAIM": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "$ref": "#/$defs/H160"
+        },
+        "grantId": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "index": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1"
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "grantId",
+        "index"
+      ],
+      "additionalProperties": false,
+      "$comment": "Historical/source grammar only. Not reachable through an enabled Intent operation branch in grc-v2-local-1; never author, sign or broadcast from this definition."
+    },
+    "Params_GRC_ROTATION_ADD_M1": {
+      "type": "object",
+      "properties": {
+        "pure": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "oldController": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "newController": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "proxyType": {
+          "const": "Any"
+        },
+        "delay": {
+          "const": "0"
+        }
+      },
+      "required": [
+        "pure",
+        "oldController",
+        "newController",
+        "proxyType",
+        "delay"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_ROTATION_REMOVE_M0": {
+      "type": "object",
+      "properties": {
+        "pure": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "oldController": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "newController": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "proxyType": {
+          "const": "Any"
+        },
+        "delay": {
+          "const": "0"
+        }
+      },
+      "required": [
+        "pure",
+        "oldController",
+        "newController",
+        "proxyType",
+        "delay"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_VESTING_VEST": {
+      "type": "object",
+      "properties": {
+        "pure": {
+          "$ref": "#/$defs/AccountId32"
+        }
+      },
+      "required": [
+        "pure"
+      ],
+      "additionalProperties": false,
+      "$comment": "Historical/source grammar only. Not reachable through an enabled Intent operation branch in grc-v2-local-1; never author, sign or broadcast from this definition."
+    },
+    "Params_GRC_VESTING_VEST_OTHER": {
+      "type": "object",
+      "properties": {
+        "targetPure": {
+          "$ref": "#/$defs/AccountId32"
+        }
+      },
+      "required": [
+        "targetPure"
+      ],
+      "additionalProperties": false
+    },
+    "Params_GRC_MULTISIG_CANCEL": {
+      "type": "object",
+      "properties": {
+        "targetController": {
+          "$ref": "#/$defs/Controller"
+        },
+        "targetCallHash": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "targetTimepoint": {
+          "$ref": "#/$defs/Timepoint"
+        },
+        "originalDepositor": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "targetEnvelopeDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "originalTargetCallBytes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HexBytes"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "targetController",
+        "targetCallHash",
+        "targetTimepoint",
+        "originalDepositor",
+        "targetEnvelopeDigest",
+        "originalTargetCallBytes"
+      ],
+      "additionalProperties": false,
+      "description": "Target preimage is inert provenance only. FrozenEnvelope.innerRuntimeCallBytes is the actual direct cancel_as_multi call, not this target preimage. Reobserve exact target instance/depositor/clock before reconstruction."
+    },
+    "Tree_Transfer": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Balances"
+        },
+        "method": {
+          "const": "transfer_keep_alive"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "dest": {
+              "$ref": "#/$defs/AccountId32"
+            },
+            "valueNative": {
+              "$ref": "#/$defs/Decimal"
+            }
+          },
+          "required": [
+            "dest",
+            "valueNative"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_CreatePure": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Proxy"
+        },
+        "method": {
+          "const": "create_pure"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "proxyType": {
+              "const": "Any"
+            },
+            "delay": {
+              "const": "0"
+            },
+            "index": {
+              "$ref": "#/$defs/Decimal"
+            }
+          },
+          "required": [
+            "proxyType",
+            "delay",
+            "index"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_MapAccount": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Revive"
+        },
+        "method": {
+          "const": "map_account"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_AddProxy": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Proxy"
+        },
+        "method": {
+          "const": "add_proxy"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "delegate": {
+              "$ref": "#/$defs/AccountId32"
+            },
+            "proxyType": {
+              "const": "Any"
+            },
+            "delay": {
+              "const": "0"
+            }
+          },
+          "required": [
+            "delegate",
+            "proxyType",
+            "delay"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_RemoveProxy": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Proxy"
+        },
+        "method": {
+          "const": "remove_proxy"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "delegate": {
+              "$ref": "#/$defs/AccountId32"
+            },
+            "proxyType": {
+              "const": "Any"
+            },
+            "delay": {
+              "const": "0"
+            }
+          },
+          "required": [
+            "delegate",
+            "proxyType",
+            "delay"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_Vest": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Vesting"
+        },
+        "method": {
+          "const": "vest"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_VestOther": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Vesting"
+        },
+        "method": {
+          "const": "vest_other"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "$ref": "#/$defs/AccountId32"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_Cancel": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Multisig"
+        },
+        "method": {
+          "const": "cancel_as_multi"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "threshold": {
+              "const": "2"
+            },
+            "otherSignatories": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AccountId32"
+              },
+              "minItems": 2,
+              "maxItems": 2,
+              "uniqueItems": true
+            },
+            "timepoint": {
+              "$ref": "#/$defs/Timepoint"
+            },
+            "callHash": {
+              "$ref": "#/$defs/Hash32"
+            }
+          },
+          "required": [
+            "threshold",
+            "otherSignatories",
+            "timepoint",
+            "callHash"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_AbiCreate": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "abi_call"
+        },
+        "palletOrContract": {
+          "const": "VESTRY"
+        },
+        "method": {
+          "const": "createGrant(address,address,address[],uint8,(uint128,uint64,uint32,address,bytes4,uint64)[])"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "grantee": {
+              "$ref": "#/$defs/H160"
+            },
+            "token": {
+              "const": "0x0000000000000000000000000000000000000000"
+            },
+            "reviewers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/H160"
+              },
+              "minItems": 2,
+              "maxItems": 2,
+              "uniqueItems": true
+            },
+            "threshold": {
+              "const": "2"
+            },
+            "inputs": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/MilestoneInput"
+                    },
+                    {
+                      "properties": {
+                        "vestingBlocks": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]*$"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/MilestoneInput"
+                    },
+                    {
+                      "properties": {
+                        "vestingBlocks": {
+                          "const": "0"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ],
+              "items": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "required": [
+            "grantee",
+            "token",
+            "reviewers",
+            "threshold",
+            "inputs"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_AbiSubmit": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "abi_call"
+        },
+        "palletOrContract": {
+          "const": "VESTRY"
+        },
+        "method": {
+          "const": "submitMilestone(uint256,uint256,string)"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "grantId": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "index": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            },
+            "evidence": {
+              "type": "string",
+              "maxLength": 1024
+            }
+          },
+          "required": [
+            "grantId",
+            "index",
+            "evidence"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_AbiApprove": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "abi_call"
+        },
+        "palletOrContract": {
+          "const": "VESTRY"
+        },
+        "method": {
+          "const": "approveMilestone(uint256,uint256)"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "grantId": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "index": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          },
+          "required": [
+            "grantId",
+            "index"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_AbiReclaim": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "abi_call"
+        },
+        "palletOrContract": {
+          "const": "VESTRY"
+        },
+        "method": {
+          "const": "reclaim(uint256,uint256)"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "grantId": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "index": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          },
+          "required": [
+            "grantId",
+            "index"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CallTree"
+          },
+          "maxItems": 0
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_ReviveCreate": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Revive"
+        },
+        "method": {
+          "const": "call"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "dest": {
+              "$ref": "#/$defs/H160"
+            },
+            "valueNative": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "weightLimit": {
+              "$ref": "#/$defs/Weight"
+            },
+            "storageDepositLimitNative": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "data": {
+              "$ref": "#/$defs/HexBytes"
+            }
+          },
+          "required": [
+            "dest",
+            "valueNative",
+            "weightLimit",
+            "storageDepositLimitNative",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tree_AbiCreate"
+          },
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_ReviveSubmit": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Revive"
+        },
+        "method": {
+          "const": "call"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "dest": {
+              "$ref": "#/$defs/H160"
+            },
+            "valueNative": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "weightLimit": {
+              "$ref": "#/$defs/Weight"
+            },
+            "storageDepositLimitNative": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "data": {
+              "$ref": "#/$defs/HexBytes"
+            }
+          },
+          "required": [
+            "dest",
+            "valueNative",
+            "weightLimit",
+            "storageDepositLimitNative",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tree_AbiSubmit"
+          },
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_ReviveApprove": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Revive"
+        },
+        "method": {
+          "const": "call"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "dest": {
+              "$ref": "#/$defs/H160"
+            },
+            "valueNative": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "weightLimit": {
+              "$ref": "#/$defs/Weight"
+            },
+            "storageDepositLimitNative": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "data": {
+              "$ref": "#/$defs/HexBytes"
+            }
+          },
+          "required": [
+            "dest",
+            "valueNative",
+            "weightLimit",
+            "storageDepositLimitNative",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tree_AbiApprove"
+          },
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_ReviveReclaim": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Revive"
+        },
+        "method": {
+          "const": "call"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "dest": {
+              "$ref": "#/$defs/H160"
+            },
+            "valueNative": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "weightLimit": {
+              "$ref": "#/$defs/Weight"
+            },
+            "storageDepositLimitNative": {
+              "$ref": "#/$defs/Decimal"
+            },
+            "data": {
+              "$ref": "#/$defs/HexBytes"
+            }
+          },
+          "required": [
+            "dest",
+            "valueNative",
+            "weightLimit",
+            "storageDepositLimitNative",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tree_AbiReclaim"
+          },
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false,
+      "$comment": "Historical/source grammar only. Not reachable through an enabled Intent operation branch in grc-v2-local-1; never author, sign or broadcast from this definition."
+    },
+    "Tree_ProxyMap": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Proxy"
+        },
+        "method": {
+          "const": "proxy"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "real": {
+              "$ref": "#/$defs/AccountId32"
+            },
+            "forceProxyType": {
+              "type": "object",
+              "properties": {
+                "variant": {
+                  "const": "Some"
+                },
+                "value": {
+                  "const": "Any"
+                }
+              },
+              "required": [
+                "variant",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "real",
+            "forceProxyType"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tree_MapAccount"
+          },
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_ProxyAdd": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Proxy"
+        },
+        "method": {
+          "const": "proxy"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "real": {
+              "$ref": "#/$defs/AccountId32"
+            },
+            "forceProxyType": {
+              "type": "object",
+              "properties": {
+                "variant": {
+                  "const": "Some"
+                },
+                "value": {
+                  "const": "Any"
+                }
+              },
+              "required": [
+                "variant",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "real",
+            "forceProxyType"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tree_AddProxy"
+          },
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_ProxyRemove": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Proxy"
+        },
+        "method": {
+          "const": "proxy"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "real": {
+              "$ref": "#/$defs/AccountId32"
+            },
+            "forceProxyType": {
+              "type": "object",
+              "properties": {
+                "variant": {
+                  "const": "Some"
+                },
+                "value": {
+                  "const": "Any"
+                }
+              },
+              "required": [
+                "variant",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "real",
+            "forceProxyType"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tree_RemoveProxy"
+          },
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_ProxySubmit": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Proxy"
+        },
+        "method": {
+          "const": "proxy"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "real": {
+              "$ref": "#/$defs/AccountId32"
+            },
+            "forceProxyType": {
+              "type": "object",
+              "properties": {
+                "variant": {
+                  "const": "Some"
+                },
+                "value": {
+                  "const": "Any"
+                }
+              },
+              "required": [
+                "variant",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "real",
+            "forceProxyType"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tree_ReviveSubmit"
+          },
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "Tree_ProxyVest": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native_call"
+        },
+        "palletOrContract": {
+          "const": "Proxy"
+        },
+        "method": {
+          "const": "proxy"
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "real": {
+              "$ref": "#/$defs/AccountId32"
+            },
+            "forceProxyType": {
+              "type": "object",
+              "properties": {
+                "variant": {
+                  "const": "Some"
+                },
+                "value": {
+                  "const": "Any"
+                }
+              },
+              "required": [
+                "variant",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "real",
+            "forceProxyType"
+          ],
+          "additionalProperties": false
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tree_Vest"
+          },
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "sourceEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "kind",
+        "palletOrContract",
+        "method",
+        "parameters",
+        "children",
+        "sourceEvidence"
+      ],
+      "additionalProperties": false,
+      "$comment": "Historical/source grammar only. Not reachable through an enabled Intent operation branch in grc-v2-local-1; never author, sign or broadcast from this definition."
+    },
+    "ReviewedSigningContext": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "walletBuildId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "signer": {
+          "$ref": "#/$defs/AccountId32"
+        },
+        "genesis": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "specVersion": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "transactionVersion": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "runtimeCodeHash": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "metadataSha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "signedExtensions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "nonce": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "era": {
+          "$ref": "#/$defs/HexBytes"
+        },
+        "mortalityBlockHash": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "outerCallBytes": {
+          "$ref": "#/$defs/HexBytes"
+        },
+        "outerCallHash": {
+          "$ref": "#/$defs/Hash32"
+        },
+        "extrinsicVersion": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "encodedExtraPayloadBytes": {
+          "$ref": "#/$defs/HexBytes"
+        },
+        "tipNative": {
+          "$ref": "#/$defs/Decimal"
+        },
+        "feeAssetId": {
+          "const": null
+        },
+        "metadataHashExtensionValue": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hash32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "originalSignPayloadJcsUtf8": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 262144,
+          "description": "RFC8785 JCS text of the exact JSON value supplied to signPayload, preserving JSON numeric value types inside this string. Strict duplicate-key/Unicode/prototype validation applies to the embedded JSON too. Parse and JCS reserialize must reproduce this string exactly; hash its UTF-8 bytes. Do not convert wallet JSON numbers to decimal strings or regenerate from extracted fields."
+        },
+        "additionalSignedPayloadBytes": {
+          "$ref": "#/$defs/HexBytes"
+        },
+        "signPayloadSha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "additionalSignedContextSha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "withSignedTransactionRequested": {
+          "const": false
+        },
+        "walletReturnedSignedTransactionAccepted": {
+          "const": false
+        },
+        "operationPhase": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "multisig_first",
+            "multisig_final",
+            "cancel"
+          ]
+        },
+        "nativeProposalDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "requestId",
+        "walletBuildId",
+        "signer",
+        "genesis",
+        "specVersion",
+        "transactionVersion",
+        "runtimeCodeHash",
+        "metadataSha256",
+        "signedExtensions",
+        "nonce",
+        "era",
+        "mortalityBlockHash",
+        "outerCallBytes",
+        "outerCallHash",
+        "extrinsicVersion",
+        "encodedExtraPayloadBytes",
+        "tipNative",
+        "feeAssetId",
+        "metadataHashExtensionValue",
+        "originalSignPayloadJcsUtf8",
+        "additionalSignedPayloadBytes",
+        "signPayloadSha256",
+        "additionalSignedContextSha256",
+        "withSignedTransactionRequested",
+        "walletReturnedSignedTransactionAccepted",
+        "operationPhase",
+        "nativeProposalDigest"
+      ],
+      "additionalProperties": false,
+      "description": "originalSignPayloadJcsUtf8 is the exact RFC8785 serialization of the reviewed wallet-request JSON object, preserving its native numeric values inside the string; signPayloadSha256 hashes its UTF-8 bytes. Extracted schema numeric fields remain decimal strings. Do not stringify wallet numeric fields before computing the request digest."
+    },
+    "CausalBusinessContext": {
+      "type": "object",
+      "properties": {
+        "assessment": {
+          "type": "string",
+          "enum": [
+            "not_applicable",
+            "matched",
+            "mismatched",
+            "unresolved"
+          ]
+        },
+        "grantId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "milestoneIndex": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "roundAtIntendedEvent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "intendedEvidenceSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nativeEventIndex": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "abiLogOrdinal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "orderedHistoryComplete": {
+          "type": "boolean"
+        },
+        "eventOrderEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        }
+      },
+      "required": [
+        "assessment",
+        "grantId",
+        "milestoneIndex",
+        "roundAtIntendedEvent",
+        "intendedEvidenceSha256",
+        "nativeEventIndex",
+        "abiLogOrdinal",
+        "orderedHistoryComplete",
+        "eventOrderEvidence"
+      ],
+      "additionalProperties": false
+    },
+    "LocalOperationProgress": {
+      "type": "object",
+      "properties": {
+        "journalVersion": {
+          "const": "1"
+        },
+        "kind": {
+          "const": "LocalOperationProgress"
+        },
+        "journalId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "intentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "envelopeDigest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "requestId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "Prepared",
+            "WalletRequested",
+            "WalletRejected",
+            "GuardRefused",
+            "WalletOutcomeUnknown",
+            "SignedAttemptRecorded"
+          ]
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "profileDigest": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "outerCallSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestedSigner": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AccountId32"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reviewedRequestDigest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestedAtUnixSeconds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "acceptedSignedAttemptId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          }
+        },
+        "portable": {
+          "const": false
+        },
+        "localContractRevision": {
+          "const": "grc-v2-local-1"
+        },
+        "reviewedSigningContext": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReviewedSigningContext"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Full exact wallet request and additional-signed context committed atomically before invoking the wallet. Null only before request preparation in Prepared. Hashes alone are insufficient."
+        }
+      },
+      "required": [
+        "journalVersion",
+        "kind",
+        "journalId",
+        "intentId",
+        "envelopeDigest",
+        "requestId",
+        "phase",
+        "profileId",
+        "profileDigest",
+        "outerCallSha256",
+        "requestedSigner",
+        "reviewedRequestDigest",
+        "requestedAtUnixSeconds",
+        "acceptedSignedAttemptId",
+        "observations",
+        "portable",
+        "localContractRevision",
+        "reviewedSigningContext"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "const": "SignedAttemptRecorded"
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "acceptedSignedAttemptId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "type": "string",
+                "enum": [
+                  "WalletRequested",
+                  "WalletRejected",
+                  "GuardRefused",
+                  "WalletOutcomeUnknown",
+                  "SignedAttemptRecorded"
+                ]
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "requestId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "requestedSigner": {
+                "$ref": "#/$defs/AccountId32"
+              },
+              "reviewedRequestDigest": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "requestedAtUnixSeconds": {
+                "$ref": "#/$defs/Decimal"
+              },
+              "outerCallSha256": {
+                "$ref": "#/$defs/Sha256"
+              },
+              "reviewedSigningContext": {
+                "$ref": "#/$defs/ReviewedSigningContext"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "phase": {
+                "not": {
+                  "const": "SignedAttemptRecorded"
+                }
+              }
+            },
+            "required": [
+              "phase"
+            ]
+          },
+          "then": {
+            "properties": {
+              "acceptedSignedAttemptId": {
+                "const": null
+              }
+            }
+          }
+        }
+      ],
+      "description": "Local-only append-only progress, including a hashless pre-signature attempt. A durably committed WalletRequested record contains the complete reviewedSigningContext before any wallet invocation; request and context never mutate. WalletRequested after a crash means invocation/outcome may be unknown, not proof that a prompt appeared. No SignedAttempt or signed hash exists until exact signed bytes have returned and passed guards."
+    },
+    "PositiveDecimal": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$",
+      "maxLength": 20
+    }
+  },
+  "$comment": "JSON Schema structural limits are numeric by specification. Instance financial values, counts, indices and version counters are canonical decimal strings. API and signing types remain blocked until exact target binding. Local unpublished contract revision grc-v2-local-1 is mandatory on instances; structural schemaVersion remains 2. No deployed compatibility or runtime validation is asserted.",
+  "localContractRevision": "grc-v2-local-1"
+}

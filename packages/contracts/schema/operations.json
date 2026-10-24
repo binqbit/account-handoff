@@ -1,0 +1,2127 @@
+{
+  "format_version": "2.0.0",
+  "document_type": "grc_symbolic_operation_catalogue",
+  "purpose": "implementation_reference_not_signable_instructions",
+  "research_date": "2026-10-23",
+  "project": "Grant Recipient Continuity",
+  "project_name_status": "provisional_descriptive_name",
+  "target_qualified": false,
+  "implementation_status": "not_implemented",
+  "execution_status": "no_tests_rpc_wallets_signatures_or_transactions_executed",
+  "authorization": "Source research and documentation only. Application construction and live work require future authorization.",
+  "digest": null,
+  "canonical_artifact_format": {
+    "serialization": "RFC8785_JCS",
+    "encoding": "UTF-8",
+    "hash": "SHA-256",
+    "excluded_field": "exact_top_level_digest_only",
+    "nested_digests_excluded": false,
+    "property_sort": "RFC8785_UTF16_code_units",
+    "unicode_normalization": "none_preserve_strings_as_is",
+    "reject": [
+      "duplicate_property_names",
+      "lone_surrogates",
+      "nonfinite_numbers",
+      "unsupported_fields",
+      "out_of_schema_values"
+    ],
+    "chain_integer_format": "canonical_nonnegative_decimal_string_without_leading_zero_except_zero",
+    "numeric_json_values_policy": "none_in_this_catalogue",
+    "array_order": "preserve_semantically_defined_order",
+    "digest_limit": "Local document binding; not a native multisig signature, compare-and-swap condition, or authorization."
+  },
+  "adapter": {
+    "package": "dedot",
+    "candidate_version": "1.4.0",
+    "source_commit": "ea82d26d46eec338a3614e611982085a2fb2974c",
+    "provider": "WsProvider",
+    "proposed_rpc_version": "legacy",
+    "implicit_transport_fallback": false,
+    "legacy_polkadot_api_package_fallback": false,
+    "abi_package": "viem",
+    "abi_candidate_version": "2.40.3",
+    "abi_purpose": "ABI_encoding_decoding_only",
+    "wallet_candidate": "SubWallet_extension_1.3.90",
+    "wallet_signing_method": "native_signPayload",
+    "with_signed_transaction_requested": false,
+    "wallet_returned_signed_transaction": "reject_initial_profile",
+    "target_endpoint": "wss://test-node-v3.portaldot.dev",
+    "target_genesis": null,
+    "target_metadata_hash": null,
+    "target_runtime_code_hash": null,
+    "contract_address": null,
+    "contract_abi_hash": null,
+    "contract_code_hash": null,
+    "target_revive_api_binding": null,
+    "runtime_api_gate": "Published candidate V14/API2 observations do not supply input/output codecs. Provide exact target ReviveApi version binding through ApiOptions.runtimeApis, with real codecs or metadata-bound type IDs; Dedot built-ins contain no ReviveApi.",
+    "source_refs": [
+      "S-DEDOT",
+      "S-DEDOT-RUNTIME",
+      "S-DEDOT-BUILTINS",
+      "S-DEDOT-SIGN",
+      "S-DEDOT-BYTES",
+      "S-POLKADOT-MAINTENANCE"
+    ],
+    "target_endpoint_status": "documented_candidate_not_contacted",
+    "front_end": "client_only_TypeScript_React_Vite_modular_monolith",
+    "state_journal": "IndexedDB_append_only_immutable_records_plus_local_progress"
+  },
+  "qualification_dependencies": {
+    "manifest": "qualification.json",
+    "gate_ids": [
+      "Q-RUNTIME",
+      "Q-CURRENCY",
+      "Q-MAPPING",
+      "Q-REVIVE-API",
+      "Q-VESTING",
+      "Q-CONTRACT",
+      "Q-ADAPTER",
+      "Q-WALLET",
+      "Q-RECEIPTS",
+      "Q-INVENTORY",
+      "Q-FUNDING",
+      "Q-READINESS",
+      "Q-CONTINUITY",
+      "Q-USABILITY",
+      "Q-GRANT-SCOPE"
+    ],
+    "reference_semantics": "An operation's required_gate_refs identify mandatory qualification domains, not a declaration that those gates have passed. Resolve source, codec, capability and current-input requirements before signing; evaluate the operation's effects after finality. A setup operation must not require its own output in advance.",
+    "postcondition_semantics": "produces_evidence_for_gate_refs identifies evidence contributed by an operation; one observation does not automatically pass an entire aggregate gate or qualify the target.",
+    "precondition_precedence": "The explicit operation preconditions and inherited policies remain mandatory. Gate references do not replace them or permit an unknown input to be assumed.",
+    "read_collection": "Qualification and recovery evidence may be collected while gates remain blocked, but authoritative interpretation requires the relevant accepted decoder and identity context. Incomplete evidence cannot enable signing or mark success.",
+    "multisig_inheritance": "GRC-MULTISIG-FIRST and GRC-MULTISIG-FINAL inherit all required gates and fresh preconditions of their containing operation; generic multisig qualification cannot authorize an unqualified inner call.",
+    "funding_scope": "Funding operations require the donor's spendable balance, fee and liveness inputs before signing; the recipient's funded budget is their output. A mapping operation requires verified mapping semantics and sufficient backing before signing; its actual reverse-mapping equality is a finalized output.",
+    "continuity_scope": "Q-CONTINUITY is an outcome gate established after attributed M1 application continuation, not a prerequisite that can already be declared passed before that action.",
+    "release_readiness_gate_refs": [
+      "Q-USABILITY"
+    ],
+    "disabled_operation_rule": "Gate evidence never enables an operation whose selected_status is disabled or whose enabled field is false.",
+    "grant_scope": "Q-GRANT-SCOPE: controlled round-zero authoring only. Scope breach permits exact original-depositor cancellation and, only after independent historical continuity proof, optional direct vest_other. External reclaim/proxied vest remain observable but non-authorable."
+  },
+  "actors": {
+    "A": {
+      "role": "retained_native_signer",
+      "address": null
+    },
+    "B": {
+      "role": "retained_native_signer",
+      "address": null
+    },
+    "C": {
+      "role": "departing_or_unavailable_native_signer",
+      "address": null
+    },
+    "D": {
+      "role": "replacement_native_signer",
+      "address": null
+    },
+    "M0": {
+      "role": "old_native_multisig",
+      "members": [
+        "A",
+        "B",
+        "C"
+      ],
+      "threshold": "2",
+      "address": null,
+      "ordinary_private_key": false
+    },
+    "M1": {
+      "role": "new_native_multisig",
+      "members": [
+        "A",
+        "B",
+        "D"
+      ],
+      "threshold": "2",
+      "address": null,
+      "ordinary_private_key": false
+    },
+    "P": {
+      "role": "dedicated_native_Pure_beneficiary",
+      "address": null,
+      "ordinary_known_private_key": false
+    },
+    "F": {
+      "role": "native_grant_funder",
+      "address": null
+    },
+    "R1": {
+      "role": "native_grant_reviewer",
+      "address": null
+    },
+    "R2": {
+      "role": "native_grant_reviewer",
+      "address": null
+    },
+    "S": {
+      "role": "explicitly_selected_native_sponsor",
+      "address": null
+    },
+    "VESTRY": {
+      "role": "qualified_contract_deployment",
+      "address": null
+    }
+  },
+  "global_policies": {
+    "applicability": "Every operation inherits these policies unless it explicitly has a stricter rule.",
+    "evidence_utf8_byte_limit": "1024",
+    "request_changes_reason_utf8_byte_limit": "512",
+    "text_limits_status": "proposed_application_authoring_or_display_policy_not_contract_limits_external_oversized_events_remain_valid",
+    "value_units": {
+      "native_balance": "native_base_units",
+      "abi_milestone_amount": "EVM_wei_like_units_uint128",
+      "abi_deadline": "Unix_seconds_uint64",
+      "abi_vesting_blocks": "qualified_block_count_uint32",
+      "weight": "separate_ref_time_and_proof_size",
+      "ratio_candidate": "10000",
+      "ratio_status": "hardcoded_in_pinned_Vestry_and_must_match_target_runtime",
+      "rounding": "bigint_exact_arithmetic_and_explicit_integer_division",
+      "fees": "local_estimate_and_preflight_budget_not_universal_onchain_fee_cap",
+      "storage_limit": "native_chain_enforced_limit_under_qualified_Revive_semantics"
+    },
+    "identity": [
+      "Normalize AccountId32 to raw bytes before sorting or comparing.",
+      "SS58 is display formatting, not an independent identity.",
+      "A B C D must be four distinct canonical native accounts.",
+      "Derive M0/M1 using exact native multisig encoding; reject equality.",
+      "Learn P from finalized PureCreated plus storage, never future inclusion prediction.",
+      "Compute h(P) with qualified mapper and independently verify reverse mapping.",
+      "Never request a direct wallet signature from P, M0, or M1."
+    ],
+    "native_encoding": {
+      "field_names_in_this_file": "symbolic_pinned_source_names_not_generated_Dedot_binding_guarantees",
+      "field_order": "Native argument order and types must be taken from accepted target metadata; no hardcoded pallet or call indexes.",
+      "dispatch_selector": "Native pallet and call variant indexes come from accepted target metadata and are SCALE encoded; Solidity four-byte function selectors do not select native calls.",
+      "nested_call": "RuntimeCall_object_via_Dedot_call_property",
+      "encoded_inner_bytes": "Dedot_callU8a_or_callHex",
+      "multisig_call_hash": "blake2_256_exact_inner_RuntimeCall_bytes",
+      "dedot_hash_property": "full_extrinsic_hash_not_inner_multisig_call_hash",
+      "signable_hex_in_catalogue": null,
+      "calldata_in_catalogue": null,
+      "frozen_after_first_approval": true,
+      "automatic_contract_before_sign_hook": false
+    },
+    "abi_encoding": {
+      "canonical_signatures": "Source-qualified Vestry ABI signatures describe the pinned contract source; Q-CONTRACT must bind the actual deployment, ABI and code before use.",
+      "function_selector_rule": "First four bytes of Keccak-256 of the UTF-8 canonical ABI function signature, derived only after accepting the exact ABI.",
+      "source_selector_limit": "A source-only selector is not evidence of deployed contract identity, target support or native Revive field order. No encoded selector or calldata is supplied by this catalogue.",
+      "argument_order": "Use exact accepted ABI tuple and argument order for contract calldata; use target native metadata separately for the enclosing Revive, Proxy and Multisig RuntimeCalls.",
+      "metric_selector_argument": "MilestoneInput.metricSelector is a bytes4 argument used by optional metric evaluation, not the selector of createGrant or submitMilestone; the selected metric-disabled profile uses symbolic ZERO_BYTES4."
+    },
+    "preflight": [
+      "Accepted exact chain/runtime/metadata/currency/mapper/contract/wallet profile for operation.",
+      "One stable finalized read anchor; no mixing latest Ethereum reads with finalized native storage.",
+      "Complete operation-relevant state and authority observations; unknown is not absent.",
+      "Sufficient qualified spendable liquidity for each payer; locked face balance is not operational liquidity.",
+      "Origin-correct Revive estimate with exact versioned runtime API, if relevant.",
+      "Full nested call dispatch weight bound, not only Revive execution estimate.",
+      "Disposable clone for fee estimation; preview never invokes sign or legacy dryRun(account).",
+      "Fresh role/state/deadline/profile checks before final signer request and before broadcast.",
+      "Compare raw metadata and code identity independently of specVersion and SDK cache. All new grant submissions/reviewer approvals require Q-GRANT-SCOPE EligibleSingleRound."
+    ],
+    "signing": [
+      "Before any wallet invocation, atomically commit LocalOperationProgress.reviewedSigningContext, exact originalSignPayloadJcsUtf8, request identity and additional-signed bytes. Commit failure means zero wallet calls (SG-30).",
+      "Human chooses actual native account and approves one explicit request.",
+      "Retain reviewed signPayload and additional-signed context; genesis/specVersion cannot all be inferred from extrinsic bytes alone.",
+      "Signature-only facade requests withSignedTransaction=false and rejects an alternate signedTransaction.",
+      "Decode returned native bytes to compare call, signer and encoded extras; separately verify captured additional-signed context.",
+      "Persist exact signed bytes and hash before a separate broadcast step.",
+      "No service secrets, automatic signing, one-shot hidden call mutation, or background resigning."
+    ],
+    "receipt": [
+      "Native extrinsic is canonical; Ethereum transaction hash/receipt is neither assumed nor required.",
+      "Correlate exact extrinsic hash/bytes with finalized block and tx index.",
+      "Restrict native events to ApplyExtrinsic(txIndex) and expected closed call tree.",
+      "Check System, Multisig, Proxy and contract/Revive boundaries where present; outer success alone is insufficient.",
+      "ProxyExecuted has no standalone P/M identity; bind it through the decoded call tree and event sequence.",
+      "Use qualified native Revive contract-event decoding plus ABI events; qualify target event shape instead of inventing Ethereum logs.",
+      "Require operation-specific finalized state readback and a latest finalized drift check.",
+      "Execution events, resulting storage and state_call runtime need separate context identities.",
+      "Upgrade after broadcast cannot stop execution; unresolved same-block evidence stays unresolved until properly decoded, even if later stable reads work.",
+      "Preserve causal round-zero M1 submission before a later same-block release/change request; mismatched earlier round change invalidates intended business proof."
+    ],
+    "retry": [
+      "Timeout or disconnect means submission_unknown until exact attempt, nonce, native proposal and postconditions are reconciled.",
+      "Rebroadcast only identical signed bytes while valid and after reconciliation; never silently choose a new nonce.",
+      "A new signature, changed inner limit/calldata, new Pure, new grant, or broader authority needs a fresh reviewed intent.",
+      "Local review expiry does not erase native multisig approvals.",
+      "First approval finalizes before the second signer is asked.",
+      "Reorged inclusion is provisional; only canonical finalized observations authorize the next stage.",
+      "ScopeBreached cannot be dismissed or reset by import; permit only separately eligible incident recovery operations."
+    ],
+    "round_boundary": {
+      "profile": "vestry-single-round-demo-v1",
+      "milestone_count": "2",
+      "reviewer_count": "2",
+      "expected_round": "0",
+      "request_changes_authoring": false,
+      "resubmission_authoring": false,
+      "release_authoring": false,
+      "execution_time_round_predicate": false,
+      "external_actions_prevented": false,
+      "recurring_real_grants_supported": false,
+      "reclaim_authoring": false
+    },
+    "mapping_branch": {
+      "revive_origin_roles": [
+        "P",
+        "F",
+        "R1",
+        "R2"
+      ],
+      "supported": "normal_non_EE_suffixed_AccountId32",
+      "auto_map": false,
+      "explicit_persisted_mapping_required": true,
+      "unsupported_EE_is_not_unmapped": true
+    },
+    "request_changes_reason_limit_scope": "historical_display_preview_only_full_raw_event_preserved_no_authoring",
+    "signed_bytes": {
+      "local": "persist_guarded_exact_signed_bytes_before_explicit_send",
+      "portable": "omit_all_signed_bytes_all_statuses_redigest_and_remap_dependents",
+      "recovery_export_enabled": false,
+      "auto_rebroadcast": false,
+      "manual_identical_rebroadcast": "after_reconciliation_same_hash_valid_era_same_accepted_profile_and_explicit_action"
+    },
+    "semantic_identity": "SG-29 seals intentId + intentRevision to semanticIntentDigest independently of full immutable record digest. Observation refresh never changes semantic identity or silently retargets an attempt.",
+    "post_proof_refresh": "Only direct GRC-VESTING-VEST-OTHER is authorable, after independently verified historical continuity and the completed strict comparison interval; never a substitute for M1 grant use."
+  },
+  "execution_templates": {
+    "DIRECT_NATIVE": {
+      "outer_origin": "selected_human_native_account",
+      "signature_count": "1",
+      "call": "operation.native_call",
+      "fees_paid_by": "selected_human_native_account",
+      "native_multisig_proposal": "not_applicable"
+    },
+    "DIRECT_REVIVE": {
+      "outer_origin": "selected_mapped_human_native_account",
+      "signature_count": "1",
+      "call": {
+        "pallet": "Revive",
+        "method": "call",
+        "pinned_source_argument_order": [
+          "dest",
+          "value",
+          "weight_limit",
+          "storage_deposit_limit",
+          "data"
+        ]
+      },
+      "dest": "VESTRY",
+      "data": "ABI_encode(operation.abi_method,operation.abi_arguments)_after_qualification",
+      "estimate_origin": "same_human_native_account",
+      "solidity_sender": "h(same_human_native_account)",
+      "fees_paid_by": "same_human_native_account",
+      "value_and_storage_funded_by": "same_human_native_account"
+    },
+    "MULTISIG_DIRECT": {
+      "outer_calls": [
+        "GRC-MULTISIG-FIRST",
+        "GRC-MULTISIG-FINAL"
+      ],
+      "signature_count": "2",
+      "inner_origin": "operation.controller",
+      "inner_call": "operation.native_call",
+      "inner_value_or_reserve_payer": "operation.controller_unless_inner_semantics_state_otherwise"
+    },
+    "MULTISIG_PROXY": {
+      "outer_calls": [
+        "GRC-MULTISIG-FIRST",
+        "GRC-MULTISIG-FINAL"
+      ],
+      "signature_count": "2",
+      "inner_origin": "operation.controller",
+      "inner_call": {
+        "pallet": "Proxy",
+        "method": "proxy",
+        "pinned_source_argument_order": [
+          "real",
+          "force_proxy_type",
+          "call"
+        ],
+        "real": "P",
+        "force_proxy_type": {
+          "variant": "Some",
+          "value": "Any"
+        },
+        "call": "operation.native_call"
+      },
+      "effective_inner_origin": "P",
+      "proxy_delay": "0",
+      "authority": "Any_is_full_native_authority_not_a_budget_or_contract_restriction"
+    },
+    "MULTISIG_PROXY_REVIVE": {
+      "base_template": "MULTISIG_PROXY",
+      "operation_native_call": {
+        "pallet": "Revive",
+        "method": "call",
+        "pinned_source_argument_order": [
+          "dest",
+          "value",
+          "weight_limit",
+          "storage_deposit_limit",
+          "data"
+        ]
+      },
+      "dest": "VESTRY",
+      "data": "ABI_encode(operation.abi_method,operation.abi_arguments)_after_qualification",
+      "estimate_origin": "P",
+      "solidity_sender": "h(P)",
+      "value_and_storage_funded_by": "P",
+      "M0_M1_mapping_required": false
+    },
+    "READ_ONLY": {
+      "signature_count": "0",
+      "broadcast": false,
+      "wallet_prompt": false,
+      "future_live_reads_require_separate_authorization": true,
+      "historical_query_multi": false
+    }
+  },
+  "proposal_outcome_classes": {
+    "FIRST_APPROVAL": "Present with exact call hash, original depositor, first approval, native stored timepoint and reserved proposal deposit; no inner execution.",
+    "PRE_DISPATCH_FAILURE": "Wrong timepoint, invalid membership, duplicate approval or inadequate final max_weight can preserve the existing proposal; read storage and correlate events before deciding.",
+    "DISPATCHED_SUCCESS": "Threshold execution consumes proposal and releases original proposal deposit; business success still requires deeper results and postconditions.",
+    "DISPATCHED_INNER_FAILURE": "Threshold execution consumes proposal even when Proxy or wrapped call fails; repair cause then start fresh proposal/approvals/timepoint.",
+    "UNRESOLVED": "Do not infer consumption or preservation; reconcile finalized Multisigs storage and correlated native events."
+  },
+  "operations": [
+    {
+      "id": "GRC-READ-QUALIFY",
+      "required_gate_refs": [],
+      "produces_evidence_for_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-VESTING",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-INVENTORY",
+        "Q-FUNDING",
+        "Q-READINESS",
+        "Q-CONTINUITY",
+        "Q-USABILITY"
+      ],
+      "title": "Qualify exact target profile",
+      "kind": "qualification_read",
+      "selected_status": "required_before_writes",
+      "template": "READ_ONLY",
+      "inputs": [
+        "target_runtime_and_configuration_sources",
+        "metadata_bytes",
+        "contract_artifact",
+        "adapter_wallet_candidates",
+        "endpoint_capabilities"
+      ],
+      "preconditions": [
+        "No source revision is silently treated as deployed runtime identity."
+      ],
+      "outputs": [
+        "per_gate_evidence_status",
+        "accepted_or_blocked_ChainProfile",
+        "exact_runtime_API_bindings_or_blocker"
+      ],
+      "success_evidence": [
+        "Genesis/runtime/metadata/code/ABI identities agree.",
+        "V14 Revive API codecs are explicitly sourced to target numeric version.",
+        "Currency reserve/hold composition and mapper/vesting clocks are qualified."
+      ],
+      "retry": "Repeat only affected reads/reviews; no transaction or silent source substitution.",
+      "source_refs": [
+        "S-DEDOT-RUNTIME",
+        "S-DEDOT-BUILTINS",
+        "S-PROXY",
+        "S-REVIVE",
+        "S-MAPPER",
+        "S-VESTRY"
+      ],
+      "enabled": false,
+      "record_role": "read_port"
+    },
+    {
+      "id": "GRC-READ-SNAPSHOT",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-VESTING",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-RECEIPTS"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-INVENTORY",
+        "Q-FUNDING",
+        "Q-CONTINUITY"
+      ],
+      "title": "Capture same-block finalized continuity snapshot",
+      "kind": "state_read",
+      "selected_status": "required",
+      "template": "READ_ONLY",
+      "inputs": [
+        "P",
+        "M0",
+        "M1",
+        "grant_id",
+        "accepted_profile",
+        "stable_finalized_anchor"
+      ],
+      "reads": [
+        "System_accounts",
+        "Balances_free_reserved_frozen_holds",
+        "Proxy_Proxies_P",
+        "known_native_announcements",
+        "Multisig_known_proposals",
+        "Revive_OriginalAccount_hP",
+        "Vesting_P",
+        "Vestry_grant_and_milestones",
+        "native_timestamp_and_qualified_vesting_clock"
+      ],
+      "preconditions": [
+        "Correct execution/poststate/API decoder roles at anchor.",
+        "No incomplete read is defaulted to empty or zero."
+      ],
+      "success_evidence": [
+        "All required observations share one stable finalized block hash.",
+        "Authority inventory, identity, budgets, schedule tuple/multiplicity and grant policy are independently represented."
+      ],
+      "retry": "New anchor means new immutable snapshot; never mutate an approved envelope's anchor.",
+      "source_refs": [
+        "S-PROXY",
+        "S-MULTISIG",
+        "S-MAPPER",
+        "S-VESTING",
+        "S-VESTRY",
+        "S-DEDOT-HISTORICAL"
+      ],
+      "enabled": false,
+      "record_role": "read_port"
+    },
+    {
+      "id": "GRC-READ-GRANT",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-REVIVE-API",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-RECEIPTS"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-CONTRACT",
+        "Q-CONTINUITY"
+      ],
+      "title": "Read qualified grant and reviewer policy",
+      "kind": "contract_read",
+      "selected_status": "required",
+      "template": "READ_ONLY",
+      "abi_methods": [
+        "grants(uint256)",
+        "getMilestone(uint256,uint256)",
+        "isReviewer(uint256,address)",
+        "grantCount()"
+      ],
+      "preconditions": [
+        "Qualified contract bytecode and ABI.",
+        "Exact target runtime API binding for native-block-anchored contract reads."
+      ],
+      "success_evidence": [
+        "Grant grantee equals h(P), token equals ZERO_ADDRESS, reviewers h(R1)/h(R2) are expected, threshold is 2.",
+        "Actual grant id comes from creation receipt and getter, never stale grantCount prediction.",
+        "Milestone evidence and reason text come from events, not nonexistent getter fields."
+      ],
+      "retry": "Repeat read at a new labelled anchor; a zero/default grant tuple is not proof that an intended grant was created.",
+      "source_refs": [
+        "S-VESTRY",
+        "S-DEDOT-RUNTIME"
+      ],
+      "enabled": false,
+      "record_role": "read_port"
+    },
+    {
+      "id": "GRC-READ-RECONCILE",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-ADAPTER",
+        "Q-RECEIPTS"
+      ],
+      "inherited_gate_refs": "Relevant required_gate_refs of the originating operation and the state being reconciled.",
+      "produces_evidence_for_gate_refs": [
+        "Q-INVENTORY",
+        "Q-FUNDING",
+        "Q-CONTINUITY"
+      ],
+      "title": "Resolve unknown attempt or current-state drift",
+      "kind": "recovery_read",
+      "selected_status": "required",
+      "template": "READ_ONLY",
+      "inputs": [
+        "intent_id",
+        "signed_attempts_if_any",
+        "known_multisig_and_call_hash",
+        "recorded_timepoint_if_any",
+        "last_finalized_cursor"
+      ],
+      "reads": [
+        "exact_extrinsic_in_finalized_body",
+        "ApplyExtrinsic_events",
+        "signer_nonce",
+        "current_native_proposal",
+        "operation_postconditions",
+        "latest_finalized_authority_and_profile"
+      ],
+      "success_evidence": [
+        "Classify success, failure, unresolved, or historical_success_with_current_drift.",
+        "Classify native proposal consumed/preserved/cancelled independently from business outcome."
+      ],
+      "retry": "Rebroadcast same valid bytes only after reconciliation permits. Missing/pruned evidence blocks automatic replacement and never proves nonexecution.",
+      "source_refs": [
+        "S-MULTISIG",
+        "S-PROXY",
+        "S-DEDOT-RECEIPTS",
+        "S-DEDOT-HISTORICAL"
+      ],
+      "enabled": false,
+      "record_role": "read_port"
+    },
+    {
+      "id": "GRC-SETUP-FUND-M0",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-FUNDING"
+      ],
+      "title": "Fund old controller's Pure creation reserve",
+      "kind": "native_transfer",
+      "selected_status": "required_if_budget_missing",
+      "template": "DIRECT_NATIVE",
+      "signer_sequence": [
+        "S"
+      ],
+      "native_call": {
+        "pallet": "Balances",
+        "method_candidate": "transfer_keep_alive",
+        "dest": "M0",
+        "value_native": null,
+        "field_order_status": "qualify_exact_target_metadata_before_encoding"
+      },
+      "value_unit": "native_base_units",
+      "preconditions": [
+        "Explicit donor amount and destination reviewed.",
+        "M0 derived from canonical A/B/C and threshold 2.",
+        "Transfer covers qualified Pure reserve and account liveness without consuming donor's protected balance.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled."
+      ],
+      "success_evidence": [
+        "Finalized direct native dispatch success and matching Transfer where target emits it.",
+        "M0 account/budget readback satisfies planned create_pure liabilities."
+      ],
+      "proposal_outcome": "not_applicable",
+      "retry": "A transfer is not idempotent. Reconcile exact attempt and balances; no automatic second top-up.",
+      "source_refs": [
+        "S-PROXY",
+        "S-BALANCES"
+      ],
+      "source_qualification": "Funding need is source-supported; precise transfer method signature is a target-metadata qualification gate.",
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_SETUP_FUND_M0",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_Transfer"
+    },
+    {
+      "id": "GRC-SETUP-FUND-ACTOR",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-FUNDING"
+      ],
+      "title": "Fund a named human actor's operational budget",
+      "kind": "native_transfer",
+      "selected_status": "required_if_budget_missing",
+      "template": "DIRECT_NATIVE",
+      "signer_sequence": [
+        "S"
+      ],
+      "allowed_recipients": [
+        "A",
+        "B",
+        "D",
+        "F",
+        "R1",
+        "R2"
+      ],
+      "native_call": {
+        "pallet": "Balances",
+        "method_candidate": "transfer_keep_alive",
+        "dest": "explicit_selected_actor",
+        "value_native": null,
+        "field_order_status": "qualify_exact_target_metadata_before_encoding"
+      },
+      "preconditions": [
+        "One explicit recipient/amount per intent.",
+        "Separate human fee/proposal reserve budgets from F grant principal and direct actor mapping/storage costs.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled."
+      ],
+      "success_evidence": [
+        "Finalized transfer plus recipient operational budget readback."
+      ],
+      "proposal_outcome": "not_applicable",
+      "retry": "Reconcile exact attempt first; same intended funding amount can otherwise be paid twice.",
+      "source_refs": [
+        "S-MULTISIG",
+        "S-MAPPER",
+        "S-BALANCES"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_SETUP_FUND_ACTOR",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_Transfer"
+    },
+    {
+      "id": "GRC-SETUP-CREATE-PURE",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-CURRENCY",
+        "Q-INVENTORY"
+      ],
+      "title": "Create dedicated Pure beneficiary under M0",
+      "kind": "native_multisig_action",
+      "selected_status": "required_for_fresh_fixture",
+      "template": "MULTISIG_DIRECT",
+      "controller": "M0",
+      "signer_sequence": [
+        "A",
+        "B"
+      ],
+      "native_call": {
+        "pallet": "Proxy",
+        "method": "create_pure",
+        "pinned_source_argument_order": [
+          "proxy_type",
+          "delay",
+          "index"
+        ],
+        "proxy_type": "Any",
+        "delay": "0",
+        "index": null
+      },
+      "preconditions": [
+        "No accepted P exists for this intent.",
+        "M0 has reserve budget Proxy.DepositBase + Proxy.DepositFactor.",
+        "Pure index and metadata types are explicit reviewed inputs.",
+        "A has first-proposal reserve and both signers have outer fee budgets.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled."
+      ],
+      "success_evidence": [
+        "Final MultisigExecuted matches M0/call_hash/timepoint and inner create_pure succeeds.",
+        "PureCreated is correlated to same extrinsic; derive/store actual P and provenance.",
+        "Proxies[P] is exactly M0/Any/0 and creator reserve is on M0."
+      ],
+      "postcondition_limit": "create_pure itself neither funds P nor proves a funded System account exists.",
+      "proposal_outcome": "DISPATCHED_SUCCESS_or_DISPATCHED_INNER_FAILURE_after_execution_entry",
+      "retry": "Never create again on timeout. A fresh inclusion may create another P; reconcile before explicitly authoring a new intent.",
+      "source_refs": [
+        "S-PROXY",
+        "S-MULTISIG"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_SETUP_CREATE_PURE",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_CreatePure"
+    },
+    {
+      "id": "GRC-SETUP-FUND-P",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-INVENTORY",
+        "Q-FUNDING"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-FUNDING"
+      ],
+      "title": "Fund P with unlocked operating liquidity",
+      "kind": "native_transfer",
+      "selected_status": "required_if_budget_missing",
+      "template": "DIRECT_NATIVE",
+      "signer_sequence": [
+        "S"
+      ],
+      "native_call": {
+        "pallet": "Balances",
+        "method_candidate": "transfer_keep_alive",
+        "dest": "P",
+        "value_native": null,
+        "field_order_status": "qualify_exact_target_metadata_before_encoding"
+      },
+      "preconditions": [
+        "P is bound to finalized PureCreated provenance.",
+        "Amount separately covers liveness, mapping hold, future incremental proxy reserve and qualified contract storage costs.",
+        "No locked grant face balance is counted as freely spendable liquidity.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled."
+      ],
+      "success_evidence": [
+        "Finalized transfer to exact P.",
+        "System account existence/liveness and source-qualified operating budget readback."
+      ],
+      "proposal_outcome": "not_applicable",
+      "retry": "Transfer is not idempotent; reconcile exact signed attempt before another transfer.",
+      "source_refs": [
+        "S-PROXY",
+        "S-MAPPER",
+        "S-BALANCES"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_SETUP_FUND_P",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_Transfer"
+    },
+    {
+      "id": "GRC-SETUP-MAP-P",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-INVENTORY",
+        "Q-FUNDING"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-MAPPING",
+        "Q-CURRENCY",
+        "Q-FUNDING"
+      ],
+      "title": "Establish P's explicit Revive reverse mapping",
+      "kind": "native_multisig_action",
+      "selected_status": "required_if_mapping_not_already_verified",
+      "template": "MULTISIG_PROXY",
+      "controller": "M0",
+      "signer_sequence": [
+        "A",
+        "B"
+      ],
+      "native_call": {
+        "pallet": "Revive",
+        "method": "map_account",
+        "pinned_source_argument_order": []
+      },
+      "effective_origin": "P",
+      "value_native": "0",
+      "preconditions": [
+        "P funded and controlled exactly by M0/Any/0.",
+        "Selected explicit manual mapping with AutoMap=false configuration are qualified.",
+        "Actual finalized OriginalAccount[h(P)] is independently read.",
+        "P can fund qualified AddressMapping hold; standard source formula is 52*DepositPerByte+DepositPerItem.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled.",
+        "Normal non-EE branch and qualified AutoMap=false only. Native funding prerequisite remains permitted before persistent mapping exists."
+      ],
+      "success_evidence": [
+        "Deep ProxyExecuted result succeeds with matching M0 execution.",
+        "Finalized OriginalAccount[h(P)] equals P.",
+        "Mapping reason record and aggregate backing are reconciled; simulation success is not mapping proof."
+      ],
+      "errors": [
+        "AccountAlreadyMapped_requires_readback_not_blind_retry",
+        "insufficient_mapping_hold_budget",
+        "proxy_authorization_failure"
+      ],
+      "proposal_outcome": "DISPATCHED_SUCCESS_or_DISPATCHED_INNER_FAILURE; pre-dispatch failure can preserve proposal",
+      "retry": "Skip only when existing mapping/backing is authoritatively verified; manual mapping is not a universally idempotent call.",
+      "source_refs": [
+        "S-MAPPER",
+        "S-REVIVE",
+        "S-PROXY",
+        "S-MULTISIG"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_SETUP_MAP_P",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_ProxyMap"
+    },
+    {
+      "id": "GRC-SETUP-MAP-ACTOR",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-MAPPING",
+        "Q-CURRENCY",
+        "Q-FUNDING"
+      ],
+      "title": "Map a direct native grant actor",
+      "kind": "native_direct_action",
+      "selected_status": "required_if_direct_actor_mapping_not_verified",
+      "template": "DIRECT_NATIVE",
+      "allowed_actors": [
+        "F",
+        "R1",
+        "R2"
+      ],
+      "signer_sequence": [
+        "selected_actor_signs_for_self"
+      ],
+      "native_call": {
+        "pallet": "Revive",
+        "method": "map_account",
+        "pinned_source_argument_order": []
+      },
+      "value_native": "0",
+      "preconditions": [
+        "Selected account is the actual direct Revive caller.",
+        "Exact mapper behavior and actor-funded hold budget are qualified.",
+        "Existing reverse mapping has been reconciled.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled.",
+        "Normal non-EE branch and qualified AutoMap=false only. Native funding prerequisite remains permitted before persistent mapping exists."
+      ],
+      "success_evidence": [
+        "Finalized direct dispatch success.",
+        "OriginalAccount[h(actor)] equals actor and mapping hold/backing is accounted."
+      ],
+      "proposal_outcome": "not_applicable",
+      "retry": "Already mapped result requires readback; no automatic remap/unmap. M0/M1 do not need mapping merely to dispatch Proxy calls.",
+      "source_refs": [
+        "S-MAPPER",
+        "S-REVIVE"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_SETUP_MAP_ACTOR",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_MapAccount"
+    },
+    {
+      "id": "GRC-GRANT-CREATE",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-VESTING",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-INVENTORY",
+        "Q-FUNDING",
+        "Q-GRANT-SCOPE"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-CONTRACT",
+        "Q-FUNDING",
+        "Q-CONTINUITY"
+      ],
+      "title": "Create and fund the two-milestone native grant",
+      "kind": "direct_native_contract_action",
+      "selected_status": "required",
+      "template": "DIRECT_REVIVE",
+      "signer_sequence": [
+        "F"
+      ],
+      "abi_method": "createGrant(address,address,address[],uint8,(uint128,uint64,uint32,address,bytes4,uint64)[])",
+      "abi_argument_order": [
+        "grantee",
+        "token",
+        "reviewers",
+        "threshold",
+        "inputs"
+      ],
+      "abi_arguments": {
+        "grantee": "h(P)",
+        "token": "ZERO_ADDRESS",
+        "reviewers": [
+          "h(R1)",
+          "h(R2)"
+        ],
+        "threshold": "2",
+        "inputs": [
+          {
+            "milestone_index": "0",
+            "tuple_order": [
+              "amount",
+              "deadline",
+              "vestingBlocks",
+              "metricTarget",
+              "metricSelector",
+              "metricMin"
+            ],
+            "amount_evm": null,
+            "deadline_unix_seconds": null,
+            "vestingBlocks": null,
+            "metricTarget": "ZERO_ADDRESS",
+            "metricSelector": "ZERO_BYTES4",
+            "metricMin": "0"
+          },
+          {
+            "milestone_index": "1",
+            "tuple_order": [
+              "amount",
+              "deadline",
+              "vestingBlocks",
+              "metricTarget",
+              "metricSelector",
+              "metricMin"
+            ],
+            "amount_evm": null,
+            "deadline_unix_seconds": null,
+            "vestingBlocks": "0",
+            "metricTarget": "ZERO_ADDRESS",
+            "metricSelector": "ZERO_BYTES4",
+            "metricMin": "0"
+          }
+        ]
+      },
+      "value_native": "exact_sum_of_two_ABI_amounts_divided_by_qualified_ratio_10000",
+      "preconditions": [
+        "P and F reverse mappings correct; reviewer identities are h(R1)/h(R2) and maps will be valid before their calls.",
+        "Both amounts are positive uint128 and divisible by 10000.",
+        "Both deadlines are uint64 strictly greater than execution timestamp.",
+        "m0 vestingBlocks is positive uint32; L0=E0/10000 is at least N0; demo requires L0 modulo N0 equals zero.",
+        "m1 vestingBlocks is zero; both metric gates disabled.",
+        "Reviewer H160s distinct, nonzero, not h(P); chosen F/R1/R2 actors distinct.",
+        "Qualified native vesting minimum, capacity, block clock and contract liquidity are checked before funding.",
+        "F has exact native escrow principal separately from fees/mapping/storage costs.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled.",
+        "Validate intended two-milestone/two-direct-reviewer native-token metrics-off policy before grant existence; observed round0 EligibleSingleRound is a post-finality output, not a circular input."
+      ],
+      "success_evidence": [
+        "Direct Revive native dispatch succeeds without contract revert.",
+        "Correlated GrantCreated provides actual grantId and exact funder/grantee/token/total/reviewers/threshold.",
+        "Finalized grants/getMilestone/isReviewer readback matches all authored inputs; both states Open."
+      ],
+      "errors": [
+        "BadConfig",
+        "mapping_or_runtime_API_mismatch",
+        "native_value_ratio_mismatch",
+        "storage_or_weight_limit_failure"
+      ],
+      "proposal_outcome": "not_applicable",
+      "retry": "Creation is not idempotent; reconcile GrantCreated and getter before any newly signed create call.",
+      "source_refs": [
+        "S-VESTRY",
+        "S-REVIVE",
+        "S-MAPPER",
+        "S-VESTING",
+        "S-VESTING-PRECOMPILE"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_GRANT_CREATE",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_ReviveCreate"
+    },
+    {
+      "id": "GRC-GRANT-SUBMIT-M0",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-INVENTORY",
+        "Q-FUNDING",
+        "Q-GRANT-SCOPE"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-CONTINUITY"
+      ],
+      "title": "Submit milestone 0 through old controller",
+      "kind": "multisig_proxy_native_contract_action",
+      "selected_status": "required_baseline",
+      "template": "MULTISIG_PROXY_REVIVE",
+      "controller": "M0",
+      "signer_sequence": [
+        "A",
+        "B"
+      ],
+      "abi_method": "submitMilestone(uint256,uint256,string)",
+      "abi_arguments": {
+        "grantId": null,
+        "index": "0",
+        "evidence": null
+      },
+      "value_native": "0",
+      "preconditions": [
+        "Exact M0-only native authority; grantee remains h(P); correct reverse mapping.",
+        "m0 state Open and execution timestamp <= m0 deadline.",
+        "Evidence is untrusted text within 1024 UTF-8 bytes.",
+        "P has qualified storage budget; native weight/storage limits frozen before first approval.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled.",
+        "Exactly two milestones/two direct native reviewers, metrics disabled, round zero and EligibleSingleRound. Review expected round/evidence locally; unchanged ABI does not enforce them."
+      ],
+      "success_evidence": [
+        "Matching M0 MultisigExecuted plus ProxyExecuted success and qualified Revive execution.",
+        "MilestoneSubmitted(grantId,0,evidence) correlated to the same native extrinsic.",
+        "Prove round0 Open-to-Submitted at the causal event and preserved identity. Later same-block review effects are separate current state; active vested baseline still requires successful release and schedule verification."
+      ],
+      "errors": [
+        "NotGrantee",
+        "BadState",
+        "DeadlinePassed",
+        "Revive_ContractReverted",
+        "proxy_auth_or_native_budget_failure"
+      ],
+      "proposal_outcome": "Dispatched success or failure consumes native proposal; pre-dispatch rejection may preserve it.",
+      "retry": "Reconcile exact prior attempt/proposal first. Do not resubmit an already submitted milestone. Any reopened round or confirmed change request is ScopeBreached; no fresh submission in this profile. Only separately eligible incident recovery remains.",
+      "source_refs": [
+        "S-VESTRY",
+        "S-REVIVE",
+        "S-PROXY",
+        "S-MULTISIG"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_GRANT_SUBMIT_M0",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_ProxySubmit"
+    },
+    {
+      "id": "GRC-GRANT-APPROVE",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-VESTING",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING",
+        "Q-GRANT-SCOPE"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-VESTING",
+        "Q-CONTINUITY"
+      ],
+      "title": "Reviewer approval with possible same-call release",
+      "kind": "direct_native_contract_action",
+      "selected_status": "required_for_each_milestone",
+      "template": "DIRECT_REVIVE",
+      "signer_sequence": [
+        "one_explicit_reviewer_R1_or_R2"
+      ],
+      "happy_path_order": [
+        "R1_finalized",
+        "R2_finalized"
+      ],
+      "abi_method": "approveMilestone(uint256,uint256)",
+      "abi_arguments": {
+        "grantId": null,
+        "index": null
+      },
+      "allowed_milestone_indexes": [
+        "0",
+        "1"
+      ],
+      "value_native": "0",
+      "preconditions": [
+        "h(selected reviewer) isReviewer for grant and mapping is correct.",
+        "Milestone Submitted and execution timestamp <= deadline.",
+        "Reviewer has not approved current round; public history/known facts must not invent hidden approvedKey state.",
+        "Review human decision is explicit; controller possession gives no reviewer role.",
+        "Before threshold-completing approval recheck beneficiary mapping, payout liquidity, native vesting minimum/capacity/clock for m0 and selected bounded resources.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled.",
+        "Exactly two milestones/two direct native reviewers, metrics disabled, round zero and EligibleSingleRound. Review expected round/evidence locally; unchanged ABI does not enforce them."
+      ],
+      "success_evidence": [
+        "Direct native Revive succeeds and MilestoneApproved identifies actual reviewer/current approvals.",
+        "Below threshold at this causal invocation: round0 remains Submitted and the approval count increases once. Later same-block reviewer effects are tracked in event order, not used to erase this successful approval.",
+        "At threshold with metric disabled: same invocation emits MilestoneReleased and state becomes Released; there is no separate required release signature.",
+        "For m0: payout/native VestingCreated and matching Vesting[P] tuple/multiplicity/lock are verified.",
+        "For m1: unlocked native payout and Released state are verified without expecting a new vesting tuple."
+      ],
+      "errors": [
+        "NotReviewer",
+        "AlreadyApproved",
+        "BadState",
+        "DeadlinePassed",
+        "PayoutFailed",
+        "vesting_precompile_failure",
+        "native_storage_weight_or_mapping_failure"
+      ],
+      "rollback": "If final approval's payout fails, its approval flag/count/events and release roll back together; earlier finalized approvals remain.",
+      "proposal_outcome": "not_applicable",
+      "retry": "Reconcile and repair the failed invocation only; permit an explicitly reviewed retry solely in unchanged EligibleSingleRound round0 before deadline. Any confirmed change request/round drift blocks new review authoring. Do not repeat earlier successful approvals.",
+      "source_refs": [
+        "S-VESTRY",
+        "S-REVIVE",
+        "S-VESTING-PRECOMPILE",
+        "S-VESTING"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_GRANT_APPROVE",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_ReviveApprove"
+    },
+    {
+      "id": "GRC-GRANT-REQUEST-CHANGES",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-CONTRACT"
+      ],
+      "title": "Reviewer reopens submitted milestone",
+      "kind": "direct_native_contract_action",
+      "selected_status": "disabled_for_first_profile_authoring",
+      "template": "DIRECT_REVIVE",
+      "signer_sequence": [
+        "one_explicit_reviewer_R1_or_R2"
+      ],
+      "abi_method": "requestChanges(uint256,uint256,string)",
+      "abi_arguments": {
+        "grantId": null,
+        "index": null,
+        "reason": null
+      },
+      "value_native": "0",
+      "preconditions": [
+        "Caller isReviewer and milestone Submitted.",
+        "Historical reason preview is limited to512 UTF-8 bytes; preserve complete external event evidence. This is not a source validity limit and authoring is disabled.",
+        "Current round < 255 to avoid checked uint8 increment overflow.",
+        "Source has no deadline check for requestChanges; expired result must not be shown as resubmittable."
+      ],
+      "success_evidence": [
+        "Correlated ChangesRequested includes caller and reason.",
+        "Finalized milestone Open, approvals zero, round old_round+1.",
+        "Original deadline, amount, beneficiary and reviewer policy unchanged."
+      ],
+      "errors": [
+        "NotReviewer",
+        "BadState",
+        "checked_round_overflow",
+        "native_contract_execution_failure"
+      ],
+      "proposal_outcome": "not_applicable",
+      "retry": "Observe actual external event and current source state. A finalized change request creates ScopeBreached. No application resubmission, fresh review-round intent or requestChanges retry is enabled under this profile.",
+      "source_refs": [
+        "S-VESTRY",
+        "S-REVIVE"
+      ],
+      "enabled": false,
+      "record_role": "disabled_source_capability",
+      "execution_policy": "Do not build FrozenEnvelope, request signature or broadcast. Source/event decoder retained for observation only.",
+      "reason": "Single-round demonstrator excludes requestChanges/resubmission; metric-disabled final approval performs ordinary release, so separate release authoring is excluded."
+    },
+    {
+      "id": "GRC-GRANT-RELEASE",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-VESTING",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-VESTING",
+        "Q-CONTINUITY"
+      ],
+      "title": "Source-defined permissionless explicit release",
+      "kind": "direct_native_contract_action",
+      "selected_status": "disabled_for_first_profile_authoring",
+      "template": "DIRECT_REVIVE",
+      "source_actor_rule": "any_caller",
+      "proposed_native_caller": "F_or_R1_or_R2_explicitly_selected_and_mapped",
+      "signer_sequence": [
+        "one_selected_human"
+      ],
+      "abi_method": "release(uint256,uint256)",
+      "abi_arguments": {
+        "grantId": null,
+        "index": null
+      },
+      "value_native": "0",
+      "preconditions": [
+        "Submitted and approvals >= threshold.",
+        "Execution timestamp <= deadline.",
+        "All payout conditions and any metric condition hold.",
+        "Chosen metric-disabled flow already releases at threshold; ordinary successful approvals do not leave a separate release task.",
+        "Do not expose this as an alternative that bypasses a failed final approval whose increment rolled back."
+      ],
+      "success_evidence": [
+        "Direct Revive success and correlated MilestoneReleased.",
+        "Released state plus exact native payout/vesting postconditions as applicable."
+      ],
+      "errors": [
+        "BadState",
+        "DeadlinePassed",
+        "MetricBelowTarget",
+        "MetricUnreadable",
+        "PayoutFailed",
+        "vesting_or_native_execution_failure"
+      ],
+      "proposal_outcome": "not_applicable",
+      "retry": "Fresh state check; Released is complete and cannot be paid again. Metric-enabled scenarios are outside the chosen profile.",
+      "source_refs": [
+        "S-VESTRY",
+        "S-REVIVE",
+        "S-VESTING-PRECOMPILE"
+      ],
+      "enabled": false,
+      "record_role": "disabled_source_capability",
+      "execution_policy": "Do not build FrozenEnvelope, request signature or broadcast. Source/event decoder retained for observation only.",
+      "reason": "Single-round demonstrator excludes requestChanges/resubmission; metric-disabled final approval performs ordinary release, so separate release authoring is excluded."
+    },
+    {
+      "id": "GRC-GRANT-RECLAIM",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING",
+        "Q-GRANT-SCOPE"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-CONTRACT",
+        "Q-FUNDING"
+      ],
+      "title": "Funder reclaims unreleased tranche after deadline",
+      "kind": "direct_native_contract_action",
+      "selected_status": "disabled_first_profile_historical_observation_only",
+      "template": "DIRECT_REVIVE",
+      "signer_sequence": [
+        "F"
+      ],
+      "abi_method": "reclaim(uint256,uint256)",
+      "abi_arguments": {
+        "grantId": null,
+        "index": null
+      },
+      "value_native": "0",
+      "preconditions": [
+        "Authoring is disabled in grc-v2-local-1; the following are source-observation predicates, not app capabilities.",
+        "Solidity caller equals stored funder h(F).",
+        "Milestone neither Released nor Reclaimed; Open or Submitted permitted.",
+        "Execution timestamp > deadline strictly.",
+        "F mapping and native receive path qualified; contract can fund return.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled."
+      ],
+      "success_evidence": [
+        "Direct Revive success and correlated MilestoneReclaimed.",
+        "Milestone state Reclaimed and amount returned to exact funder identity."
+      ],
+      "errors": [
+        "NotFunder",
+        "BadState",
+        "DeadlineNotPassed",
+        "PayoutFailed",
+        "native_execution_failure"
+      ],
+      "proposal_outcome": "not_applicable",
+      "retry": "No in-app retry or preparation. Read/reconcile external history only; native pending proposals are not revoked by this local scope restriction.",
+      "source_refs": [
+        "S-VESTRY",
+        "S-REVIVE"
+      ],
+      "enabled": false,
+      "record_role": "disabled_source_operation",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_GRANT_RECLAIM",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_ReviveReclaim",
+      "authoring_allowed": false,
+      "scope_note": "Retain source semantics and decode external history only. No active builder, wallet, execution, imported executable intent, or UI action in the selected first profile."
+    },
+    {
+      "id": "GRC-ROTATION-ADD-M1",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-VESTING",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-INVENTORY",
+        "Q-FUNDING",
+        "Q-READINESS",
+        "Q-GRANT-SCOPE"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-INVENTORY",
+        "Q-CURRENCY",
+        "Q-CONTINUITY"
+      ],
+      "title": "Old quorum introduces whole new controller",
+      "kind": "native_multisig_proxy_action",
+      "selected_status": "chosen_phase1",
+      "template": "MULTISIG_PROXY",
+      "controller": "M0",
+      "signer_sequence": [
+        "A",
+        "B"
+      ],
+      "native_call": {
+        "pallet": "Proxy",
+        "method": "add_proxy",
+        "pinned_source_argument_order": [
+          "delegate",
+          "proxy_type",
+          "delay"
+        ],
+        "delegate": "M1",
+        "proxy_type": "Any",
+        "delay": "0"
+      },
+      "value_native": "0",
+      "preconditions": [
+        "Exact native inventory M0/Any/0 and canonical Pure deposit provenance.",
+        "P/h(P)/grantee and active m0 vesting tuple baseline captured; m1 Open with sufficient deadline margin.",
+        "M1 members A/B/D and threshold 2 explicitly reviewed; D readiness recorded honestly.",
+        "P can reserve incremental qualified Proxy.DepositFactor.",
+        "All known P-held liabilities backed; currency wiring and unchanged constants qualified.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled.",
+        "Demonstrator grant scope remains EligibleSingleRound; stop rotation progression if intended M1 milestone1 proof was preempted or scope breached."
+      ],
+      "success_evidence": [
+        "ProxyAdded for real P and delegate M1/Any/0 in the correlated event phase.",
+        "ProxyExecuted Ok and matching M0 MultisigExecuted.",
+        "Finalized exact inventory M0/Any/0 plus M1/Any/0.",
+        "Stored proxy deposit B+F becomes B+2F; P attributable reserve increases F; mapping hold/backing and vesting tuple remain valid."
+      ],
+      "authority_after": "DualControl_both_M0_and_M1_have_full_authority",
+      "errors": [
+        "duplicate_delegate_or_capacity",
+        "reserve_budget_failure",
+        "proxy_auth_failure",
+        "runtime_or_inventory_drift"
+      ],
+      "proposal_outcome": "Dispatched failure consumes proposal; pre-dispatch rejection may preserve it.",
+      "retry": "If M1 already exists, reconcile provenance and inventory instead of replay. Never assume M0 frozen after this step.",
+      "source_refs": [
+        "S-PROXY",
+        "S-MULTISIG",
+        "S-MAPPER",
+        "S-BALANCES"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_ROTATION_ADD_M1",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_ProxyAdd"
+    },
+    {
+      "id": "GRC-ROTATION-REMOVE-M0",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-VESTING",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-INVENTORY",
+        "Q-FUNDING",
+        "Q-READINESS",
+        "Q-GRANT-SCOPE"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-INVENTORY",
+        "Q-CURRENCY",
+        "Q-READINESS",
+        "Q-CONTINUITY"
+      ],
+      "title": "New quorum removes exactly the old controller",
+      "kind": "native_multisig_proxy_action",
+      "selected_status": "chosen_phase2",
+      "template": "MULTISIG_PROXY",
+      "controller": "M1",
+      "signer_sequence": [
+        "A",
+        "D"
+      ],
+      "native_call": {
+        "pallet": "Proxy",
+        "method": "remove_proxy",
+        "pinned_source_argument_order": [
+          "delegate",
+          "proxy_type",
+          "delay"
+        ],
+        "delegate": "M0",
+        "proxy_type": "Any",
+        "delay": "0"
+      },
+      "value_native": "0",
+      "preconditions": [
+        "Phase1 final and exact inventory M0/Any/0 plus M1/Any/0.",
+        "Canonical deposit history, unchanged qualified B/F, no unexplained reserve/hold changes.",
+        "Mapping, beneficiary and active m0 tuple still match baseline.",
+        "A+D required by demonstration policy; native threshold still permits other valid pairs outside this app.",
+        "No extra Utility layer, remove_proxies, kill_pure, unknown-delegate sweep or proxy-type change.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled.",
+        "Demonstrator grant scope remains EligibleSingleRound; stop rotation progression if intended M1 milestone1 proof was preempted or scope breached."
+      ],
+      "success_evidence": [
+        "ProxyRemoved identifies P and M0/Any/0.",
+        "Deep ProxyExecuted success and matching M1/call_hash/timepoint execution with A+D approval evidence.",
+        "Finalized inventory exactly M1/Any/0; no Utility.BatchCompleted is expected.",
+        "P proxy-attributable backing reduces by exactly F while all recognized P-held liabilities remain backed.",
+        "P/h(P)/stored grantee and original m0 tuple/multiplicity preserved; M0 historical creator reserve remains disclosed.",
+        "Split creator-funded D from P-backed increment f; P reserved returns H in the clean mapping-only trace, M0 historical D remains. Do not require P reserved >= H + recorded singleton D."
+      ],
+      "postcondition_failure": "ConfigurationDiverged if the complete finalized list is not exactly {(M1,Any,0)}. Retain exact-removal historical receipt; no automatic sweep or certificate.",
+      "errors": [
+        "M1_removed_before_execution",
+        "NotProxy",
+        "old_delegate_not_found",
+        "proxy_filter_or_runtime_drift",
+        "insufficient_or_unexplained_hold_backing"
+      ],
+      "proposal_outcome": "Execution entry consumes M1 proposal even if Proxy authentication or removal fails; new attempt requires new proposal/timepoint after repair.",
+      "retry": "Read exact authority/proposal state before action. This is not compare-and-swap; preflight cannot stop M0 racing before inclusion.",
+      "source_refs": [
+        "S-PROXY",
+        "S-MULTISIG",
+        "S-MAPPER",
+        "S-BALANCES"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_ROTATION_REMOVE_M0",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_ProxyRemove"
+    },
+    {
+      "id": "GRC-GRANT-SUBMIT-M1",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-REVIVE-API",
+        "Q-VESTING",
+        "Q-CONTRACT",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-INVENTORY",
+        "Q-FUNDING",
+        "Q-READINESS",
+        "Q-GRANT-SCOPE"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-READINESS",
+        "Q-CONTINUITY"
+      ],
+      "title": "Prove application continuation through new controller",
+      "kind": "multisig_proxy_native_contract_action",
+      "selected_status": "required_completion_proof",
+      "template": "MULTISIG_PROXY_REVIVE",
+      "controller": "M1",
+      "signer_sequence": [
+        "A",
+        "D"
+      ],
+      "abi_method": "submitMilestone(uint256,uint256,string)",
+      "abi_arguments": {
+        "grantId": null,
+        "index": "1",
+        "evidence": null
+      },
+      "value_native": "0",
+      "preconditions": [
+        "Verified phase2 completion with exact M1-only authority and current profile.",
+        "Same P/h(P)/grant grantee and matching preexisting m0 vesting tuple.",
+        "Milestone1 Open and execution timestamp <= deadline.",
+        "Evidence within 1024 UTF-8 bytes; fixed reviewed destination, ABI calldata and bounded native resources.",
+        "A+D sign this fresh operation; removal receipt alone is insufficient.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled.",
+        "Exactly two milestones/two direct native reviewers, metrics disabled, round zero and EligibleSingleRound. Review expected round/evidence locally; unchanged ABI does not enforce them."
+      ],
+      "success_evidence": [
+        "M1 proposal and A/D approvals, Proxy real=P, Revive mapped caller h(P), and exact ABI submit operation are correlated.",
+        "Deepest relevant native dispatch succeeds.",
+        "MilestoneSubmitted(grantId,1,evidence) belongs to same native transaction.",
+        "Prove intended round-zero Open-to-Submitted at the causal event from complete ordered history. Later same-block Released/Open changes current state, not an already verified historical submission. Prior change request invalidates intended context."
+      ],
+      "errors": [
+        "NotGrantee",
+        "BadState",
+        "DeadlinePassed",
+        "ContractReverted",
+        "M1_proxy_auth_failure",
+        "mapping_storage_weight_or_profile_failure"
+      ],
+      "proposal_outcome": "Dispatched failure consumes native proposal; wrong timepoint/insufficient declared max_weight may preserve it.",
+      "retry": "Reconcile attribution, not only current Submitted state; M0 may have submitted during DualControl. A mismatched actor path cannot count as this proof.",
+      "source_refs": [
+        "S-VESTRY",
+        "S-REVIVE",
+        "S-MAPPER",
+        "S-PROXY",
+        "S-MULTISIG"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_GRANT_SUBMIT_M1",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_ProxySubmit"
+    },
+    {
+      "id": "GRC-VESTING-VEST",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-VESTING",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-INVENTORY",
+        "Q-FUNDING",
+        "Q-READINESS"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-VESTING"
+      ],
+      "title": "New controller updates P's native vesting lock",
+      "kind": "native_multisig_proxy_action",
+      "selected_status": "disabled_first_profile_historical_observation_only",
+      "template": "MULTISIG_PROXY",
+      "controller": "M1",
+      "signer_sequence": [
+        "A",
+        "D"
+      ],
+      "native_call": {
+        "pallet": "Vesting",
+        "method": "vest",
+        "pinned_source_argument_order": []
+      },
+      "value_native": "0",
+      "preconditions": [
+        "Authoring is disabled in grc-v2-local-1; the following are source-observation predicates, not app capabilities.",
+        "M1-only authority currently verified.",
+        "Vesting[P] storage has schedule entries; zero calculated unvested does not itself mean no cleanup.",
+        "Strict before/after rotation tuple snapshot interval has ended.",
+        "Qualified vesting clock and balance-lock behavior.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled."
+      ],
+      "success_evidence": [
+        "Deep Proxy result success with correlated M1 execution.",
+        "VestingUpdated(P,unvested) or VestingCompleted(P) under qualified target events.",
+        "Finalized remaining schedules/lock reconcile progress and cleanup."
+      ],
+      "meaning": "Lock refresh and removal of completed schedules; funds were transferred into P at prior payout, not newly claimed from escrow.",
+      "errors": [
+        "NotVesting_when_storage_absent",
+        "proxy_or_runtime_failure"
+      ],
+      "proposal_outcome": "Dispatched result consumes proposal; re-read before classification.",
+      "retry": "No in-app retry or preparation. Read/reconcile external history only; native pending proposals are not revoked by this local scope restriction.",
+      "source_refs": [
+        "S-VESTING",
+        "S-PROXY",
+        "S-MULTISIG"
+      ],
+      "enabled": false,
+      "record_role": "disabled_source_operation",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_VESTING_VEST",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_ProxyVest",
+      "authoring_allowed": false,
+      "scope_note": "Retain source semantics and decode external history only. No active builder, wallet, execution, imported executable intent, or UI action in the selected first profile."
+    },
+    {
+      "id": "GRC-VESTING-VEST-OTHER",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-VESTING",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-VESTING"
+      ],
+      "title": "Sponsor refreshes P's vesting lock permissionlessly",
+      "kind": "native_direct_action",
+      "selected_status": "optional_post_proof_only",
+      "template": "DIRECT_NATIVE",
+      "signer_sequence": [
+        "S"
+      ],
+      "native_call": {
+        "pallet": "Vesting",
+        "method": "vest_other",
+        "pinned_source_argument_order": [
+          "target"
+        ],
+        "target": "P"
+      },
+      "value_native": "0",
+      "preconditions": [
+        "S can pay native fee; no Revive mapping required for this native-only call.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled.",
+        "An independently verified historical ContinuityCertificate already proves the selected A+D removal and separate M1 grant submission; the strict comparison interval is complete. Abandonment or failure of that proof does not enable this optional action.",
+        "P has schedule storage requiring update. Direct sponsor S pays fees; no proxied vest substitution and no continuity credit."
+      ],
+      "success_evidence": [
+        "Finalized direct dispatch and VestingUpdated/Completed for P.",
+        "Schedule/lock readback."
+      ],
+      "claim_boundary": "Not proof of M1 authority or application continuation; source allows any signed actor to refresh another account's vesting lock.",
+      "proposal_outcome": "not_applicable",
+      "retry": "Reconcile schedules first; do not call repeatedly merely because calculated unvested is zero.",
+      "source_refs": [
+        "S-VESTING"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_VESTING_VEST_OTHER",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_VestOther"
+    },
+    {
+      "id": "GRC-MULTISIG-FIRST",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "inherited_gate_refs": "All required_gate_refs and operation-specific input requirements of the containing operation.",
+      "produces_evidence_for_gate_refs": [
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "title": "First full-call native multisig approval",
+      "kind": "execution_template_operation",
+      "selected_status": "required_wrapper_of_allowlisted_multisig_business_intent_only",
+      "template": "DIRECT_NATIVE",
+      "signer_sequence": [
+        "operation.signer_sequence_first_member"
+      ],
+      "native_call": {
+        "pallet": "Multisig",
+        "method": "as_multi",
+        "pinned_source_argument_order": [
+          "threshold",
+          "other_signatories",
+          "maybe_timepoint",
+          "call",
+          "max_weight"
+        ],
+        "threshold": "2",
+        "other_signatories": "canonical_sorted_full_controller_members_excluding_actual_signer",
+        "maybe_timepoint": {
+          "variant": "None"
+        },
+        "call": "exact_frozen_inner_RuntimeCall",
+        "max_weight": {
+          "ref_time": null,
+          "proof_size": null
+        }
+      },
+      "preconditions": [
+        "No active native proposal exists for this M/call_hash; otherwise reconcile instead of pretending it is first.",
+        "Full inner preimage, source/profile and effect summary are reviewed.",
+        "First signer has Q=Multisig.DepositBase+2*Multisig.DepositFactor plus outer fee/liveness budget."
+      ],
+      "success_evidence": [
+        "Finalized System success and NewMultisig matching first signer, M and exact inner call hash.",
+        "Multisigs[M,call_hash] has exact first approval, depositor, reserve and stored timepoint.",
+        "No inner operation or authority change is claimed."
+      ],
+      "proposal_outcome": "FIRST_APPROVAL",
+      "retry": "Never guess timepoint from header alone; use native stored timepoint whose BlockNumberProvider may differ. Duplicate first submission is reconciled, not recreated.",
+      "source_refs": [
+        "S-MULTISIG",
+        "S-DEDOT-BYTES"
+      ],
+      "enabled": false,
+      "record_role": "wrapper_template",
+      "enabled_as_standalone_intent": false,
+      "enabled_within_allowlisted_parent": true
+    },
+    {
+      "id": "GRC-MULTISIG-FINAL",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "inherited_gate_refs": "All required_gate_refs and fresh preconditions of the containing operation.",
+      "produces_evidence_for_gate_refs": [
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "title": "Second full-call approval and immediate threshold execution",
+      "kind": "execution_template_operation",
+      "selected_status": "required_wrapper_of_allowlisted_multisig_business_intent_only",
+      "template": "DIRECT_NATIVE",
+      "signer_sequence": [
+        "operation.signer_sequence_second_distinct_member"
+      ],
+      "native_call": {
+        "pallet": "Multisig",
+        "method": "as_multi",
+        "pinned_source_argument_order": [
+          "threshold",
+          "other_signatories",
+          "maybe_timepoint",
+          "call",
+          "max_weight"
+        ],
+        "threshold": "2",
+        "other_signatories": "canonical_sorted_full_controller_members_excluding_actual_signer",
+        "maybe_timepoint": {
+          "variant": "Some",
+          "value": "exact_current_native_stored_timepoint"
+        },
+        "call": "same_frozen_inner_RuntimeCall_as_first_approval",
+        "max_weight": {
+          "ref_time": null,
+          "proof_size": null
+        }
+      },
+      "preconditions": [
+        "First approval finalized; current native record/hash/timepoint and original depositor are verified.",
+        "Second signer is distinct authorized controller member; A+D policy checked for chosen M1 demonstration.",
+        "Fresh authority, deadline, reserve and runtime checks pass.",
+        "max_weight covers full inner declared weight in both dimensions; outer fee budget is separately estimated."
+      ],
+      "success_evidence": [
+        "Threshold-completing as_multi immediately dispatches inner call; no separate automatic executor is implied.",
+        "MultisigExecuted matches M, call_hash, timepoint and executing signer.",
+        "Check nested Proxy/Revive results and complete operation-specific readback.",
+        "Proposal absent and original Q unreserve reconciled after execution entry."
+      ],
+      "errors": [
+        "wrong_timepoint_or_member",
+        "MaxWeightTooLow",
+        "inner_dispatch_error",
+        "wrapped_Proxy_inner_error",
+        "contract_revert_or_postcondition_failure"
+      ],
+      "proposal_outcome": "PRE_DISPATCH_FAILURE_may_preserve; DISPATCHED_SUCCESS_or_DISPATCHED_INNER_FAILURE_consumes",
+      "retry": "Consumed inner failure requires a new first approval and new timepoint after repair. Preserved proposal may receive a newly reviewed final attempt if exact approved inner bytes and all policy conditions remain valid.",
+      "source_refs": [
+        "S-MULTISIG",
+        "S-PROXY",
+        "S-REVIVE"
+      ],
+      "enabled": false,
+      "record_role": "wrapper_template",
+      "enabled_as_standalone_intent": false,
+      "enabled_within_allowlisted_parent": true
+    },
+    {
+      "id": "GRC-MULTISIG-CANCEL",
+      "required_gate_refs": [
+        "Q-RUNTIME",
+        "Q-CURRENCY",
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "produces_evidence_for_gate_refs": [
+        "Q-RECEIPTS",
+        "Q-FUNDING"
+      ],
+      "title": "Original depositor cancels one native proposal",
+      "kind": "native_direct_action",
+      "selected_status": "supported_recovery",
+      "template": "DIRECT_NATIVE",
+      "signer_sequence": [
+        "exact_original_proposal_depositor"
+      ],
+      "native_call": {
+        "pallet": "Multisig",
+        "method": "cancel_as_multi",
+        "pinned_source_argument_order": [
+          "threshold",
+          "other_signatories",
+          "timepoint",
+          "call_hash"
+        ],
+        "threshold": "2",
+        "other_signatories": "canonical_sorted_original_members_excluding_depositor",
+        "timepoint": "exact_current_native_stored_timepoint",
+        "call_hash": null
+      },
+      "preconditions": [
+        "Proposal exists with exact M/hash/timepoint.",
+        "Caller equals original depositor; quorum cannot substitute for unavailable depositor C.",
+        "Original member set/threshold derives same M.",
+        "Every applicable semantic guard must pass; imported records are untrusted until locally reconstructed and reconciled."
+      ],
+      "success_evidence": [
+        "Finalized MultisigCancelled matches operation.",
+        "Proposal absent and its deposit released to correct original depositor."
+      ],
+      "proposal_outcome": "Cancelled_on_success_preserved_on_precondition_failure",
+      "retry": "Absent proposal requires reconciliation with execution/cancel receipts, not assumed successful cancellation. Local expiry never substitutes for this action.",
+      "source_refs": [
+        "S-MULTISIG"
+      ],
+      "enabled": true,
+      "record_role": "business_intent",
+      "parameters_schema_ref": "contracts.schema.json#/$defs/Params_GRC_MULTISIG_CANCEL",
+      "call_tree_schema_ref": "contracts.schema.json#/$defs/Tree_Cancel",
+      "envelope_semantics": "Direct cancel_as_multi bytes are the executable envelope. Original inner target bytes are inert Intent.parameters provenance. Native timepoint must include the qualified clockDomain."
+    },
+    {
+      "id": "GRC-DISABLED-FULL-RESET",
+      "required_gate_refs": [],
+      "related_gate_refs": [
+        "Q-CURRENCY",
+        "Q-MAPPING",
+        "Q-INVENTORY"
+      ],
+      "produces_evidence_for_gate_refs": [],
+      "title": "Rejected full native proxy reset baseline",
+      "kind": "disabled_alternative",
+      "selected_status": "disabled_by_design",
+      "enabled": false,
+      "template": "MULTISIG_PROXY",
+      "controller": "M1",
+      "hypothetical_signer_sequence": [
+        "A",
+        "D"
+      ],
+      "reason": "Initial Pure deposit is reserved on M0 but recorded under P. Under inspected shared Balances accounting, full unreserve on P can consume mapping hold backing while leaving hold reason records intact. Dedicated P does not remove this risk.",
+      "source_supported_narrow_property": "Exact direct-inner batch_all propagates error and rolls back batch storage if add fails; captured Signed(P) origin survives removal. Atomicity does not imply safe reserve accounting.",
+      "execution_policy": "Permanently excluded from this profile; no encoding/import-to-signing/advanced override. Historical source description only.",
+      "proposal_outcome_if_experimented_later": "If threshold dispatch entered and inner batch fails, native proposal can be consumed while DualControl storage is restored; reapproval needed. This is not an authorized experiment.",
+      "replacement": "GRC-ROTATION-REMOVE-M0",
+      "source_refs": [
+        "S-PROXY",
+        "S-MULTISIG",
+        "S-UTILITY",
+        "S-MAPPER",
+        "S-BALANCES"
+      ],
+      "record_role": "disabled_source_capability",
+      "native_call_history": {
+        "pallet": "Utility",
+        "method": "batch_all",
+        "calls": [
+          {
+            "pallet": "Proxy",
+            "method": "remove_proxies",
+            "arguments": []
+          },
+          {
+            "pallet": "Proxy",
+            "method": "add_proxy",
+            "delegate": "M1",
+            "proxy_type": "Any",
+            "delay": "0"
+          }
+        ]
+      },
+      "superseded_aliases": [
+        "RESET_CONTROLLERS",
+        "remove_proxies_then_readd_M1",
+        "pre_map_reserve_normalization"
+      ]
+    },
+    {
+      "id": "GRC-DISABLED-HASH-ONLY-APPROVAL",
+      "required_gate_refs": [],
+      "related_gate_refs": [
+        "Q-ADAPTER",
+        "Q-WALLET",
+        "Q-RECEIPTS"
+      ],
+      "produces_evidence_for_gate_refs": [],
+      "title": "Deferred hash-only native multisig approval",
+      "kind": "disabled_alternative",
+      "selected_status": "deferred_wallet_qualification",
+      "enabled": false,
+      "native_call": {
+        "pallet": "Multisig",
+        "method": "approve_as_multi",
+        "call_hash": null
+      },
+      "reason": "Selected profile uses full-call as_multi in both approval requests so the exact preimage is available for independent review.",
+      "source_semantics": "Hash-only approval does not itself dispatch an inner call even when approval count reaches threshold; later full-call as_multi is required.",
+      "execution_policy": "Do not substitute for GRC-MULTISIG-FIRST or GRC-MULTISIG-FINAL without separately qualifying wallet preimage display and updating approved design.",
+      "source_refs": [
+        "S-MULTISIG"
+      ],
+      "record_role": "disabled_source_capability"
+    }
+  ],
+  "source_registry": {
+    "S-POLKADOT-MAINTENANCE": {
+      "url": "https://docs.polkadot.com/reference/tools/polkadot-js-api/",
+      "revision": "living_document_read_2026-10-23",
+      "status": "official_documentation"
+    },
+    "S-PROXY": {
+      "url": "https://github.com/paritytech/polkadot-sdk/blob/477b53f040f1a45f3567fb37435e2c0ef7476221/substrate/frame/proxy/src/lib.rs",
+      "revision": "477b53f040f1a45f3567fb37435e2c0ef7476221",
+      "status": "source_read_not_target_binding"
+    },
+    "S-MULTISIG": {
+      "url": "https://github.com/paritytech/polkadot-sdk/blob/477b53f040f1a45f3567fb37435e2c0ef7476221/substrate/frame/multisig/src/lib.rs",
+      "revision": "477b53f040f1a45f3567fb37435e2c0ef7476221",
+      "status": "source_read_not_target_binding"
+    },
+    "S-UTILITY": {
+      "url": "https://github.com/paritytech/polkadot-sdk/blob/477b53f040f1a45f3567fb37435e2c0ef7476221/substrate/frame/utility/src/lib.rs",
+      "revision": "477b53f040f1a45f3567fb37435e2c0ef7476221",
+      "status": "source_read_not_target_binding"
+    },
+    "S-BALANCES": {
+      "url": "https://github.com/paritytech/polkadot-sdk/blob/477b53f040f1a45f3567fb37435e2c0ef7476221/substrate/frame/balances/src/impl_currency.rs",
+      "additional_url": "https://github.com/paritytech/polkadot-sdk/blob/477b53f040f1a45f3567fb37435e2c0ef7476221/substrate/frame/balances/src/impl_fungible.rs",
+      "revision": "477b53f040f1a45f3567fb37435e2c0ef7476221",
+      "status": "currency_and_hold_source_read_transfer_signature_still_target_qualified"
+    },
+    "S-MAPPER": {
+      "url": "https://github.com/paritytech/polkadot-sdk/blob/b76182dd335abcc07b0ff876d4889416a4c08ab7/substrate/frame/revive/src/address.rs",
+      "revision": "b76182dd335abcc07b0ff876d4889416a4c08ab7",
+      "status": "source_read_not_target_binding"
+    },
+    "S-REVIVE": {
+      "url": "https://github.com/paritytech/polkadot-sdk/blob/b76182dd335abcc07b0ff876d4889416a4c08ab7/substrate/frame/revive/src/lib.rs",
+      "revision": "b76182dd335abcc07b0ff876d4889416a4c08ab7",
+      "status": "source_read_not_target_API2_binding"
+    },
+    "S-VESTING": {
+      "url": "https://github.com/paritytech/polkadot-sdk/blob/b76182dd335abcc07b0ff876d4889416a4c08ab7/substrate/frame/vesting/src/lib.rs",
+      "revision": "b76182dd335abcc07b0ff876d4889416a4c08ab7",
+      "status": "source_read_not_target_binding"
+    },
+    "S-VESTING-PRECOMPILE": {
+      "url": "https://github.com/paritytech/polkadot-sdk/blob/b76182dd335abcc07b0ff876d4889416a4c08ab7/substrate/frame/vesting/precompiles/src/lib.rs",
+      "revision": "b76182dd335abcc07b0ff876d4889416a4c08ab7",
+      "status": "source_read_target_registration_unverified"
+    },
+    "S-VESTRY": {
+      "url": "https://github.com/nftkingiii/vestry/blob/1c09ff369d53155487f3dd84d97ee6fd53a94902/contracts/Vestry.sol",
+      "revision": "1c09ff369d53155487f3dd84d97ee6fd53a94902",
+      "status": "full_source_read_deployed_bytecode_binding_unverified"
+    },
+    "S-DEDOT": {
+      "url": "https://github.com/dedotdev/dedot/blob/ea82d26d46eec338a3614e611982085a2fb2974c/packages/api/src/client/DedotClient.ts",
+      "revision": "ea82d26d46eec338a3614e611982085a2fb2974c",
+      "status": "candidate_source_read"
+    },
+    "S-DEDOT-RUNTIME": {
+      "url": "https://github.com/dedotdev/dedot/blob/ea82d26d46eec338a3614e611982085a2fb2974c/packages/api/src/executor/RuntimeApiExecutor.ts",
+      "revision": "ea82d26d46eec338a3614e611982085a2fb2974c",
+      "status": "exact_version_custom_API_override_source_read"
+    },
+    "S-DEDOT-BUILTINS": {
+      "url": "https://github.com/dedotdev/dedot/blob/ea82d26d46eec338a3614e611982085a2fb2974c/packages/runtime-specs/src/all.ts",
+      "revision": "ea82d26d46eec338a3614e611982085a2fb2974c",
+      "status": "no_builtin_ReviveApi_at_pin"
+    },
+    "S-DEDOT-SIGN": {
+      "url": "https://github.com/dedotdev/dedot/blob/ea82d26d46eec338a3614e611982085a2fb2974c/packages/api/src/extrinsic/submittable/BaseSubmittableExtrinsic.ts",
+      "additional_url": "https://github.com/dedotdev/dedot/blob/ea82d26d46eec338a3614e611982085a2fb2974c/packages/api/src/extrinsic/extensions/ExtraSignedExtension.ts",
+      "revision": "ea82d26d46eec338a3614e611982085a2fb2974c",
+      "status": "signature_and_mutation_guards_source_read"
+    },
+    "S-DEDOT-BYTES": {
+      "url": "https://github.com/dedotdev/dedot/blob/ea82d26d46eec338a3614e611982085a2fb2974c/packages/codecs/src/extrinsic/GenericExtrinsic.ts",
+      "revision": "ea82d26d46eec338a3614e611982085a2fb2974c",
+      "status": "exact_byte_and_hash_properties_source_read"
+    },
+    "S-DEDOT-RECEIPTS": {
+      "url": "https://github.com/dedotdev/dedot/blob/ea82d26d46eec338a3614e611982085a2fb2974c/packages/api/src/extrinsic/submittable/SubmittableExtrinsic.ts",
+      "additional_url": "https://github.com/dedotdev/dedot/blob/ea82d26d46eec338a3614e611982085a2fb2974c/packages/api/src/extrinsic/submittable/SubmittableResult.ts",
+      "revision": "ea82d26d46eec338a3614e611982085a2fb2974c",
+      "status": "native_monitor_and_outer_success_limit_source_read"
+    },
+    "S-DEDOT-HISTORICAL": {
+      "url": "https://github.com/dedotdev/dedot/blob/ea82d26d46eec338a3614e611982085a2fb2974c/packages/api/src/client/LegacyClient.ts",
+      "additional_url": "https://github.com/dedotdev/dedot/blob/ea82d26d46eec338a3614e611982085a2fb2974c/packages/api/src/client/BaseSubstrateClient.ts",
+      "revision": "ea82d26d46eec338a3614e611982085a2fb2974c",
+      "status": "historical_runtime_context_source_read"
+    }
+  },
+  "unresolved_inputs": [
+    "Exact Portal runtime/configuration/metadata/deployed-code binding.",
+    "Exact advertised ReviveApi numeric-version input/output codec binding for V14 target.",
+    "Qualified payment/call-info API versions and complete native wrapper weight estimation.",
+    "Installed wallet version, native custom-network/metadata support and signature-only behavior.",
+    "Real chain/deployment/account addresses, bytecode hashes, typed call encodings, estimates and receipts.",
+    "Target native transfer method signature and all generated target-native field orders.",
+    "Target contract-event shape, historical state/API availability, finality source and archive depth.",
+    "Independent human custody, legal grant consent and actual user benefit over existing wallet workflows remain unestablished.",
+    "Same-spec metadata/code drift and exact ReviveApi@2 codec/build relation remain unresolved; no accepted target profile exists."
+  ],
+  "integration_decision": "final-integration-2026-10-23",
+  "canonical_records_schema": "contracts.schema.json",
+  "semantic_guards": "semantic-guards.json",
+  "enabled_business_operation_ids": [
+    "GRC-SETUP-FUND-M0",
+    "GRC-SETUP-FUND-ACTOR",
+    "GRC-SETUP-CREATE-PURE",
+    "GRC-SETUP-FUND-P",
+    "GRC-SETUP-MAP-P",
+    "GRC-SETUP-MAP-ACTOR",
+    "GRC-GRANT-CREATE",
+    "GRC-GRANT-SUBMIT-M0",
+    "GRC-GRANT-SUBMIT-M1",
+    "GRC-GRANT-APPROVE",
+    "GRC-ROTATION-ADD-M1",
+    "GRC-ROTATION-REMOVE-M0",
+    "GRC-VESTING-VEST-OTHER",
+    "GRC-MULTISIG-CANCEL"
+  ],
+  "first_build_mode": "CONTROLLED_SINGLE_ROUND_DEMONSTRATOR",
+  "grant_policy_id": "vestry-single-round-demo-v1",
+  "localContractRevision": "grc-v2-local-1"
+}

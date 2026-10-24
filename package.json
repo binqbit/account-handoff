@@ -1,0 +1,52 @@
+{
+  "name": "account-handoff",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24.10.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "generate:contracts": "node packages/contracts/scripts/generate.mjs"
+  },
+  "dependencies": {
+    "@polkadot/util": "14.0.3",
+    "@polkadot/util-crypto": "14.0.3",
+    "canonicalize": "5.1.0",
+    "dedot": "1.4.0",
+    "idb": "8.0.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "viem": "2.40.3"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1",
+    "@polkadot/keyring": "14.0.3",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "ajv": "8.20.0",
+    "fake-indexeddb": "6.2.6",
+    "fast-check": "4.10.2",
+    "prettier": "3.9.10",
+    "solc": "0.8.24",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  },
+  "overrides": {
+    "viem": {
+      "ws": "8.22.0"
+    },
+    "tmp": "0.2.7"
+  }
+}

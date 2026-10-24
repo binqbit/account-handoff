@@ -1,0 +1,43 @@
+{
+  "revision": "grc-v2-local-1",
+  "source_role": "Original planning inputs; packages/contracts/schema owns the executable copies from this implementation onward",
+  "files": [
+    {
+      "file": "contracts.schema.json",
+      "source": "private-docs/contracts/contracts.schema.json",
+      "sha256": "e0d09c339d96cf59d52ed083900f63b55ccfe5e9eb611176bda576f115b3a341"
+    },
+    {
+      "file": "portable-package.schema.json",
+      "source": "private-docs/contracts/portable-package.schema.json",
+      "sha256": "c909ea4386ba08ec330014094ef40c3daff7e24a88cb5943db84fe55389aa37a"
+    },
+    {
+      "file": "local-journal.schema.json",
+      "source": "private-docs/contracts/local-journal.schema.json",
+      "sha256": "c6f2f02ff3c3641655ff362b07f2e92896146909987afeaad9e07bceb9d98f87"
+    },
+    {
+      "file": "operations.json",
+      "source": "private-docs/contracts/operations.json",
+      "sha256": "3dbe7d782a8ad3efb9366b463752f319b68198c703b655c4def718fc8df96fe1"
+    },
+    {
+      "file": "semantic-guards.json",
+      "source": "private-docs/contracts/semantic-guards.json",
+      "sha256": "7d719161412df48071fea23614c977a091985165c7fbfea1ca09a44e832989a1"
+    },
+    {
+      "file": "qualification.json",
+      "source": "private-docs/contracts/qualification.json",
+      "sha256": "36da2e985f0d66b25573299c5806ac9ad12f4e8b2e8b088c39fcadf1f538d8ff"
+    }
+  ],
+  "implementationAmendments": [
+    {
+      "file": "contracts.schema.json",
+      "reason": "Account-handoff-local supports exact metadata14/15/16 while original remote profile keeps14; no hash/source/API gate relaxation",
+      "reference": "LOCAL-AMENDMENT.md"
+    }
+  ]
+}

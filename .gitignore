@@ -13,3 +13,8 @@ build/
 coverage/
 .DS_Store
 *.log
+/artifacts/
+/.local-state/
+/playwright-report/
+/test-results/
+*.tsbuildinfo
