@@ -2,7 +2,7 @@ import type { Destination } from "../../ui-contract";
 import type { ScreenProps } from "../../routes/screen-types";
 import { titles } from "../../state/navigation";
 import { Address, Button, Icon } from "../ui";
-import { compactAddress } from "../addresses/options";
+import { compactAddress } from "../addresses/format";
 
 export function Topbar({
   snapshot,
@@ -56,16 +56,28 @@ export function Topbar({
                 {!snapshot.wallet.selectedAddress && (
                   <option value="">Select an account</option>
                 )}
-                {snapshot.wallet.accounts.map((account) => (
-                  <option
-                    key={`${account.source}-${account.address}`}
-                    value={account.address}
-                  >
-                    {account.label ?? account.name ?? "Wallet account"}
-                    {` · ${compactAddress(account.address)}`}
-                    {account.role ? ` · ${account.role}` : ""}
-                  </option>
-                ))}
+                {snapshot.wallet.accounts.map((account) => {
+                  const name = account.label?.trim() || account.name?.trim();
+                  const duplicateName =
+                    name &&
+                    snapshot.wallet.accounts.filter(
+                      (other) =>
+                        (other.label?.trim() || other.name?.trim()) === name,
+                    ).length > 1;
+                  return (
+                    <option
+                      key={`${account.source}-${account.address}`}
+                      value={account.address}
+                      title={account.address}
+                    >
+                      {name ?? compactAddress(account.address)}
+                      {duplicateName
+                        ? ` · ${compactAddress(account.address)}`
+                        : ""}
+                      {account.role ? ` · ${account.role}` : ""}
+                    </option>
+                  );
+                })}
               </select>
               <Address
                 value={snapshot.wallet.selectedAddress}

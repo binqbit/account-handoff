@@ -181,6 +181,17 @@ function reviewOperation(): OperationView {
     callHash: `0x${"c".repeat(64)}`,
   };
 }
+if (scenario === "same-names") {
+  snapshot = {
+    ...snapshot,
+    wallet: {
+      ...snapshot.wallet,
+      accounts: snapshot.wallet.accounts.map((account, index) =>
+        index < 2 ? { ...account, label: "Signer" } : account,
+      ),
+    },
+  };
+}
 if (scenario === "empty")
   snapshot = {
     ...snapshot,

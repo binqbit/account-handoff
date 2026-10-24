@@ -93,7 +93,9 @@
   display: block;
   color: #a9c1b6;
   font-size: 0.72rem;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .address-option code {
   display: block;
@@ -116,9 +118,6 @@
   gap: 5px;
   font-size: 0.75rem;
   margin: 8px 0 0;
-}
-.address-picker__selected span {
-  color: var(--muted);
 }
 .field__error {
   color: var(--negative);
@@ -288,4 +287,8 @@
     min-height: 40px;
     min-width: 36px;
   }
+}
+
+.address-chip__body > .address-wrap {
+  margin-top: 3px;
 }

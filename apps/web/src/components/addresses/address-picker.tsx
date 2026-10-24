@@ -7,6 +7,8 @@ import {
   type KeyboardEvent,
 } from "react";
 import { Icon } from "../icon";
+import { Address } from "./address";
+import { compactAddress } from "./format";
 import {
   addressError,
   addressKey,
@@ -45,6 +47,7 @@ export function AddressPicker({
   const input = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [active, setActive] = useState(-1);
   const query = value.trim().toLowerCase();
   const matches = options.filter((option) =>
@@ -56,6 +59,12 @@ export function AddressPicker({
   const chosen = options.find(
     (option) => addressKey(option.address, kind) === addressKey(value, kind),
   );
+  const hasSelection = !onSelect && !!addressKey(value, kind);
+  const displayValue =
+    hasSelection && !editing
+      ? (chosen?.label ??
+        (kind === "contract" ? "Contract address" : "Custom account"))
+      : value;
   const activeIndex = active >= 0 && active < matches.length ? active : -1;
   useEffect(() => {
     if (open && activeIndex >= 0)
@@ -124,7 +133,7 @@ export function AddressPicker({
           id={id}
           type="text"
           role="combobox"
-          value={value}
+          value={displayValue}
           required={required}
           disabled={disabled}
           autoComplete="off"
@@ -136,7 +145,7 @@ export function AddressPicker({
           aria-activedescendant={
             open && activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined
           }
-          aria-describedby={`${id}-help${error ? ` ${id}-error` : ""}`}
+          aria-describedby={`${id}-help${hasSelection ? ` ${id}-selected` : ""}${error ? ` ${id}-error` : ""}`}
           aria-invalid={!!error}
           placeholder={
             placeholder ??
@@ -144,7 +153,11 @@ export function AddressPicker({
               ? "Select or paste a contract address (0x…)"
               : "Search accounts or paste a native address")
           }
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setEditing(true);
+            setOpen(true);
+          }}
+          onBlur={() => setEditing(false)}
           onPaste={onPaste}
           onKeyDown={keyDown}
           onChange={(event) => {
@@ -196,8 +209,13 @@ export function AddressPicker({
                 </span>
                 <span className="address-option__body">
                   <strong>{option.label}</strong>
-                  <small>{option.detail}</small>
-                  <code>{option.address}</code>
+                  <small title={option.detail}>{option.detail}</small>
+                  <code title={option.address}>
+                    {compactAddress(option.address)}
+                  </code>
+                  <span className="sr-only">
+                    Full address: {option.address}
+                  </span>
                 </span>
                 {chosen?.address === option.address && (
                   <Icon name="check" size={16} />
@@ -216,11 +234,15 @@ export function AddressPicker({
           )}
         </div>
       )}
-      {chosen && !open && (
-        <p className="address-picker__selected">
-          <Icon name="check" size={13} />
-          {chosen.label} <span>· {chosen.detail}</span>
-        </p>
+      {hasSelection && (
+        <span id={`${id}-selected`} className="sr-only">
+          Selected address: {value}
+        </span>
+      )}
+      {hasSelection && !editing && !open && (
+        <div className="address-picker__selected">
+          <Address value={value} label={`${label} address`} />
+        </div>
       )}
       <p className={compact ? "sr-only" : "field__help"} id={`${id}-help`}>
         {help}

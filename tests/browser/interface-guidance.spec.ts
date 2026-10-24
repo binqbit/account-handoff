@@ -79,11 +79,10 @@ test("known contract input explains and checks the EVM address format", async ({
   await contract.fill(`0x${"b".repeat(40)}`);
   await page.getByLabel("Grant ID", { exact: true }).focus();
   await expect(contract).toHaveAttribute("aria-invalid", "false");
-  await expect(
-    page
-      .locator(".address-picker__selected")
-      .filter({ hasText: "Vestry contract" }),
-  ).toBeVisible();
+  await expect(contract).toHaveValue("Vestry contract");
+  await expect(contract).toHaveAccessibleDescription(
+    new RegExp(`0x${"b".repeat(40)}`),
+  );
   await expect(page.getByRole("alert")).toHaveCount(0);
 });
 

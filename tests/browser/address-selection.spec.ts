@@ -95,7 +95,14 @@ test("keyboard account selection and mobile suggestions retain labels, addresses
   await input.focus();
   await expect(
     page.getByRole("listbox").getByRole("option").filter({ hasText: "Alice" }),
-  ).toContainText(address(1));
+  ).toContainText("0x111111…111111");
+  await expect(
+    page
+      .getByRole("listbox")
+      .getByRole("option")
+      .filter({ hasText: "Alice" })
+      .locator("code"),
+  ).toHaveAttribute("title", address(1));
   await expect(
     page.getByRole("listbox").getByRole("option").filter({ hasText: "Alice" }),
   ).toContainText("Connected wallet");

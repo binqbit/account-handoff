@@ -137,9 +137,6 @@ textarea::placeholder {
   overflow-wrap: anywhere;
   min-width: 0;
 }
-.selected-option-detail > svg {
-  margin-top: 3px;
-}
 .mode-picker > button > svg {
   margin-bottom: 10px;
   color: #b9d0c0;

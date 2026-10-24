@@ -1,7 +1,7 @@
 import { useId } from "react";
 import type { OperationField } from "../../ui-contract";
 import { AddressPicker } from "../addresses/address-picker";
-import { Icon } from "../icon";
+import { Address } from "../addresses/address";
 
 export function OperationInput({
   field,
@@ -85,10 +85,9 @@ export function OperationInput({
         />
       )}
       {field.type === "select" && selected?.detail && (
-        <p className="selected-option-detail">
-          <Icon name="wallet" size={14} />
-          <code>{selected.detail}</code>
-        </p>
+        <div className="selected-option-detail">
+          <Address value={selected.detail} label={`${field.label} address`} />
+        </div>
       )}
       {(field.help || field.maxBytes) && (
         <p

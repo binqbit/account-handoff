@@ -104,13 +104,118 @@ test("the signer stays fully visible in operation review", async ({ page }) => {
   await page
     .getByRole("button", { name: "Prepare for review", exact: true })
     .click();
-  const route = page
-    .locator(".card")
-    .filter({
-      has: page.getByRole("heading", { name: "Execution route", exact: true }),
-    });
+  const route = page.locator(".card").filter({
+    has: page.getByRole("heading", { name: "Execution route", exact: true }),
+  });
   await expect(route.locator(".address-wrap > .address")).toHaveText(full);
   await expect(
     route.getByRole("button", { name: "Show full signer address" }),
+  ).toHaveCount(0);
+});
+
+test("selected addresses use account names at rest and exact values when edited", async ({
+  page,
+}) => {
+  await page.goto(`${harness}#setup`);
+  const input = page.getByRole("combobox", {
+    name: "Funder account F",
+    exact: true,
+  });
+  await input.fill("Alice");
+  await page
+    .getByRole("listbox")
+    .getByRole("option")
+    .filter({ hasText: "Alice" })
+    .click();
+  await page.getByLabel("Workspace name").focus();
+  await expect(input).toHaveValue("Alice");
+  await expect(input).toHaveAccessibleDescription(new RegExp(full));
+  const selected = page.locator(".address-picker").filter({ has: input });
+  await selected
+    .getByRole("button", { name: "Show full Funder account F address" })
+    .click();
+  await expect(selected.locator(".address-full")).toHaveText(full);
+  await input.focus();
+  await expect(input).toHaveValue(full);
+});
+
+test("selected group members keep their full addresses available", async ({
+  page,
+}) => {
+  await page.goto(`${harness}#setup`);
+  const input = page.getByRole("combobox", {
+    name: "Add account to Original group M0",
+    exact: true,
+  });
+  await input.fill("Alice");
+  await page
+    .getByRole("listbox")
+    .getByRole("option")
+    .filter({ hasText: "Alice" })
+    .click();
+  const group = page.getByRole("group", {
+    name: "Original group M0",
+    exact: true,
+  });
+  await group.getByRole("button", { name: "Show full Alice address" }).click();
+  await expect(group.locator(".address-full")).toHaveText(full);
+  await expect(
+    group.getByRole("button", { name: "Remove Alice from Original group M0" }),
+  ).toBeVisible();
+});
+
+test("accounts sharing a name remain distinguishable by address", async ({
+  page,
+}) => {
+  await page.goto(`${harness}?scenario=same-names`);
+  const selector = page.getByLabel("Personal account", { exact: true });
+  await expect(
+    selector.locator("option").filter({ hasText: "Signer" }),
+  ).toHaveText(["Signer · 0x111111…111111", "Signer · 0x222222…222222"]);
+  await selector.selectOption(`0x${"2".repeat(64)}`);
+  const selected = page.locator(".wallet-details");
+  await selected
+    .getByRole("button", { name: "Show full signing account address" })
+    .click();
+  await expect(selected.locator(".address-full")).toHaveText(
+    `0x${"2".repeat(64)}`,
+  );
+});
+
+test("a late clipboard response never marks the replacement account as copied", async ({
+  page,
+}) => {
+  await page.goto(harness);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: () =>
+          new Promise<void>((resolve) => {
+            (window as unknown as { finishCopy: () => void }).finishCopy =
+              resolve;
+          }),
+      },
+    });
+  });
+  const selected = page.locator(".wallet-details");
+  await selected
+    .getByRole("button", { name: "Copy signing account address", exact: true })
+    .click();
+  await page.getByLabel("Personal account").selectOption(`0x${"2".repeat(64)}`);
+  await page.evaluate(() =>
+    (window as unknown as { finishCopy: () => void }).finishCopy(),
+  );
+  await expect(
+    selected.getByRole("button", {
+      name: "Copy signing account address",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    selected.getByRole("button", {
+      name: "Copied signing account address",
+      exact: true,
+    }),
   ).toHaveCount(0);
 });

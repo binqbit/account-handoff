@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Icon } from "../icon";
 import { AddressPicker } from "./address-picker";
-import { addressKey, compactAddress, type AddressOption } from "./options";
+import { Address } from "./address";
+import { addressKey, type AddressOption } from "./options";
 
 export function AddressList({
   label,
@@ -96,7 +97,10 @@ export function AddressList({
               </span>
               <span className="address-chip__body">
                 <strong>{known?.label ?? `Account ${index + 1}`}</strong>
-                <code title={value}>{compactAddress(value)}</code>
+                <Address
+                  value={value}
+                  label={`${known?.label ?? `Account ${index + 1}`} address`}
+                />
               </span>
               <button
                 className="icon-button"
