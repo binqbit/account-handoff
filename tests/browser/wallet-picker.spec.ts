@@ -14,6 +14,14 @@ test("wallet accounts use a dark compact list with names and bounded addresses",
     exact: true,
   });
   await expect(picker).toHaveAttribute("data-selected-address", first);
+  await expect(picker.locator("strong")).toHaveText("Alice");
+  await expect(picker.locator("code")).toHaveText("0x111111…111111");
+  await expect(
+    page.getByRole("button", {
+      name: "Show full signing account address",
+      exact: true,
+    }),
+  ).toHaveCount(0);
   await expect(page.locator(".wallet-details select")).toHaveCount(0);
   await picker.click();
   const list = page.getByRole("listbox", {
@@ -125,4 +133,32 @@ test("an unselected wallet stays unselected until the user chooses an account", 
           .commands,
     ),
   ).toEqual([]);
+});
+
+test("failed wallet-address copying gives one plain recovery message", async ({
+  page,
+}) => {
+  await page.goto(harness);
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new Error("denied");
+        },
+      },
+    }),
+  );
+  await page
+    .getByRole("button", { name: "Copy signing account address", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toContainText("Copy failed");
+  await expect(page.getByRole("alert").locator("code")).toHaveText(first);
+  await page
+    .getByRole("combobox", { name: "Personal account", exact: true })
+    .click();
+  await expect(
+    page.getByRole("listbox", { name: "Wallet accounts" }),
+  ).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });

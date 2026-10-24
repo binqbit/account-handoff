@@ -2,7 +2,11 @@ import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { NativeConnection } from "@account-handoff/native-adapter";
 import { injectLocalWallet } from "../browser-wallet";
-import { readFixture, connectAndImport } from "../browser-support";
+import {
+  readFixture,
+  connectAndImport,
+  selectPersonalAccount,
+} from "../browser-support";
 
 export function registerBaselineScenarios() {
   test("loads the real baseline across accessible task routes without signing", async ({
@@ -21,6 +25,12 @@ export function registerBaselineScenarios() {
         "http://127.0.0.1:4175",
       );
       await connectAndImport(page, contents, fixture.endpoint);
+      const before = await connection.readAccount(fixture.input.beneficiary);
+      await selectPersonalAccount(page, wallet.accounts.A);
+      await selectPersonalAccount(page, wallet.accounts.B);
+      expect(
+        (await connection.readAccount(fixture.input.beneficiary)).proxies,
+      ).toEqual(before.proxies);
       for (const route of [
         "overview",
         "milestones",
@@ -70,7 +80,7 @@ export function registerBaselineScenarios() {
       );
       await connectAndImport(page, contents, fixture.endpoint);
       const before = await connection.readAccount(fixture.input.beneficiary);
-      await page.getByLabel("Personal account").selectOption(wallet.accounts.A);
+      await selectPersonalAccount(page, wallet.accounts.A);
       await page.evaluate(() => {
         window.location.hash = "review?action=GRC-ROTATION-ADD-M1";
       });

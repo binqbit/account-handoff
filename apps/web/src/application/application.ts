@@ -834,11 +834,6 @@ export class Application implements ApplicationFacade {
         descriptor,
       );
       await this.createWorkspace(verified.input, verified);
-      const w = this.workspace()!;
-      w.creationBlock = verified.creationBlock;
-      w.creationEvidence = verified.creationEvidence;
-      await this.save();
-      await this.refresh();
       this.notify(
         "LOCAL workspace imported; Pure provenance verified.",
         "positive",

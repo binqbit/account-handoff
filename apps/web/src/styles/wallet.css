@@ -80,3 +80,55 @@
   color: var(--muted);
   font-size: 0.8rem;
 }
+
+.wallet-account-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.wallet-account-identity {
+  display: block;
+  min-width: 0;
+}
+.wallet-account-identity strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.8rem;
+  font-weight: 550;
+}
+.wallet-account-identity code {
+  display: block;
+  color: #9eb7aa;
+  font-size: 0.63rem;
+  font-weight: 400;
+  margin-top: 2px;
+}
+.wallet-account-copy {
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 4px;
+  color: #a0b7ab;
+  background: transparent;
+  flex-shrink: 0;
+}
+.wallet-copy-error {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 80;
+  width: min(290px, calc(100vw - 28px));
+  padding: 12px;
+  background: #18282b;
+  border: 1px solid #425c56;
+  border-radius: 8px;
+  font-size: 0.76rem;
+}
+.wallet-copy-error code {
+  display: block;
+  margin-top: 7px;
+  overflow-wrap: anywhere;
+  user-select: text;
+}

@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import type { AppSnapshot } from "../../ui-contract";
-import { Address } from "../addresses/address";
+import { useWalletCopy } from "./use-wallet-copy";
 import { compactAddress } from "../addresses/format";
 import { Icon } from "../icon";
 
@@ -35,15 +35,19 @@ export function WalletAccountPicker({
   const name = (account: typeof selected) =>
     account?.label?.trim() || account?.name?.trim() || "Account";
   const activeIndex = Math.min(active, accounts.length - 1);
+  const clipboard = useWalletCopy(selected?.address ?? null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open && clipboard.state !== "failed") return;
     const outside = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
+      if (!root.current?.contains(event.target as Node)) {
+        setOpen(false);
+        clipboard.clear();
+      }
     };
     document.addEventListener("pointerdown", outside);
     return () => document.removeEventListener("pointerdown", outside);
-  }, [open]);
+  }, [open, clipboard.state, clipboard.clear]);
   useEffect(() => {
     if (open && activeIndex >= 0)
       document
@@ -100,41 +104,71 @@ export function WalletAccountPicker({
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
       }}
     >
-      <button
-        ref={trigger}
-        className="wallet-account-trigger"
-        type="button"
-        role="combobox"
-        aria-label="Personal account"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-controls={`${id}-accounts`}
-        aria-describedby={selected ? `${id}-selection` : undefined}
-        aria-activedescendant={
-          open && activeIndex >= 0 ? `${id}-account-${activeIndex}` : undefined
-        }
-        data-selected-address={selected?.address ?? ""}
-        disabled={disabled}
-        onKeyDown={keyDown}
-        onClick={() => {
-          setActive(Math.max(0, selectedIndex));
-          setOpen(!open);
-        }}
-      >
-        <span>{selected ? name(selected) : "Select an account"}</span>
-        <Icon name="down" size={14} />
-      </button>
-      {selected && (
-        <>
-          <span className="sr-only" id={`${id}-selection`}>
-            {name(selected)}: {selected.address}
+      <div className="wallet-account-summary">
+        <button
+          ref={trigger}
+          className="wallet-account-trigger"
+          type="button"
+          role="combobox"
+          aria-label="Personal account"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-controls={`${id}-accounts`}
+          aria-describedby={selected ? `${id}-selection` : undefined}
+          aria-activedescendant={
+            open && activeIndex >= 0
+              ? `${id}-account-${activeIndex}`
+              : undefined
+          }
+          data-selected-address={selected?.address ?? ""}
+          disabled={disabled}
+          onKeyDown={keyDown}
+          onClick={() => {
+            setActive(Math.max(0, selectedIndex));
+            setOpen(!open);
+          }}
+        >
+          <span className="wallet-account-identity">
+            <strong>{selected ? name(selected) : "Select an account"}</strong>
+            {selected && <code>{compactAddress(selected.address)}</code>}
           </span>
-          <Address
-            value={selected.address}
-            compact
-            label="signing account address"
-          />
-        </>
+          <Icon name="down" size={14} />
+        </button>
+        {selected && (
+          <button
+            type="button"
+            className="wallet-account-copy"
+            disabled={disabled}
+            aria-label={
+              clipboard.state === "copied"
+                ? "Copied signing account address"
+                : "Copy signing account address"
+            }
+            onClick={() => {
+              setOpen(false);
+              void clipboard.copy();
+            }}
+          >
+            <Icon
+              name={clipboard.state === "copied" ? "check" : "copy"}
+              size={14}
+            />
+          </button>
+        )}
+      </div>
+      {selected && (
+        <span className="sr-only" id={`${id}-selection`}>
+          {name(selected)}: {selected.address}
+        </span>
+      )}
+      <span className="sr-only" role="status">
+        {clipboard.state === "copied" ? "Signing account address copied" : ""}
+      </span>
+      {selected && clipboard.state === "failed" && !open && (
+        <div className="wallet-copy-error" role="alert">
+          Copy failed. Select this address to copy it manually.
+          <code>{selected.address}</code>
+        </div>
       )}
       {open && (
         <div

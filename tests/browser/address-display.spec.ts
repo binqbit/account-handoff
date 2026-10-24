@@ -69,7 +69,7 @@ test("copying a compact address uses its exact value and resets when the account
       exact: true,
     }),
   ).toBeVisible();
-  await expect(selected.locator(".address-value code")).toHaveText(
+  await expect(selected.locator(".wallet-account-trigger code")).toHaveText(
     "0x222222…222222",
   );
 });
@@ -184,11 +184,14 @@ test("accounts sharing a name remain distinguishable by address", async ({
   await selector.press("Escape");
   await selectWalletAccount(page, `0x${"2".repeat(64)}`);
   const selected = page.locator(".wallet-details");
-  await selected
-    .getByRole("button", { name: "Show full signing account address" })
-    .click();
-  await expect(selected.locator(".address-full")).toHaveText(
-    `0x${"2".repeat(64)}`,
+  await expect(
+    selected.getByRole("button", { name: "Show full signing account address" }),
+  ).toHaveCount(0);
+  await expect(selected.locator(".wallet-account-trigger code")).toHaveText(
+    "0x222222…222222",
+  );
+  await expect(selector).toHaveAccessibleDescription(
+    new RegExp(`0x${"2".repeat(64)}`),
   );
 });
 

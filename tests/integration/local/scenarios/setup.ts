@@ -15,6 +15,7 @@ import {
   runId,
   connectNetworkAndWallet,
   performApproval,
+  selectPersonalAccount,
   captureActualWorkspace,
 } from "../browser-support";
 
@@ -46,7 +47,7 @@ export function registerSetupScenarios() {
         expect(state.mappedTo, `${role} must begin without mapping`).toBeNull();
       }
       await connectNetworkAndWallet(page, fixture.endpoint);
-      await page.getByLabel("Personal account").selectOption(wallet.accounts.A);
+      await selectPersonalAccount(page, wallet.accounts.A);
       await page.getByRole("button", { name: /Workspaces/ }).click();
       await page
         .getByRole("button", { name: "New workspace", exact: true })

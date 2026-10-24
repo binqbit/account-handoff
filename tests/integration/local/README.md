@@ -29,7 +29,7 @@ The opt-in environment variable prevents accidental local transactions during or
 
 The suite verifies:
 
-1. Actual workspace import, six task routes, automated accessibility and zero wallet signatures during observation.
+1. Actual workspace import, account switching, six task routes, automated accessibility and zero wallet signatures during observation. The native proxy inventory stays unchanged while the selected wallet account changes.
 2. Explicit wallet rejection, no signed result and unchanged native proxy state.
 3. Six deliberate signatures: A/B add M1, A/D remove M0, then separate A/D milestone-1 submission. The test reads actual proxy inventory, persistent mapping and grant state after those operations, checks the website's history, and verifies that reload does not sign again.
 4. A separate workspace with Pure index 1 and new, initially unmapped funder/reviewer accounts. Twenty-seven signatures exercise funding, Pure creation, mapping, grant creation, initial submission, both reviewer approvals and the complete handoff followed by a second controller change on the same Pure and grant. Native reads independently verify the resulting mappings, grant states, vesting lock and authority. The second handoff does not create or resubmit a milestone. All state-changing calls still originate from the application's explicit review/sign/send controls.

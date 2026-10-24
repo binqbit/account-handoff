@@ -77,6 +77,21 @@ export async function connectAndImport(
   await expect(
     page.getByRole("heading", { name: new RegExp(`LOCAL ${runId}`) }),
   ).toBeVisible();
+  await expect(page.locator(".activity-indicator")).toHaveCount(0, {
+    timeout: 180000,
+  });
+}
+export async function selectPersonalAccount(page: Page, address: string) {
+  const picker = page.getByRole("combobox", {
+    name: "Personal account",
+    exact: true,
+  });
+  await picker.click();
+  await page
+    .getByRole("listbox", { name: "Wallet accounts", exact: true })
+    .locator(`[data-address="${address}"]`)
+    .click();
+  await expect(picker).toHaveAttribute("data-selected-address", address);
 }
 export async function performApproval(
   page: Page,
@@ -86,7 +101,7 @@ export async function performApproval(
   fields: Record<string, string> = {},
 ) {
   await test.step(`${role}: ${actionId}`, async () => {
-    await page.getByLabel("Personal account").selectOption(address);
+    await selectPersonalAccount(page, address);
     await page.evaluate((id) => {
       window.location.hash = `review?action=${encodeURIComponent(id)}`;
     }, actionId);
