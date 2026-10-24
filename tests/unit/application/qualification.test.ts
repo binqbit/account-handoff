@@ -164,6 +164,12 @@ describe("operation-specific LOCAL qualification", () => {
     ).toEqual(["Q-RUNTIME"]);
     expect(result.apiBindings).toEqual([]);
   });
+  it("keeps immutable profile qualification content stable across finalized heads", async () => {
+    const input = await localFixture();
+    const first = await buildLocalQualification(input);
+    input.fingerprint.anchor = { hash: `0x${"ab".repeat(32)}`, number: 500 };
+    expect(await buildLocalQualification(input)).toEqual(first);
+  });
   it("derives API method codec IDs from exact metadata and refuses another advertised API version", async () => {
     const { descriptor, fingerprint } = await localFixture();
     const source = { ...evidence, sourceId: descriptor.sourceCommit! };

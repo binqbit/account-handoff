@@ -70,6 +70,13 @@ export interface ChainView {
   grant: GrantState | null;
   profile: ChainProfile;
   localDescriptor: LocalDescriptor | null;
+  currentContinuity?: {
+    certificateDigest: string;
+    profileDigest: string;
+    blockHash: Hex;
+    status: "matched" | "drift" | "unavailable";
+    reasons: string[];
+  };
 }
 export interface LocalDescriptor {
   mode: "LOCAL";

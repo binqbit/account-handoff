@@ -160,13 +160,13 @@ export async function buildLocalQualification(input: {
     bindingEvidence: {
       rawMetadataEvidence: {
         kind: "native_chain",
-        locator: `${f.anchor.hash}:metadata`,
+        locator: `native:${f.genesis}:metadata:${f.metadataSha256}`,
         sourceId: f.metadataSha256,
         contentSha256: f.metadataSha256,
       },
       rawRuntimeCodeEvidence: {
         kind: "native_chain",
-        locator: `${f.anchor.hash}:code`,
+        locator: `native:${f.genesis}:code:${f.runtimeCodeHash}`,
         sourceId: f.runtimeCodeHash,
         contentSha256: null,
       },

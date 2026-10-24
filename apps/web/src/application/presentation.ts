@@ -214,10 +214,17 @@ function proof(
       eq(chain.grant.grantee, baseline.grant.grantee) &&
       eq(chain.grant.funder, baseline.grant.funder) &&
       chain.grant.milestones.every((milestone) => milestone.round === 0);
+    const current = chain?.currentContinuity;
+    const currentMatched =
+      current?.status === "matched" &&
+      current.blockHash === chain?.fingerprint.anchor.hash &&
+      current.profileDigest === chain?.profile.digest &&
+      current.certificateDigest === workspace.continuityCertificate?.digest;
     if (
       state !== "M1" ||
       !mapped(stateFor(chain, workspace.pure)) ||
       !grantMatches ||
+      !currentMatched ||
       workspace.continuityCertificate?.verdict ===
         "historically_verified_current_drift"
     )
@@ -340,14 +347,23 @@ export function actionViews(
       : []),
   ];
   const requirePure = (): string[] =>
-    workspace.pure ? [] : ["Спочатку створіть і підтвердьте бенефіціара P."];
+    !workspace.pure
+      ? ["Спочатку створіть і підтвердьте бенефіціара P."]
+      : workspace.creationEvidence.some(
+            (entry) =>
+              entry.kind === "native_chain" &&
+              /^0x[0-9a-f]{64}\/\d+$/.test(entry.locator) &&
+              /^0x[0-9a-f]{64}$/.test(entry.sourceId ?? ""),
+          )
+        ? []
+        : ["Потрібне підтверджене походження Pure з події PureCreated."];
   const requireMapping = (): string[] =>
     mapped(pureState)
       ? []
       : ["Потрібне підтверджене постійне mapping P → h(P) → P."];
   const requireGrant = (): string[] =>
     workspace.grantId !== null && workspace.contract && chain?.grant
-      ? []
+      ? requirePure()
       : ["Спочатку створіть або перевірте грант для бенефіціара P."];
   const grant = chain?.grant;
   const milestone = (index: number) => grant?.milestones[index];

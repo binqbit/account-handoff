@@ -48,7 +48,14 @@ function fixture(): { workspace: WorkspaceRecord; chain: ChainView } {
     pure: P!,
     contract: hex("d", 20),
     grantId: "0",
-    creationEvidence: [],
+    creationEvidence: [
+      {
+        ...evidence,
+        kind: "native_chain",
+        locator: `${hex("1")}/0`,
+        sourceId: hex("2"),
+      },
+    ],
     history: [],
     baseline: null,
   };
@@ -281,6 +288,13 @@ function certificate(
     localContractRevision: "grc-v2-local-1",
   };
   expect(validateRecord(result).ok).toBe(true);
+  chain.currentContinuity = {
+    certificateDigest: result.digest,
+    profileDigest: chain.profile.digest,
+    blockHash: chain.fingerprint.anchor.hash,
+    status: "matched",
+    reasons: [],
+  };
   return result;
 }
 describe("UI presentation preserves authoritative distinctions", () => {
@@ -322,6 +336,28 @@ describe("UI presentation preserves authoritative distinctions", () => {
     receiptGate.stage = "finalized_output";
     expect(
       actionViews(workspace, chain, R1!).every((action) => !action.enabled),
+    ).toBe(true);
+  });
+  it("blocks unproven manually entered Pure while keeping pre-P funding available", () => {
+    const { workspace, chain } = fixture();
+    workspace.creationEvidence = [];
+    const actions = actionViews(workspace, chain, R1!);
+    for (const id of [
+      "GRC-SETUP-MAP-P",
+      "GRC-GRANT-CREATE",
+      "GRC-GRANT-APPROVE",
+      "GRC-ROTATION-ADD-M1",
+      "GRC-GRANT-SUBMIT-M1",
+    ]) {
+      expect(actions.find((action) => action.id === id)?.blockers).toContain(
+        "Потрібне підтверджене походження Pure з події PureCreated.",
+      );
+    }
+    expect(
+      actions.find((action) => action.id === "GRC-SETUP-FUND-M0")?.enabled,
+    ).toBe(true);
+    expect(
+      actions.find((action) => action.id === "GRC-SETUP-FUND-ACTOR")?.enabled,
     ).toBe(true);
   });
   it("does not mistake an extra authority for a completed handoff", () => {
