@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "vite --config apps/web/vite.config.ts --host 127.0.0.1",
     "build": "npm run verify:native && npm run generate:contracts && tsc --noEmit && vite build --config apps/web/vite.config.ts",
-    "build:testnet": "npm run verify:native && npm run generate:contracts && tsc --noEmit && vite build --config apps/web/vite.config.ts --mode testnet",
+    "build:testnet": "node scripts/testnet/verify-artifacts.mjs && npm run verify:native && npm run generate:contracts && tsc --noEmit && vite build --config apps/web/vite.config.ts --mode testnet",
     "package:testnet": "node scripts/testnet/package.mjs",
     "preview": "vite preview --config apps/web/vite.config.ts --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
@@ -41,7 +41,11 @@
     "local:reconcile": "node scripts/local/reconcile.mjs",
     "local:refresh-descriptor": "node scripts/local/refresh-descriptor.mjs",
     "generate:native": "node scripts/dev/generate-native.mjs",
-    "verify:native": "node scripts/dev/verify-generated-native.mjs"
+    "verify:native": "node scripts/dev/verify-generated-native.mjs",
+    "verify:testnet": "node --dns-result-order=ipv4first --import tsx scripts/testnet/verify.mts",
+    "testnet:fork": "node scripts/testnet/fork.mjs",
+    "test:testnet:runtime": "node --import tsx tests/integration/testnet/runtime.mts",
+    "test:testnet:browser": "playwright test --config tests/integration/testnet/playwright.config.ts"
   },
   "dependencies": {
     "@polkadot/util": "14.0.3",

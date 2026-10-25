@@ -88,6 +88,7 @@ try {
     "README.md",
     "network.json",
     "vestry-deployment.json",
+    "runtime-verification.json",
   ])
     await copyFile(join(root, "infra/testnet", file), join(directory, file));
   const files = {};
@@ -96,6 +97,9 @@ try {
   );
   const deployment = JSON.parse(
     await readFile(join(directory, "vestry-deployment.json"), "utf8"),
+  );
+  const runtimeVerification = JSON.parse(
+    await readFile(join(directory, "runtime-verification.json"), "utf8"),
   );
   if (
     deployment.address !== network.contractAddress ||
@@ -119,7 +123,10 @@ try {
         mode: "testnet",
         network,
         capabilities: {
-          readOnlyPreview: true,
+          readOnlyPreview: runtimeVerification.status !== "passed",
+          runtimeProfileVerified: runtimeVerification.status === "passed",
+          runtimeVerificationScope: "isolated PortalDot runtime fork",
+          publicTestnetJourneyExecuted: false,
           testnetTransactionsQualified: false,
           contractAddress: network.contractAddress,
         },

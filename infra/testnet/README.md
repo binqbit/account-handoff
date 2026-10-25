@@ -2,7 +2,7 @@
 
 This package contains a prebuilt production website. No npm install, source checkout, local chain, `.env`, or private key is needed to serve it.
 
-**Status: read-only testnet preview.** You can connect to the real PortalDot V3 testnet, inspect network readiness, connect a native wallet, read its public accounts and create local multisig workspace records. Transaction preparation/signing, existing-beneficiary verification and the complete grant/handoff journey still require testnet-specific runtime and contract qualification. They are not enabled by this package. The separately recorded working demo used LOCAL.
+The website connects to PortalDot V3 with its own pinned metadata, automatic-mapping policy and verified Vestry deployment. Operations are enabled only when the current runtime matches the retained qualification and the selected wallet, authority, mapping and funding checks pass. A runtime change blocks preparation. The release manifest distinguishes runtime verification from a completed public-testnet journey; a successful local fork does not prove public-network finality or wallet-extension compatibility.
 
 The original, unmodified **Vestry** contract is deployed at `0xb8e2d057cf231f265dd6f3841216f4727edad345`. The deployment finalized in block **189561** and its runtime bytecode was verified against the pinned compiler artifact. See [vestry-deployment.json](vestry-deployment.json) for its transaction and code hashes. The package records this address in `network.json` and `release.json`; it neither redeploys the contract nor enables unqualified testnet transactions.
 
@@ -55,6 +55,7 @@ The included Node server binds to loopback by default and is sufficient for loca
 - `Dockerfile`, `compose.yaml`, `.dockerignore`: optional container startup.
 - `network.json`: expected network identity.
 - `vestry-deployment.json`: finalized original-contract deployment and bytecode verification record.
+- `runtime-verification.json`: scope, hashes and retained runtime capability verification.
 - `release.json`: source revision, build mode, capabilities and artifact hashes.
 - `SHA256SUMS`: checksums of all package files except itself; run `sha256sum -c SHA256SUMS` on Linux.
 

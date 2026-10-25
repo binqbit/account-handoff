@@ -6,6 +6,8 @@ The grant must name the Pure account's correct application identity when it is c
 
 The application checks the network profile, identity mapping, account permissions, balances and grant state before preparing an operation. Unsupported configuration or incomplete evidence blocks the affected action.
 
+PortalDot uses automatic account mapping. The application still requires the funded native account's persisted reverse mapping to resolve to that same account; it does not substitute a fallback address or submit manual mapping calls. LOCAL uses its separately qualified explicit-mapping configuration.
+
 ## Supported multisig profile
 
 The current profile uses two-of-three native multisigs and replaces one member per handoff. It supports successive handoffs; it does not provide arbitrary thresholds or a general-purpose wallet dashboard. The configured approval sequence remains explicit in each operation review.

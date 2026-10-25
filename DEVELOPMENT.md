@@ -37,7 +37,17 @@ The original, unmodified Vestry is deployed on PortalDot V3 at `0xb8e2d057cf231f
 
 The local `.env` stores the public address as `AH_TESTNET_VESTRY_ADDRESS`; [.env.example](.env.example) documents the same value. `infra/testnet/network.json` is the canonical public build configuration. The static build deliberately does not read `.env`, which may also contain wallet secrets.
 
-The current testnet artifact remains a **read-only preview**: network identity/readiness and public account reads are available; testnet transactions remain blocked by the existing runtime, wallet, and contract qualification checks. A verified contract deployment does not qualify the complete grant/handoff journey, which has been verified separately on LOCAL.
+DEMO loads its own pinned metadata and deployment binding, supports the runtime's automatic account mapping, and verifies the current code before enabling operations. [Runtime verification](infra/testnet/runtime-verification.json) records the exact artifact and capability evidence; missing evidence or a changed runtime blocks preparation. LOCAL source/build evidence is never substituted for PortalDot evidence. A locally executed PortalDot runtime fork does not establish public-network consensus, wallet-extension behavior or a completed testnet journey.
+
+Run the public-network compatibility check without opening a wallet or sending a transaction:
+
+```bash
+npm run verify:testnet
+```
+
+This checks the pinned profile, live contract code and reads, unsigned call encoding, and native signing-payload preparation. It writes a report under `.agent-workspace/verification/testnet/`. It does not sign or broadcast. The build also verifies the metadata hash, dependency lock and retained adapter-source hashes. Requalify changed runtime artifacts or adapters rather than changing their evidence to a passing status manually.
+
+The [isolated PortalDot integration checks](tests/integration/testnet/README.md) execute the exact testnet runtime locally, then exercise the real DEMO interface against that fork. Test tooling and generated state stay in `.agent-workspace`; they are not production dependencies. Passing compatibility checks does not fund wallets or authorize a public-network run.
 
 Create the standalone archive with `npm run package:testnet` (requires `zip` and `unzip`), or `npm run package:testnet -- /absolute/path/release.zip`. The default output is `private-docs/Account Handoff Testnet.zip` with a SHA-256 sidecar. This command rebuilds the assets, copies only approved static files and startup resources, and records the Git revision and checksums. The extracted package runs with `node serve.mjs` or `docker compose up --build -d` at `http://127.0.0.1:8080`; see [the package instructions](infra/testnet/README.md). Public static hosting uses only the contents of `www/`.
 
