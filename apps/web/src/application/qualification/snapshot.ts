@@ -198,7 +198,10 @@ export async function completePreparationSnapshot(
         value: facts,
         anchor: initial.anchor,
         decoderId:
-          profile.bindingEvidence.generatedNativeTypesSha256 ?? "unqualified",
+          profile.bindingEvidence.generatedNativeTypesSha256 ??
+          profile.apiBindings.find((binding) => binding.status === "qualified")
+            ?.codecArtifactSha256 ??
+          "unqualified",
         evidence: [evidence],
         errorCode: null,
       },

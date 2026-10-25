@@ -296,6 +296,31 @@ describe("operation-specific LOCAL qualification", () => {
       genesis: HASH,
       runtimeCodeHash: HASH,
       metadataSha256: DIGEST,
+      apiBindings: [
+        {
+          name: "ReviveApi",
+          version: "2",
+          status: "qualified" as const,
+          codecArtifactSha256: DIGEST,
+          sourceEvidence: [evidence],
+          boundRuntimeCodeHash: HASH,
+          boundMetadataSha256: DIGEST,
+          methodManifestSha256: DIGEST,
+          traitSourceEvidence: [evidence],
+          runtimeImplementationEvidence: [evidence],
+          methods: [
+            {
+              methodName: "call",
+              rpcMethodName: "ReviveApi_call",
+              canonicalSignature: "synthetic",
+              inputCodecArtifactSha256: DIGEST,
+              outputCodecArtifactSha256: DIGEST,
+              typeRegistrySha256: DIGEST,
+              sourceEvidence: [evidence],
+            },
+          ],
+        },
+      ],
       gateRecords: ["Q-RUNTIME", "Q-CURRENCY", "Q-ADAPTER", "Q-RECEIPTS"].map(
         (id) => capability(id as GateId),
       ),
@@ -375,6 +400,7 @@ describe("operation-specific LOCAL qualification", () => {
     const result = await completePreparationSnapshot(input);
     expect(result.blockers).toEqual([]);
     expect(result.snapshot.completeness).toBe("complete");
+    expect(result.snapshot.observations.preparation!.decoderId).toBe(DIGEST);
     const observed = result.snapshot.observations.preparation!.value as {
       accounts: Record<
         string,
