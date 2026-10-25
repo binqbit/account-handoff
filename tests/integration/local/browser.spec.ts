@@ -1,6 +1,7 @@
 /** Real-native scenarios register in this order and run in one worker. */
 import { test } from "@playwright/test";
 import { registerBaselineScenarios } from "./scenarios/baseline";
+import { registerCancellationScenarios } from "./scenarios/cancellation";
 import { registerHandoffScenarios } from "./scenarios/handoff";
 import { registerSetupScenarios } from "./scenarios/setup";
 import { localWalletTrace } from "./browser-wallet";
@@ -25,6 +26,7 @@ test.describe("real LOCAL website and native wallet boundary", () => {
     "Run explicitly with AH_LOCAL_BROWSER=1 after seeding a dedicated LOCAL baseline.",
   );
   registerBaselineScenarios();
+  registerCancellationScenarios();
   registerHandoffScenarios();
   registerSetupScenarios();
 });

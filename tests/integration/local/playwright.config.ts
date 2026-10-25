@@ -1,6 +1,7 @@
 import { defineConfig } from "@playwright/test";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 const explicitBrowser = process.env["CHROME_PATH"];
 if (explicitBrowser && !existsSync(explicitBrowser))
   throw new Error("CHROME_PATH must name an existing browser executable");
@@ -12,12 +13,14 @@ const executablePath =
     "/usr/bin/chromium",
     "/usr/bin/chromium-browser",
   ].find((candidate) => existsSync(candidate));
-const outputDirectory = fileURLToPath(
-  new URL(
-    "../../../.agent-workspace/verification/local-browser/current",
-    import.meta.url,
-  ),
-);
+const outputDirectory = process.env["AH_LOCAL_BROWSER_OUTPUT"]
+  ? resolve(process.env["AH_LOCAL_BROWSER_OUTPUT"])
+  : fileURLToPath(
+      new URL(
+        "../../../.agent-workspace/verification/local-browser/current",
+        import.meta.url,
+      ),
+    );
 export default defineConfig({
   testDir: ".",
   testMatch: "browser.spec.ts",

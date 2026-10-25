@@ -7,6 +7,7 @@ import {
 } from "@account-handoff/native-adapter";
 import { readGrant } from "@account-handoff/grant-adapter";
 import { injectLocalWallet } from "../browser-wallet";
+import { captureJournalEvidence } from "../journal-evidence";
 import {
   readFixture,
   connectAndImport,
@@ -91,6 +92,7 @@ export function registerHandoffScenarios() {
         "A",
         "D",
       ]);
+      await captureJournalEvidence(page, testInfo, connection, 6);
       await page.getByRole("button", { name: "History", exact: true }).click();
       await expect(page.getByText("Continued", { exact: true })).toBeVisible();
       const axe = await new AxeBuilder({ page })
