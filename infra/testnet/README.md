@@ -6,6 +6,8 @@ This package contains a prebuilt production website. No npm install, source chec
 
 The original, unmodified **Vestry** contract is deployed at `0xb8e2d057cf231f265dd6f3841216f4727edad345`. The deployment finalized in block **189561** and its runtime bytecode was verified against the pinned compiler artifact. See [vestry-deployment.json](vestry-deployment.json) for its transaction and code hashes. The package records this address in `network.json` and `release.json`; it neither redeploys the contract nor enables unqualified testnet transactions.
 
+Testnet grant forms default to a **10 tPOT vested tranche** and a **0.1 tPOT unvested tranche**. The vested amount is the verified network minimum; 0.1 tPOT is a small payment matching the account existential deposit, rather than an absolute minimum for an already funded recipient. The 1,000-block vesting period divides the first amount exactly. Native storage and multisig/proxy deposits are determined by the runtime and are separate from grant principal and fees. These smaller defaults do not enable the blocked transaction paths.
+
 ## Start with Node
 
 Install Node.js 24.10 or newer. Extract the entire archive, open a terminal in `Account Handoff Testnet`, and run:

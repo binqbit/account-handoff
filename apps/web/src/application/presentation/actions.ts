@@ -5,6 +5,7 @@ import {
 } from "@account-handoff/contracts";
 import type { ActionView, OperationField } from "../../ui-contract";
 import type { ChainView, WorkspaceRecord } from "../models";
+import testnet from "../../../../../infra/testnet/network.json";
 import { proof } from "./continuity";
 import {
   authority,
@@ -72,6 +73,8 @@ export function actionViews(
 ): ActionView[] {
   if (!workspace) return [];
   const symbol = chain?.fingerprint.tokenSymbol ?? "native";
+  const isPortalDotTestnet =
+    workspace.mode === "DEMO" && workspace.genesis === testnet.genesisHash;
   const current = authority(workspace, chain);
   const actorState = stateFor(chain, selectedSigner);
   const pureState = stateFor(chain, workspace.pure);
@@ -170,8 +173,10 @@ export function actionViews(
       type: "number",
       inputMode: "decimal",
       required: true,
-      value: "18",
-      help: `The first milestone's amount in ${symbol}, not raw base units. It is held in the grant until release.`,
+      value: isPortalDotTestnet ? "10" : "18",
+      help: isPortalDotTestnet
+        ? "PortalDot requires at least 10 tPOT for a vested tranche."
+        : `The first milestone's amount in ${symbol}, not raw base units. It is held in the grant until release.`,
     },
     {
       name: "secondAmount",
@@ -179,7 +184,7 @@ export function actionViews(
       type: "number",
       inputMode: "decimal",
       required: true,
-      value: "12",
+      value: isPortalDotTestnet ? "0.1" : "12",
       help: `The next milestone's amount in ${symbol}. The funder needs both tranches plus transaction costs.`,
     },
     {
@@ -187,7 +192,7 @@ export function actionViews(
       label: "First tranche vesting: blocks",
       type: "number",
       required: true,
-      value: "1800",
+      value: isPortalDotTestnet ? "1000" : "1800",
       help: "Number of chain blocks over which the first released tranche unlocks. Enter 0 for no vesting; this is not a number of seconds.",
     },
     {
