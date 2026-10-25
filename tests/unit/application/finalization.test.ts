@@ -183,7 +183,7 @@ describe("finalization after a workspace journal is reopened", () => {
         profile: p,
         accounts: {},
         grant: null,
-        localDescriptor: null,
+        descriptor: null,
       };
       access.connection = {
         fingerprint: vi.fn().mockResolvedValue(fingerprint),

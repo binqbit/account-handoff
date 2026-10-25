@@ -1,3 +1,4 @@
+import type { NetworkDescriptor } from "./network-descriptor";
 import type { ChainProfile } from "@account-handoff/contracts";
 import {
   NativeConnection,
@@ -9,7 +10,7 @@ import {
   type GrantHistory,
 } from "@account-handoff/grant-adapter";
 import type { AppSnapshot } from "../ui-contract";
-import type { ChainView, WorkspaceRecord, LocalDescriptor } from "./models";
+import type { ChainView, WorkspaceRecord } from "./models";
 import type { WalletAccount } from "@account-handoff/wallet-adapter";
 export async function readWorkspaceState(
   connection: NativeConnection,
@@ -95,7 +96,7 @@ export async function readWorkspaceState(
 export function connectedNetwork(
   current: AppSnapshot["network"],
   f: NativeFingerprint,
-  d: LocalDescriptor | null,
+  d: NetworkDescriptor | null,
   profile: ChainProfile,
   walletConnected: boolean,
 ): AppSnapshot["network"] {
@@ -107,7 +108,7 @@ export function connectedNetwork(
     blockHash: f.anchor.hash,
     blockNumber: String(f.anchor.number),
     runtimeVersion: `${f.specName} / ${f.specVersion}`,
-    runId: d?.runId ?? null,
+    runId: d?.mode === "LOCAL" ? d.runId : null,
     updatedAt: new Date().toISOString(),
     error: null,
     readiness: [

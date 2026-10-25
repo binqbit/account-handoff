@@ -1,3 +1,4 @@
+import type { NetworkDescriptor } from "./network-descriptor";
 import { createKeyMulti } from "@polkadot/util-crypto";
 import { blake2AsHex, u8aToHex } from "dedot/utils";
 import { keccak256 } from "viem";
@@ -93,10 +94,12 @@ function equalHex(left: unknown, right: unknown): boolean {
 }
 function fingerprintMatches(
   fingerprint: NativeFingerprint,
-  expected: LocalDescriptor,
+  expected: NetworkDescriptor,
 ): void {
   requireValue(
-    fingerprint.genesis === (expected.genesisHash ?? expected.genesis),
+    fingerprint.genesis ===
+      (expected.genesisHash ??
+        (expected.mode === "LOCAL" ? expected.genesis : undefined)),
     "LOCAL genesis differs from the qualified run",
   );
   requireValue(
@@ -110,7 +113,7 @@ function fingerprintMatches(
     "Runtime version differs from the qualified LOCAL run",
   );
 }
-async function verifyContractAt(
+export async function verifyContractAt(
   connection: NativeConnection,
   address: Hex,
   expectedHash: Hex,
@@ -237,10 +240,10 @@ async function evidence(receipt: NativeReceipt): Promise<EvidenceRef> {
 }
 
 /** Validate only. Imported claims never mutate local records or install an endpoint. */
-export async function validateLocalWorkspaceImport(
+async function validateWorkspaceImport(
   raw: unknown,
   connection: NativeConnection,
-  expectedRun: LocalDescriptor,
+  expectedRun: NetworkDescriptor,
 ): Promise<VerifiedLocalWorkspaceImport> {
   const packet = object(raw);
   exactFields(
@@ -259,24 +262,29 @@ export async function validateLocalWorkspaceImport(
     "LOCAL package",
   );
   requireValue(
-    connection.mode === "LOCAL" &&
-      expectedRun.mode === "LOCAL" &&
-      expectedRun.qualified === true,
+    expectedRun.mode === "DEMO" ||
+      (connection.mode === "LOCAL" && expectedRun.qualified === true),
     "A qualified LOCAL run is required",
   );
   requireValue(
-    packet["format"] === "account-handoff-local-workspace" &&
+    packet["format"] ===
+      (expectedRun.mode === "LOCAL"
+        ? "account-handoff-local-workspace"
+        : "account-handoff-workspace") &&
       (packet["version"] === 1 || packet["version"] === 2) &&
-      packet["mode"] === "LOCAL",
+      packet["mode"] === expectedRun.mode,
     "Unsupported LOCAL workspace format",
   );
   requireValue(
-    packet["runId"] === expectedRun.runId &&
-      packet["generation"] === expectedRun.generation,
+    expectedRun.mode !== "LOCAL" ||
+      (packet["runId"] === expectedRun.runId &&
+        packet["generation"] === expectedRun.generation),
     "Imported workspace belongs to another LOCAL run or generation",
   );
   requireValue(
-    packet["genesisHash"] === (expectedRun.genesisHash ?? expectedRun.genesis),
+    packet["genesisHash"] ===
+      (expectedRun.genesisHash ??
+        (expectedRun.mode === "LOCAL" ? expectedRun.genesis : undefined)),
     "Imported workspace belongs to another genesis",
   );
   requireValue(
@@ -285,7 +293,8 @@ export async function validateLocalWorkspaceImport(
     "Connection differs from the qualified LOCAL endpoint",
   );
   requireValue(
-    expectedRun.status === "running" && !!expectedRun.contract,
+    (expectedRun.mode === "DEMO" || expectedRun.status === "running") &&
+      !!expectedRun.contract,
     "The LOCAL run is retired or has no bound contract",
   );
   const currentOnly = packet["version"] === 2;
@@ -570,7 +579,7 @@ export async function verifyWorkspaceConnection(
   input: WorkspaceInput,
   creation: { blockHash: string; transactionHash: string },
   connection: NativeConnection,
-  expectedRun: LocalDescriptor,
+  expectedRun: NetworkDescriptor,
 ): Promise<VerifiedLocalWorkspaceImport> {
   const blockHash = hex(creation.blockHash, 32);
   const transactionHash = hex(creation.transactionHash, 32);
@@ -581,14 +590,20 @@ export async function verifyWorkspaceConnection(
     newMembers: _next,
     ...current
   } = input;
-  return validateLocalWorkspaceImport(
+  return validateWorkspaceImport(
     {
-      format: "account-handoff-local-workspace",
+      format:
+        expectedRun.mode === "LOCAL"
+          ? "account-handoff-local-workspace"
+          : "account-handoff-workspace",
       version: 2,
-      mode: "LOCAL",
-      runId: expectedRun.runId,
-      generation: expectedRun.generation,
-      genesisHash: expectedRun.genesisHash ?? expectedRun.genesis,
+      mode: expectedRun.mode,
+      ...(expectedRun.mode === "LOCAL"
+        ? { runId: expectedRun.runId, generation: expectedRun.generation }
+        : {}),
+      genesisHash:
+        expectedRun.genesisHash ??
+        (expectedRun.mode === "LOCAL" ? expectedRun.genesis : undefined),
       endpoint: connection.endpoint,
       input: current,
       creation: {
@@ -601,4 +616,12 @@ export async function verifyWorkspaceConnection(
     connection,
     expectedRun,
   );
+}
+
+export async function validateLocalWorkspaceImport(
+  raw: unknown,
+  connection: NativeConnection,
+  expectedRun: LocalDescriptor,
+): Promise<VerifiedLocalWorkspaceImport> {
+  return validateWorkspaceImport(raw, connection, expectedRun);
 }

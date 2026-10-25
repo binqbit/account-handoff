@@ -160,7 +160,7 @@ async function fixture() {
     fingerprint,
     accounts: { [pure]: state },
     grant,
-    localDescriptor: null,
+    descriptor: null,
   };
   const currentAnchor = anchor();
   currentAnchor.blockNumber = "40";

@@ -1,3 +1,4 @@
+import type { NetworkDescriptor } from "./network-descriptor";
 import {
   canonicalJson,
   parseBoundedJson,
@@ -29,12 +30,7 @@ import type {
   OperationView,
   RuntimeMode,
 } from "../ui-contract";
-import type {
-  ChainView,
-  WorkspaceRecord,
-  LocalDescriptor,
-  PendingOperation,
-} from "./models";
+import type { ChainView, WorkspaceRecord, PendingOperation } from "./models";
 import { actionViews, workspaceView } from "./presentation";
 import {
   validateLocalWorkspaceImport,
@@ -58,7 +54,7 @@ import { updateWorkspaceCertificate } from "./certificate-state";
 import { operationPostconditions } from "./operation-postconditions";
 import { finalizeOperation } from "./finalize-operation";
 import { resolveRecovery } from "./recover-operation";
-import { readLocalDescriptor, qualifiedProfile } from "./network-profile";
+import { readNetworkDescriptor, qualifiedProfile } from "./network-profile";
 import { readWorkspaceState, connectedNetwork } from "./network-state";
 import { checkPendingOperation } from "./check-pending";
 import { signOperation } from "./sign-operation";
@@ -311,8 +307,8 @@ export class Application implements ApplicationFacade {
       );
     }
   }
-  private async descriptor(): Promise<LocalDescriptor | null> {
-    return readLocalDescriptor(this.state.network.mode);
+  private async descriptor(): Promise<NetworkDescriptor | null> {
+    return readNetworkDescriptor(this.state.network.mode);
   }
   private async connectNetwork(mode: RuntimeMode, endpoint: string) {
     assertDeploymentMode(mode);
@@ -339,7 +335,11 @@ export class Application implements ApplicationFacade {
     this.render();
     try {
       const descriptor = await this.descriptor();
-      if (descriptor?.qualified && !descriptor.nativeMetadataBinding)
+      if (
+        descriptor?.mode === "LOCAL" &&
+        descriptor.qualified &&
+        !descriptor.nativeMetadataBinding
+      )
         throw new Error(
           "Qualified codec metadata is missing; refresh the LOCAL qualification.",
         );
@@ -367,9 +367,15 @@ export class Application implements ApplicationFacade {
   }
   private async profile(
     f: NativeFingerprint,
-    d: LocalDescriptor | null,
+    d: NetworkDescriptor | null,
   ): Promise<ChainProfile> {
-    return qualifiedProfile(this.state.network.mode, this.profiles, f, d);
+    return qualifiedProfile(
+      this.state.network.mode,
+      this.profiles,
+      f,
+      d,
+      this.connection ?? undefined,
+    );
   }
   private async refresh() {
     const connection = this.connection;
@@ -412,7 +418,7 @@ export class Application implements ApplicationFacade {
         accounts,
         grant,
         profile,
-        localDescriptor: d,
+        descriptor: d,
       };
       this.state = {
         ...this.state,
@@ -427,7 +433,7 @@ export class Application implements ApplicationFacade {
       if (w) {
         await this.journal?.close();
         this.journal = await openJournal(
-          `account-handoff:${w.mode.toLowerCase()}:${f.genesis}:${d?.runId ?? "network"}:${w.id}`,
+          `account-handoff:${w.mode.toLowerCase()}:${f.genesis}:${d?.mode === "LOCAL" ? d.runId : "network"}:${w.id}`,
         );
         await this.journal.appendRecord(profile);
         if (!this.pending)
@@ -473,7 +479,7 @@ export class Application implements ApplicationFacade {
         "Connect the grant's Pure beneficiary and its creation receipt first.",
       );
     if (input.beneficiary && !verified) {
-      if (!input.creation || !this.connection || !this.chain.localDescriptor)
+      if (!input.creation || !this.connection || !this.chain.descriptor)
         throw new Error(
           "Connecting a beneficiary requires its creation block and transaction on a qualified network.",
         );
@@ -481,7 +487,7 @@ export class Application implements ApplicationFacade {
         input,
         input.creation,
         this.connection,
-        this.chain.localDescriptor,
+        this.chain.descriptor,
       );
     }
     if (verified) {
@@ -846,8 +852,8 @@ export class Application implements ApplicationFacade {
         throw new Error(
           "Connect to the matching LOCAL network before importing.",
         );
-      const descriptor = this.chain.localDescriptor;
-      if (!descriptor)
+      const descriptor = this.chain.descriptor;
+      if (descriptor?.mode !== "LOCAL")
         throw new Error("A qualified LOCAL manifest is required.");
       const verified = await validateLocalWorkspaceImport(
         raw,

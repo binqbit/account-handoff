@@ -1,3 +1,4 @@
+import type { NetworkDescriptor } from "./network-descriptor";
 import { parseBoundedJson } from "@account-handoff/contracts";
 import type { ChainProfile } from "@account-handoff/contracts";
 import {
@@ -15,7 +16,7 @@ import { type WalletSession } from "@account-handoff/wallet-adapter";
 
 import { type Journal } from "@account-handoff/local-store";
 
-import type { ChainView, LocalDescriptor, PendingOperation } from "./models";
+import type { ChainView, PendingOperation } from "./models";
 
 import { buildResourceReview } from "./resources";
 import { assessCurrentWallet } from "./qualification";
@@ -28,10 +29,10 @@ export interface PendingCheckContext {
   wallets: WalletSession[];
   getSelected: () => WalletAccount | null;
   clearRecovery: () => void;
-  descriptor: () => Promise<LocalDescriptor | null>;
+  descriptor: () => Promise<NetworkDescriptor | null>;
   profile: (
     f: NativeFingerprint,
-    descriptor: LocalDescriptor | null,
+    descriptor: NetworkDescriptor | null,
   ) => Promise<ChainProfile>;
   operationInputs: (
     pending: PendingOperation,
@@ -98,7 +99,8 @@ export async function checkPendingOperation({
   const descriptor = await loadDescriptor();
   if (
     p.runScope &&
-    (!descriptor?.qualified ||
+    (descriptor?.mode !== "LOCAL" ||
+      !descriptor.qualified ||
       `${descriptor.runId}:${descriptor.generation}` !== p.runScope)
   )
     throw new Error("The LOCAL run changed or was reset.");

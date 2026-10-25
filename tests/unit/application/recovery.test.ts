@@ -53,7 +53,7 @@ async function harness() {
       anchor: { hash: a.reviewedSigningContext.mortalityBlockHash, number: 10 },
       specName: "synthetic-test",
     },
-    localDescriptor: null,
+    descriptor: null,
   };
   access.workspace = vi.fn().mockReturnValue({ id: "workspace" });
   access.connection = {

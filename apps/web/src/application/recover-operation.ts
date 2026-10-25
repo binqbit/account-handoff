@@ -196,9 +196,10 @@ export async function resolveRecovery(
     phase: r.context.operationPhase,
     route: [],
     resources: [],
-    runScope: chain.localDescriptor
-      ? `${chain.localDescriptor.runId}:${chain.localDescriptor.generation}`
-      : null,
+    runScope:
+      chain.descriptor?.mode === "LOCAL"
+        ? `${chain.descriptor.runId}:${chain.descriptor.generation}`
+        : null,
   };
 
   return { recovered, receipt, resumeSigned };

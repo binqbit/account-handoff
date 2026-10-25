@@ -26,3 +26,5 @@ export { normalizeSignerPayload, signatureBytes } from "./signing";
 export { decodeContractEstimate } from "./state";
 export { normalizeEvents, classifyNativeReceipt } from "./receipts";
 export { NativeConnection, safeEndpoint } from "./connection";
+
+export { validateMetadataBinding } from "./metadata";

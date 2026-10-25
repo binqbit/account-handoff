@@ -21,6 +21,7 @@ import type { GrantState } from "@account-handoff/grant-adapter";
 import type { Lease } from "@account-handoff/local-store";
 import type { RuntimeMode } from "../ui-contract";
 import type { LocalCapabilityManifest } from "./qualification";
+import type { NetworkDescriptor } from "./network-descriptor";
 
 export interface WorkspaceRecord {
   id: string;
@@ -75,7 +76,7 @@ export interface ChainView {
   accounts: Record<string, NativeAccountState>;
   grant: GrantState | null;
   profile: ChainProfile;
-  localDescriptor: LocalDescriptor | null;
+  descriptor: NetworkDescriptor | null;
   currentContinuity?: {
     certificateDigest: string;
     profileDigest: string;

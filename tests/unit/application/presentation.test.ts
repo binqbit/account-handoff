@@ -155,7 +155,7 @@ function fixture(): { workspace: HandoffWorkspace; chain: ChainView } {
         reason: "Synthetic capability boundary",
       })),
     } as ChainView["profile"],
-    localDescriptor: {
+    descriptor: {
       mode: "LOCAL",
       runId: "test",
       generation: 1,
@@ -458,7 +458,7 @@ describe("UI presentation preserves authoritative distinctions", () => {
   });
   it("does not assume native/ABI conversion when its binding is absent", () => {
     const { workspace, chain } = fixture();
-    chain.localDescriptor = null;
+    chain.descriptor = null;
     const view = workspaceView(workspace, chain);
     expect(view.grantTotal).toBeNull();
     expect(view.milestones[0]?.amount).toContain("ABI units");

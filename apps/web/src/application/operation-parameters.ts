@@ -100,9 +100,9 @@ export async function operationParameters(
       break;
     case "GRC-GRANT-CREATE": {
       const contract = hex(fields["contract"] ?? w.contract ?? "", 20);
-      if (chain.localDescriptor?.contract?.address.toLowerCase() !== contract)
+      if (chain.descriptor?.contract?.address.toLowerCase() !== contract)
         throw new Error(
-          "The contract must match the verified local deployment.",
+          "The contract must match the verified network deployment.",
         );
       const first = parseUnits(
         fields["firstAmount"] ?? "",

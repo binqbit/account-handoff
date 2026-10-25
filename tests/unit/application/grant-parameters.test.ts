@@ -18,7 +18,7 @@ function prepare(minimum = 10n * UNIT) {
     estimateContract: estimate,
   };
   const chain = {
-    localDescriptor: { contract: { address } },
+    descriptor: { contract: { address } },
     fingerprint: { tokenDecimals: 14, tokenSymbol: "AHLOCAL" },
   };
   return {

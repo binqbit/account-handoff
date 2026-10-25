@@ -31,7 +31,7 @@ export function mapped(state: NativeAccountState | undefined): boolean {
   return !!state && eq(state.mappedTo, state.address);
 }
 export function ratioFor(chain: ChainView | null): bigint | null {
-  const raw = chain?.localDescriptor?.runtime.nativeToEthRatio;
+  const raw = chain?.descriptor?.runtime.nativeToEthRatio;
   if (!raw || !/^[1-9][0-9]*$/.test(raw)) return null;
   return BigInt(raw);
 }

@@ -7,10 +7,23 @@ import type { ChainProfile } from "@account-handoff/contracts";
 import {
   object,
   type NativeFingerprint,
+  type NativeConnection,
 } from "@account-handoff/native-adapter";
 import type { RuntimeMode } from "../ui-contract";
 import type { LocalDescriptor } from "./models";
 import { buildLocalQualification } from "./qualification";
+import type { NetworkDescriptor } from "./network-descriptor";
+import { buildTestnetQualification } from "./qualification/testnet";
+
+export async function readNetworkDescriptor(
+  mode: RuntimeMode,
+): Promise<NetworkDescriptor | null> {
+  if (mode === "DEMO") {
+    const { readTestnetDescriptor } = await import("./testnet-descriptor");
+    return readTestnetDescriptor();
+  }
+  return readLocalDescriptor(mode);
+}
 
 export async function readLocalDescriptor(
   mode: RuntimeMode,
@@ -32,7 +45,8 @@ export async function qualifiedProfile(
   mode: RuntimeMode,
   profiles: Map<string, ChainProfile>,
   f: NativeFingerprint,
-  d: LocalDescriptor | null,
+  d: NetworkDescriptor | null,
+  connection?: NativeConnection,
 ): Promise<ChainProfile> {
   const metadataBindingDigest = d?.nativeMetadataBinding
     ? await sha256(canonicalJson(d.nativeMetadataBinding))
@@ -45,23 +59,27 @@ export async function qualifiedProfile(
     decimals: f.tokenDecimals,
     symbol: f.tokenSymbol,
     ss58Prefix: f.ss58Prefix,
-    run: d?.runId ?? null,
-    generation: d?.generation ?? null,
-    qualified: d?.qualified ?? false,
-    buildHash: d?.buildHash ?? null,
-    source: d?.sourceCommit ?? null,
+    run: d?.mode === "LOCAL" ? d.runId : null,
+    generation: d?.mode === "LOCAL" ? d.generation : null,
+    qualified: d?.mode === "LOCAL" ? d.qualified : null,
+    buildHash: d?.mode === "LOCAL" ? d.buildHash : null,
+    source: d?.mode === "LOCAL" ? d.sourceCommit : null,
     contract: d?.contract ?? null,
-    capabilities: d?.capabilities ?? null,
+    capabilities: d?.mode === "LOCAL" ? d.capabilities : d?.verification,
     metadataSourceAnchor: d?.nativeMetadataBinding?.sourceAnchor ?? null,
     metadataBindingDigest,
-    generatedNativeTypesSha256: d?.generatedNativeTypesSha256 ?? null,
+    generatedNativeTypesSha256:
+      d?.mode === "LOCAL" ? d.generatedNativeTypesSha256 : null,
   });
   const existing = profiles.get(key);
   if (existing) return existing;
-  const qualified = await buildLocalQualification({
-    descriptor: d,
-    fingerprint: f,
-  });
+  const qualified =
+    mode === "DEMO" && d?.mode === "DEMO" && connection
+      ? await buildTestnetQualification(d, f, connection)
+      : await buildLocalQualification({
+          descriptor: d?.mode === "LOCAL" ? d : null,
+          fingerprint: f,
+        });
   const profileId = `${mode.toLowerCase()}-${await sha256(key)}`;
   const result = await createChainProfile({
     profileId,

@@ -67,7 +67,7 @@ export async function prepareOperation(
 ): Promise<PendingOperation> {
   if (chain.profile.status !== "accepted")
     throw new Error(
-      "A qualified LOCAL build with exact native types is required.",
+      "A qualified network profile with exact native codecs is required.",
     );
   const view = actionViews(w, chain, selected.address).find(
     (a) => a.id === actionId,
@@ -505,9 +505,10 @@ export async function prepareOperation(
     blockers: [],
     signer: selected.address,
     phase,
-    runScope: chain.localDescriptor
-      ? `${chain.localDescriptor.runId}:${chain.localDescriptor.generation}`
-      : null,
+    runScope:
+      chain.descriptor?.mode === "LOCAL"
+        ? `${chain.descriptor.runId}:${chain.descriptor.generation}`
+        : null,
     route:
       plan.signingPath === "direct"
         ? ["Signer", "Native runtime"]

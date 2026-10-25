@@ -101,11 +101,14 @@ export function actionViews(
     common.push("The workspace belongs to another network.");
   if (
     chain &&
-    ((workspace.mode === "LOCAL" && chain.localDescriptor?.mode !== "LOCAL") ||
-      (workspace.mode !== "LOCAL" && chain.localDescriptor))
+    ((workspace.mode === "LOCAL" && chain.descriptor?.mode !== "LOCAL") ||
+      (workspace.mode !== "LOCAL" && chain.descriptor?.mode !== workspace.mode))
   )
     common.push("The environment profile does not match the workspace.");
-  if (chain?.localDescriptor?.status === "retired")
+  if (
+    chain?.descriptor?.mode === "LOCAL" &&
+    chain.descriptor.status === "retired"
+  )
     common.push("The local run has ended. A current runId is required.");
   if (selectedSigner && chain && !actorState)
     common.push("The selected signer's budget has not been read yet.");
