@@ -201,7 +201,9 @@ export async function prepareOperation(
           : authority,
       grantContext,
       localReviewExpiresAtUnixSeconds: String(
-        Math.floor(Date.now() / 1000) + 300,
+        (await connection.currentBlockTime(chain.fingerprint.anchor.hash)) /
+          1000n +
+          300n,
       ),
       localExpiryRevokesNativeProposal: false,
     },
