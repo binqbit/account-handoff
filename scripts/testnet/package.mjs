@@ -87,9 +87,23 @@ try {
     ".dockerignore",
     "README.md",
     "network.json",
+    "vestry-deployment.json",
   ])
     await copyFile(join(root, "infra/testnet", file), join(directory, file));
   const files = {};
+  const network = JSON.parse(
+    await readFile(join(directory, "network.json"), "utf8"),
+  );
+  const deployment = JSON.parse(
+    await readFile(join(directory, "vestry-deployment.json"), "utf8"),
+  );
+  if (
+    deployment.address !== network.contractAddress ||
+    deployment.genesisHash !== network.genesisHash ||
+    deployment.evmChainId !== network.evmChainId ||
+    deployment.finalized !== true
+  )
+    throw new Error("Contract deployment does not match the packaged network.");
   for (const path of await listFiles(directory))
     files[path] = digest(await readFile(join(directory, path)));
   await writeFile(
@@ -103,13 +117,11 @@ try {
           dirty: git("status", "--porcelain").length > 0,
         },
         mode: "testnet",
-        network: JSON.parse(
-          await readFile(join(directory, "network.json"), "utf8"),
-        ),
+        network,
         capabilities: {
           readOnlyPreview: true,
           testnetTransactionsQualified: false,
-          contractAddress: null,
+          contractAddress: network.contractAddress,
         },
         files,
       },
