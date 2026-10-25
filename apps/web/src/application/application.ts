@@ -62,6 +62,7 @@ import { readLocalDescriptor, qualifiedProfile } from "./network-profile";
 import { readWorkspaceState, connectedNetwork } from "./network-state";
 import { checkPendingOperation } from "./check-pending";
 import { signOperation } from "./sign-operation";
+import { operationTabId } from "./tab-identity";
 import {
   WalletConnection,
   readWalletPreference,
@@ -113,9 +114,11 @@ export class Application implements ApplicationFacade {
   private generation = 0;
   private profiles = new Map<string, ChainProfile>();
   private commandRunning = false;
-  private tabId = id();
   private grantHistory: GrantHistory | null = null;
-  private constructor(private metadata: Journal) {
+  private constructor(
+    private metadata: Journal,
+    private tabId: string,
+  ) {
     this.walletConnection = new WalletConnection(
       metadata,
       (wallet, sessions, reason) => {
@@ -127,7 +130,10 @@ export class Application implements ApplicationFacade {
     );
   }
   static async create(): Promise<Application> {
-    const app = new Application(await openJournal(deployment.journalName));
+    const app = new Application(
+      await openJournal(deployment.journalName),
+      await operationTabId(),
+    );
     const stored = await app.metadata.getPreference<unknown>("workspaces");
     if (Array.isArray(stored))
       for (const value of stored) {
