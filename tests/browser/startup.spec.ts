@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("actual application starts with an empty local workspace and no signing request", async ({
   page,
+  baseURL,
 }) => {
   const errors: string[] = [];
   const sockets: string[] = [];
@@ -21,7 +22,9 @@ test("actual application starts with an empty local workspace and no signing req
   ).toBeVisible();
   await expect(page.getByText("TEST HARNESS", { exact: false })).toHaveCount(0);
   expect(errors).toEqual([]);
-  expect(sockets.every((url) => new URL(url).port === "4173")).toBe(true);
+  expect(
+    sockets.every((url) => new URL(url).host === new URL(baseURL!).host),
+  ).toBe(true);
   await page.getByRole("button", { name: "Docs", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "A guide to Account Handoff" }),

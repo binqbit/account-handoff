@@ -14,12 +14,16 @@ const executablePath =
     "/usr/bin/chromium",
     "/usr/bin/chromium-browser",
   ].find((candidate) => existsSync(candidate));
+const browserPort = Number(process.env["AH_BROWSER_PORT"] ?? "4173");
+if (!Number.isInteger(browserPort) || browserPort < 1024 || browserPort > 65535)
+  throw new Error("AH_BROWSER_PORT must be an integer from 1024 to 65535");
+const browserOrigin = `http://127.0.0.1:${browserPort}`;
 
 export default defineConfig({
   testDir: "./tests/browser",
   timeout: 30000,
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: browserOrigin,
     browserName: "chromium",
     headless: true,
     launchOptions: {
@@ -32,9 +36,9 @@ export default defineConfig({
     new URL(".agent-workspace/verification/browser/", import.meta.url),
   ),
   webServer: {
-    command: "npm run dev -- --port 4173",
-    url: "http://127.0.0.1:4173",
-    reuseExistingServer: !process.env["CI"],
+    command: `npm run dev -- --port ${browserPort} --strictPort`,
+    url: browserOrigin,
+    reuseExistingServer: false,
     timeout: 60000,
   },
 });

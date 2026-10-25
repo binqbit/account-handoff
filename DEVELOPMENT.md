@@ -21,7 +21,7 @@ npm run build
 npm run preview -- --port 4174
 ```
 
-Static assets are emitted to `dist/`. Reserve port 4173 for browser tests and 4175 for the dedicated real-LOCAL browser suite.
+Static assets are emitted to `dist/`. Reserve port 4173 for browser tests and 4175 for the dedicated real-LOCAL browser suite. If the ordinary browser-test port is occupied, run `AH_BROWSER_PORT=4183 npm run test:browser`. The runner starts its own server and fails on a port conflict instead of reusing an unrelated application.
 
 ### PortalDot V3 testnet build
 
