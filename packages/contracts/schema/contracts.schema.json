@@ -1923,7 +1923,7 @@
           }
         }
       ],
-      "description": "Accepted binds exact runtime identity only. Every operation separately requires its capability and fresh input gate components. Q-REVIVE-API/Q-CONTRACT/Q-WALLET etc cannot be inferred from this top-level status. Setup output gates are evaluated after finality. The narrowly modified account-handoff-local runtime may bind exact metadata versions 14, 15, or 16 with the same full artifact/source evidence. Other first-profile targets retain metadata version 14."
+      "description": "Accepted binds exact runtime identity. Each operation independently requires capability and fresh input gates. LOCAL uses source/build evidence; the pinned portaldot-v3 runtime can use explicit runtime-artifact verification with no source-provenance claim. Both support exact metadata versions 14, 15 or 16. Other targets retain metadata version 14."
     },
     "Snapshot": {
       "type": "object",

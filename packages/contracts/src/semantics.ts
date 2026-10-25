@@ -73,7 +73,8 @@ export async function validateRecordSemantics(
           "SG-05",
         );
     if (
-      record.mappingPolicy.autoMap === record.mappingPolicy.explicitMappingRequired
+      record.mappingPolicy.autoMap ===
+      record.mappingPolicy.explicitMappingRequired
     )
       add(
         "UnsupportedMappingPolicy",

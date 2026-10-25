@@ -69,6 +69,13 @@ export async function prepareOperation(
     throw new Error(
       "A qualified network profile with exact native codecs is required.",
     );
+  if (
+    chain.profile.mappingPolicy.autoMap &&
+    ["GRC-SETUP-MAP-P", "GRC-SETUP-MAP-ACTOR"].includes(actionId)
+  )
+    throw new Error(
+      "This runtime maps funded accounts automatically. Verify its reverse mapping instead of submitting a mapping transaction.",
+    );
   const view = actionViews(w, chain, selected.address).find(
     (a) => a.id === actionId,
   );

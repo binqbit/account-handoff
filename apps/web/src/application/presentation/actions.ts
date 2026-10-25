@@ -167,7 +167,7 @@ export function actionViews(
       label: "Deployed Vestry contract address",
       type: "contract",
       required: true,
-      value: workspace.contract ?? "",
+      value: workspace.contract ?? chain?.descriptor?.contract?.address ?? "",
       help: "Paste the deployed Vestry contract address on this network: 0x followed by 40 hexadecimal characters. This is not a personal wallet address.",
     },
     {
@@ -344,6 +344,11 @@ export function actionViews(
       [
         ...requirePure(),
         ...requireOld(),
+        ...(chain?.profile.mappingPolicy.autoMap
+          ? [
+              "This runtime maps funded accounts automatically; verify P's reverse mapping.",
+            ]
+          : []),
         ...(mapped(pureState) ? ["P mapping is already verified."] : []),
       ],
     ),
@@ -355,6 +360,11 @@ export function actionViews(
       "Selected F / R1 / R2",
       [
         ...(!directRole ? ["Select a personal account for F, R1 or R2."] : []),
+        ...(chain?.profile.mappingPolicy.autoMap
+          ? [
+              "This runtime maps funded accounts automatically; verify the account's reverse mapping.",
+            ]
+          : []),
         ...(mapped(actorState)
           ? ["The selected account's mapping is already verified."]
           : []),

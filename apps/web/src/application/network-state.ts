@@ -124,7 +124,9 @@ export function connectedNetwork(
         status: profile.status === "accepted" ? "ready" : "blocked",
         detail:
           profile.status === "accepted"
-            ? "Code, metadata, and generated types match the qualified runtime."
+            ? d?.mode === "DEMO"
+              ? "Pinned PortalDot runtime, metadata and contract verified."
+              : "Code, metadata, and generated types match the qualified runtime."
             : current.mode === "LOCAL"
               ? "Run local:qualify and generate the native types."
               : "Network reads are available. Transactions require separate qualification for this runtime and contract.",

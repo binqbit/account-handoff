@@ -130,6 +130,16 @@ function fixture(): { workspace: HandoffWorkspace; chain: ChainView } {
     accounts,
     grant,
     profile: {
+      mappingPolicy: {
+        supportedBranch: "normal_non_EE_suffixed_AccountId32",
+        autoMap: false,
+        explicitMappingRequired: true,
+        statelessEEBranchSupported: false,
+        reviveOriginRoles: ["P", "F", "R1", "R2"],
+        controllerOrMemberMappingRequiredForNativeWrapper: false,
+        unmappingEnabled: false,
+        qualifiedConfigurationEvidence: [evidence],
+      },
       status: "accepted",
       profileId: "synthetic-view-profile",
       digest: "2".repeat(64),
@@ -478,4 +488,21 @@ describe("UI presentation preserves authoritative distinctions", () => {
       )?.enabled,
     ).toBe(true);
   });
+});
+
+it("does not offer a manual mapping transaction on an automatically mapped runtime", () => {
+  const { workspace, chain } = fixture();
+  chain.profile.mappingPolicy = {
+    ...chain.profile.mappingPolicy,
+    autoMap: true,
+    explicitMappingRequired: false,
+  };
+  const actions = actionViews(workspace, chain, F!);
+  for (const id of ["GRC-SETUP-MAP-P", "GRC-SETUP-MAP-ACTOR"]) {
+    const action = actions.find((action) => action.id === id)!;
+    expect(action.enabled).toBe(false);
+    expect(
+      action.blockers.some((reason) => reason.includes("automatically")),
+    ).toBe(true);
+  }
 });

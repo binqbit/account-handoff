@@ -41,6 +41,12 @@ export async function buildTestnetQualification(
     sourceId: f.runtimeCodeHash,
     contentSha256: f.metadataSha256,
   };
+  const code: EvidenceRef = {
+    kind: "native_chain",
+    locator: `native:${f.genesis}:runtime-code:${f.runtimeCodeHash}`,
+    sourceId: f.runtimeCodeHash,
+    contentSha256: null,
+  };
   const evidence = [raw, ...(d.verification ? [d.verification.evidence] : [])];
   const proof =
     d.verification?.runtimeCodeHash === f.runtimeCodeHash &&
@@ -68,7 +74,7 @@ export async function buildTestnetQualification(
     },
     bindingEvidence: {
       rawMetadataEvidence: raw,
-      rawRuntimeCodeEvidence: raw,
+      rawRuntimeCodeEvidence: code,
       runtimeArtifactVerification: proof ? d.verification!.evidence : null,
       runtimeSourceBuildRelationship: null,
       generatedNativeTypesSha256: null,
@@ -174,7 +180,7 @@ export async function buildTestnetQualification(
       boundMetadataSha256: f.metadataSha256,
       methodManifestSha256: await sha256(canonicalJson(methods)),
       traitSourceEvidence: [raw],
-      runtimeImplementationEvidence: evidence,
+      runtimeImplementationEvidence: [code, ...evidence],
       methods,
     });
   }

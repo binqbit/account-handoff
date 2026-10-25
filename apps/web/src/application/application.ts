@@ -398,7 +398,7 @@ export class Application implements ApplicationFacade {
         new URL(d.nativeRpc).toString() !== connection.endpoint
       )
         throw new Error(
-          "The LOCAL endpoint does not match the active manifest",
+          "The endpoint does not match the active network descriptor",
         );
       const profile = await this.profile(f, d);
       const w = this.workspace();
