@@ -193,7 +193,7 @@ export function actionViews(
       type: "number",
       required: true,
       value: isPortalDotTestnet ? "1000" : "1800",
-      help: "Number of chain blocks over which the first released tranche unlocks. Enter 0 for no vesting; this is not a number of seconds.",
+      help: "Number of chain blocks over which the first released tranche unlocks. Use at least 1 block; this is not a number of seconds.",
     },
     {
       name: "deadlineDays",

@@ -3,7 +3,7 @@ import type {
   DataValue,
   ResourceBounds,
 } from "@account-handoff/contracts";
-import { parseUnits } from "@account-handoff/domain";
+import { formatUnits, parseUnits } from "@account-handoff/domain";
 import {
   NativeConnection,
   hex,
@@ -121,6 +121,15 @@ export async function operationParameters(
       const vesting = Number(fields["vestingBlocks"]);
       if (!Number.isSafeInteger(vesting) || vesting < 1 || vesting > 0xffffffff)
         throw new Error("Invalid vesting duration");
+      const minimumVested = connection.api.consts.vesting.minVestedTransfer;
+      if (first < minimumVested)
+        throw new Error(
+          `The first vested tranche must be at least ${formatUnits(minimumVested, chain.fingerprint.tokenDecimals)} ${chain.fingerprint.tokenSymbol}.`,
+        );
+      if (first % BigInt(vesting) !== 0n)
+        throw new Error(
+          "The first tranche cannot unlock evenly over this many blocks. Choose another vesting duration.",
+        );
       const milestones = [
         {
           amount: String(first * 10000n),
