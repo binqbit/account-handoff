@@ -101,14 +101,15 @@ export type ApiBinding = {
 
 export type MappingPolicy = {
   supportedBranch: "normal_non_EE_suffixed_AccountId32";
-  autoMap: false;
-  explicitMappingRequired: true;
   statelessEEBranchSupported: false;
   reviveOriginRoles: ["P", "F", "R1", "R2"];
   controllerOrMemberMappingRequiredForNativeWrapper: false;
   unmappingEnabled: false;
   qualifiedConfigurationEvidence: Array<EvidenceRef>;
-};
+} & (
+  | { autoMap: false; explicitMappingRequired: true }
+  | { autoMap: true; explicitMappingRequired: false }
+);
 
 export type BindingEvidence = {
   metadataHashConvention: "SHA256_of_exact_SCALE_metadata_bytes_without_RPC_hex_text";
@@ -116,6 +117,8 @@ export type BindingEvidence = {
   rawMetadataEvidence: EvidenceRef | null;
   rawRuntimeCodeEvidence: EvidenceRef | null;
   runtimeSourceBuildRelationship: EvidenceRef | null;
+  /** Exact deployed runtime executed in an isolated fork; does not assert source provenance. */
+  runtimeArtifactVerification?: EvidenceRef | null;
   generatedNativeTypesSha256: Sha256 | null;
   abiSha256: Sha256 | null;
   contractAddress: H160 | null;

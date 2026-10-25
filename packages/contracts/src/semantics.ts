@@ -73,12 +73,11 @@ export async function validateRecordSemantics(
           "SG-05",
         );
     if (
-      record.mappingPolicy.autoMap ||
-      !record.mappingPolicy.explicitMappingRequired
+      record.mappingPolicy.autoMap === record.mappingPolicy.explicitMappingRequired
     )
       add(
         "UnsupportedMappingPolicy",
-        "Explicit persisted mapping is required",
+        "Mapping policy must select exactly one automatic or explicit mapping branch",
         "SG-08",
       );
   }

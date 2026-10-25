@@ -30,6 +30,7 @@ import type {
   Controller,
   CallTree,
   ReviewedSigningContext,
+  MappingPolicy,
 } from "./records.js";
 
 export const newRecordId = (kind: string): string =>
@@ -67,6 +68,7 @@ export async function createChainProfile(input: {
   apiBindings?: ApiBinding[];
   bindingEvidence?: Partial<BindingEvidence>;
   mappingConfigurationEvidence?: EvidenceRef[];
+  mappingPolicy?: MappingPolicy;
 }): Promise<ChainProfile> {
   const f = input.fingerprint;
   const profile: ChainProfile = {
@@ -94,7 +96,7 @@ export async function createChainProfile(input: {
     derivedFromRecordDigest: null,
     firstBuildMode: "CONTROLLED_SINGLE_ROUND_DEMONSTRATOR",
     grantPolicyId: "vestry-single-round-demo-v1",
-    mappingPolicy: {
+    mappingPolicy: input.mappingPolicy ?? {
       supportedBranch: "normal_non_EE_suffixed_AccountId32",
       autoMap: false,
       explicitMappingRequired: true,

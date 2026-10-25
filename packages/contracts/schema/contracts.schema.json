@@ -1640,12 +1640,6 @@
                   },
                   "rawRuntimeCodeEvidence": {
                     "$ref": "#/$defs/EvidenceRef"
-                  },
-                  "runtimeSourceBuildRelationship": {
-                    "$ref": "#/$defs/EvidenceRef"
-                  },
-                  "generatedNativeTypesSha256": {
-                    "$ref": "#/$defs/Sha256"
                   }
                 }
               }
@@ -1655,7 +1649,10 @@
                 "if": {
                   "properties": {
                     "specName": {
-                      "const": "account-handoff-local"
+                      "enum": [
+                        "account-handoff-local",
+                        "portaldot-v3"
+                      ]
                     }
                   },
                   "required": [
@@ -1680,6 +1677,41 @@
                     }
                   }
                 }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "bindingEvidence": {
+                        "properties": {
+                          "runtimeSourceBuildRelationship": {
+                            "$ref": "#/$defs/EvidenceRef"
+                          },
+                          "generatedNativeTypesSha256": {
+                            "$ref": "#/$defs/Sha256"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "specName": {
+                        "const": "portaldot-v3"
+                      },
+                      "bindingEvidence": {
+                        "properties": {
+                          "runtimeArtifactVerification": {
+                            "$ref": "#/$defs/EvidenceRef"
+                          }
+                        },
+                        "required": [
+                          "runtimeArtifactVerification"
+                        ]
+                      }
+                    }
+                  }
+                ]
               }
             ]
           }
@@ -4299,10 +4331,10 @@
           "const": "normal_non_EE_suffixed_AccountId32"
         },
         "autoMap": {
-          "const": false
+          "type": "boolean"
         },
         "explicitMappingRequired": {
-          "const": true
+          "type": "boolean"
         },
         "statelessEEBranchSupported": {
           "const": false
@@ -4338,7 +4370,29 @@
         "unmappingEnabled",
         "qualifiedConfigurationEvidence"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "autoMap": {
+              "const": false
+            },
+            "explicitMappingRequired": {
+              "const": true
+            }
+          }
+        },
+        {
+          "properties": {
+            "autoMap": {
+              "const": true
+            },
+            "explicitMappingRequired": {
+              "const": false
+            }
+          }
+        }
+      ]
     },
     "BindingEvidence": {
       "type": "object",
@@ -4453,6 +4507,16 @@
           "items": {
             "$ref": "#/$defs/EvidenceRef"
           }
+        },
+        "runtimeArtifactVerification": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
