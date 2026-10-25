@@ -147,6 +147,10 @@ export async function loadOperationInputs(
     ...(pure ? { currentVesting: schedules(pure.vesting) } : {}),
     vestingBlockNumber: BigInt(f.anchor.number),
     reviewerAuthorized: reviewer,
-    continuityVerified: workspaceView(w, chain).continuity === "continued",
+    // Both states require the same independently verified historical certificate.
+    // Drift is assessed separately by this operation's fresh account/runtime guards.
+    continuityVerified: ["continued", "drift"].includes(
+      workspaceView(w, chain).continuity,
+    ),
   };
 }
