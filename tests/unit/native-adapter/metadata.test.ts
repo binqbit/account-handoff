@@ -151,7 +151,13 @@ describe("exact immutable metadata and explicit decoder binding", () => {
     });
     const current = await connection.captureMetadata(currentHash);
     expect(current.rawMetadata).toBe(currentRaw);
+    api.rpc.state_getStorage.mockClear();
     const fingerprint = await connection.fingerprint(currentHash);
+    expect(api.rpc.state_getStorage).not.toHaveBeenCalled();
+    expect(api.rpc.state_getStorageHash).toHaveBeenCalledWith(
+      "0x3a636f6465",
+      currentHash,
+    );
     expect(fingerprint).toMatchObject({
       metadataBinding: "pinned-runtime-code",
       metadataSourceAnchor: binding.sourceAnchor,

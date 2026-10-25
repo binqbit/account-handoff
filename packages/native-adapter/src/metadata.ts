@@ -75,16 +75,19 @@ export async function readFingerprint(
     atHash ?? hex(await connection.api.rpc.chain_getFinalizedHead(), 32);
   const [header, code, version, properties] = await Promise.all([
     connection.api.rpc.chain_getHeader(hash),
-    connection.api.rpc.state_getStorage("0x3a636f6465", hash),
+    binding
+      ? connection.api.rpc.state_getStorageHash("0x3a636f6465", hash)
+      : connection.api.rpc.state_getStorage("0x3a636f6465", hash),
     connection.api.rpc.state_getRuntimeVersion(hash),
     connection.api.rpc.system_properties(),
   ]);
   if (!header || !code)
     throw new Error("Finalized runtime identity is unavailable");
+  const runtimeCodeHash = binding ? hex(code, 32) : blake2AsHex(code);
   if (
     binding &&
     (connection.api.genesisHash !== binding.genesis ||
-      blake2AsHex(code) !== binding.runtimeCodeHash ||
+      runtimeCodeHash !== binding.runtimeCodeHash ||
       version.specVersion !== binding.specVersion)
   )
     throw new Error(
@@ -135,7 +138,7 @@ export async function readFingerprint(
     metadataHash: blake2AsHex(hex(metadata)),
     metadataSha256,
     rawMetadata: hex(metadata),
-    runtimeCodeHash: blake2AsHex(code),
+    runtimeCodeHash,
     signedExtensions:
       connection.api.registry.metadata.extrinsic.signedExtensions.map(
         (e) => e.ident,
