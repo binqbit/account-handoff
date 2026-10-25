@@ -5,10 +5,7 @@ import {
   contractAddress,
 } from "@account-handoff/native-adapter";
 import { readGrant } from "@account-handoff/grant-adapter";
-import {
-  connectExistingWorkspaceThroughUi,
-  readCreationLocator,
-} from "../connect-workspace";
+import { finishSetupJourney } from "./post-handoff";
 import { injectLocalWallet } from "../browser-wallet";
 import {
   readFixture,
@@ -20,7 +17,7 @@ import {
 } from "../browser-support";
 
 export function registerSetupScenarios() {
-  test("creates a separate Pure and grant through UI funding, mapping, submission and reviewer approval", async ({
+  test("creates a separate Pure and completes the grant, repeated handoff and vesting through the UI", async ({
     page,
   }, testInfo) => {
     test.setTimeout(900000);
@@ -160,9 +157,9 @@ export function registerSetupScenarios() {
         "GRC-GRANT-CREATE",
         {
           "Deployed Vestry contract address": fixture.input.contract,
-          [`First tranche (${fingerprint.tokenSymbol})`]: "18",
-          [`Second tranche (${fingerprint.tokenSymbol})`]: "12",
-          "First tranche vesting: blocks": "1800",
+          [`First tranche (${fingerprint.tokenSymbol})`]: "10",
+          [`Second tranche (${fingerprint.tokenSymbol})`]: "0.1",
+          "First tranche vesting: blocks": "50",
           "Milestone deadline: days from preparation": "7",
         },
       );
@@ -300,102 +297,15 @@ export function registerSetupScenarios() {
         fullPage: true,
       });
       await captureActualWorkspace(page, testInfo, "ui-created-continued");
-      // A second control change uses the same Pure and grant, with no new milestone claim.
-      await page
-        .getByRole("button", { name: "Control handoff", exact: true })
-        .click();
-      await page
-        .getByRole("button", { name: "Start another handoff", exact: true })
-        .click();
-      await expect(
-        page.getByRole("heading", {
-          name: "Choose the replacement group",
-          exact: true,
-        }),
-      ).toBeVisible();
-      const group = page.getByRole("group", {
-        name: "Replacement signers",
-        exact: true,
-      });
-      for (let index = 0; index < 2; index++)
-        await group
-          .getByRole("button", { name: /^Remove / })
-          .first()
-          .click();
-      for (const role of ["A", "B", "C"] as const) {
-        const field = page.getByRole("combobox", {
-          name: "Add account to Replacement signers",
-          exact: true,
-        });
-        await field.fill(wallet.accounts[role]);
-        await field.press("Enter");
-      }
-      await page
-        .getByRole("button", { name: "Prepare handoff", exact: true })
-        .click();
-      await expect(
-        page.getByRole("heading", {
-          name: "Three actions. One stable beneficiary.",
-        }),
-      ).toBeVisible();
-      for (const role of ["A", "B"] as const)
-        await performApproval(
-          page,
-          role,
-          wallet.accounts[role],
-          "GRC-ROTATION-ADD-M1",
-        );
-      for (const role of ["A", "C"] as const)
-        await performApproval(
-          page,
-          role,
-          wallet.accounts[role],
-          "GRC-ROTATION-REMOVE-M0",
-        );
-      const finalState = await connection.readAccount(pure);
-      expect(finalState.proxies).toEqual([
-        { delegate: m0, proxyType: "Any", delay: 0 },
-      ]);
-      expect(finalState.mappedAddress).toBe(contractAddress(pure));
-      const unchangedGrant = await readGrant(
+      await finishSetupJourney(page, testInfo, {
         connection,
-        wallet.accounts.F2,
-        fixture.input.contract,
-        grantId,
-      );
-      expect(unchangedGrant.grantee).toBe(grant.grantee);
-      expect(unchangedGrant.milestones[1]!.state).toBe(1);
-      expect(wallet.requests).toHaveLength(27);
-      console.info(
-        "[LOCAL] Second handoff is finalized; beneficiary and grant are unchanged",
-      );
-      await page.getByRole("button", { name: "History", exact: true }).click();
-      await expect(
-        page.getByRole("heading", {
-          name: "Previous control handoffs",
-          exact: true,
-        }),
-      ).toBeVisible();
-      await page.screenshot({
-        path: testInfo.outputPath("second-handoff-same-beneficiary.png"),
-        fullPage: true,
-      });
-      const creation = await readCreationLocator(page, pure);
-      await connectExistingWorkspaceThroughUi(page, {
-        name: `Connected LOCAL ${runId}`,
-        members: [wallet.accounts.A, wallet.accounts.B, wallet.accounts.C],
-        controller: m0,
-        funder: wallet.accounts.F2,
-        reviewers: [wallet.accounts.R1_2, wallet.accounts.R2_2],
+        wallet,
         pure,
+        m0,
         contract: fixture.input.contract,
-        grantId: String(grantId),
-        creation,
+        grantId,
+        grantee: grant.grantee,
       });
-      expect(wallet.requests).toHaveLength(27);
-      console.info(
-        "[LOCAL] Connected the existing controller, Pure and grant without signing",
-      );
     } finally {
       await connection.close();
     }

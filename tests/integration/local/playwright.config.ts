@@ -37,7 +37,12 @@ export default defineConfig({
       ...(executablePath ? { executablePath } : {}),
       args: ["--no-sandbox"],
     },
-    trace: "retain-on-failure",
+    trace: {
+      mode: "retain-on-failure",
+      screenshots: true,
+      snapshots: false,
+      sources: true,
+    },
   },
   outputDir: outputDirectory,
   reporter: [

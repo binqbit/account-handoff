@@ -23,6 +23,8 @@ npm run preview -- --port 4174
 
 Static assets are emitted to `dist/`. Reserve port 4173 for browser tests and 4175 for the dedicated real-LOCAL browser suite. If the ordinary browser-test port is occupied, run `AH_BROWSER_PORT=4183 npm run test:browser`. The runner starts its own server and fails on a port conflict instead of reusing an unrelated application.
 
+Run generation and production-build commands before starting the ordinary browser suite. That suite uses Vite's development server; concurrent writes to generated source can reload a page and erase the form state under test. The real-LOCAL suite builds first and then serves the static result.
+
 ### PortalDot V3 testnet build
 
 ```bash
@@ -214,6 +216,8 @@ npm run local:up -- --run development
 ```
 
 Use the website's reconciliation action for an uncertain browser attempt. Use `npm run local:reconcile -- --run development` for CLI seed/handoff attempts. They are different journals; neither command automatically signs a replacement. Preserve the exact attempt, nonce, proposal incarnation, and available receipt before deciding the next action.
+
+On browsers with Web Locks, a document holds its tab identity while session storage retains it across reloads. A duplicated tab receives a different identity and cannot take over an active operation lease. Reloading the original tab can restore saved signed bytes for a separate, explicit send. If Web Locks or session storage is unavailable, ownership remains isolated per document and immediate recovery across a reload is not guaranteed; the existing lease and transaction-validity checks still apply.
 
 Reset is an explicit destructive command for that run's native/gateway state:
 
