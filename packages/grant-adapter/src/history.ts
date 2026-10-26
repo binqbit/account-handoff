@@ -207,6 +207,13 @@ export async function scanGrantHistoryWithSource(
   };
   if (options.toBlock > (await source.finalizedHeight()))
     throw new Error("History cannot include unfinalized blocks");
+  // RPC latency must not grow by one round trip for every historical block.
+  // Fetch a bounded window, but validate and reduce strictly in block order.
+  const reads = new Map<
+    number,
+    Promise<{ ok: true; block: HistoryBlock } | { ok: false; error: unknown }>
+  >();
+  let nextRead = options.fromBlock;
   for (let height = options.fromBlock; height <= options.toBlock; height += 1) {
     if (options.signal?.aborted) {
       output.complete = false;
@@ -214,7 +221,22 @@ export async function scanGrantHistoryWithSource(
       break;
     }
     try {
-      const block = await source.block(height);
+      while (nextRead <= options.toBlock && nextRead < height + 8) {
+        const requested = nextRead++;
+        reads.set(
+          requested,
+          Promise.resolve()
+            .then(() => source.block(requested))
+            .then(
+              (block) => ({ ok: true as const, block }),
+              (error) => ({ ok: false as const, error }),
+            ),
+        );
+      }
+      const read = await reads.get(height)!;
+      reads.delete(height);
+      if (!read.ok) throw read.error;
+      const { block } = read;
       if (block.number !== height || !block.executionCompatible)
         throw new Error(
           "Execution/runtime context changed or mismatched at history block",

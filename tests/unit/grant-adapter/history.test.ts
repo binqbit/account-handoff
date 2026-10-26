@@ -138,4 +138,72 @@ describe("finalized causal grant history", () => {
       }),
     ).rejects.toThrow(/unfinalized/);
   });
+  it("bounds concurrent reads and reduces out-of-order results chronologically", async () => {
+    const base = source({
+      1: [emitted("GrantCreated")],
+      12: [emitted("MilestoneSubmitted")],
+    });
+    let active = 0,
+      peak = 0;
+    const completed: number[] = [],
+      progress: number[] = [];
+    const result = await scanGrantHistoryWithSource(
+      {
+        finalizedHeight: async () => 12,
+        async block(height) {
+          active++;
+          peak = Math.max(peak, active);
+          await new Promise((resolve) => setTimeout(resolve, 20 - height));
+          completed.push(height);
+          active--;
+          return base.block(height);
+        },
+      },
+      {
+        contract,
+        grantId: "0",
+        fromBlock: 1,
+        toBlock: 12,
+        onProgress: (done) => progress.push(done),
+      },
+    );
+    expect(peak).toBe(8);
+    expect(completed[0]).not.toBe(1);
+    expect(progress).toEqual(Array.from({ length: 12 }, (_, i) => i + 1));
+    expect(result.entries.map((entry) => entry.blockNumber)).toEqual([1, 12]);
+    expect(result.scope).toBe("EligibleSingleRound");
+  });
+  it("does not accept prefetched blocks beyond a failure or cancellation", async () => {
+    const base = source({
+      1: [emitted("GrantCreated")],
+      4: [emitted("MilestoneSubmitted")],
+    });
+    const failed = await scanGrantHistoryWithSource(
+      {
+        ...base,
+        async block(height) {
+          if (height === 2) throw new Error("unavailable block");
+          return base.block(height);
+        },
+      },
+      { contract, grantId: "0", fromBlock: 1, toBlock: 4 },
+    );
+    expect(failed.complete).toBe(false);
+    expect(failed.scannedThrough).toBe(1);
+    expect(failed.entries.map((entry) => entry.blockNumber)).toEqual([1]);
+    const controller = new AbortController();
+    const cancelled = await scanGrantHistoryWithSource(base, {
+      contract,
+      grantId: "0",
+      fromBlock: 1,
+      toBlock: 4,
+      signal: controller.signal,
+      onProgress() {
+        controller.abort();
+      },
+    });
+    expect(cancelled.complete).toBe(false);
+    expect(cancelled.scannedThrough).toBe(1);
+    expect(cancelled.blockers).toContain("History scan canceled");
+  });
 });
