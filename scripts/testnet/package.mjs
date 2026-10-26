@@ -89,6 +89,7 @@ try {
     "network.json",
     "vestry-deployment.json",
     "runtime-verification.json",
+    "runtime-verification-evidence.json",
   ])
     await copyFile(join(root, "infra/testnet", file), join(directory, file));
   const files = {};

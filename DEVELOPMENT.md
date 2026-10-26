@@ -39,13 +39,15 @@ The local `.env` stores the public address as `AH_TESTNET_VESTRY_ADDRESS`; [.env
 
 DEMO loads its own pinned metadata and deployment binding, supports the runtime's automatic account mapping, and verifies the current code before enabling operations. [Runtime verification](infra/testnet/runtime-verification.json) records the exact artifact and capability evidence; missing evidence or a changed runtime blocks preparation. LOCAL source/build evidence is never substituted for PortalDot evidence. A locally executed PortalDot runtime fork does not establish public-network consensus, wallet-extension behavior or a completed testnet journey.
 
+Remote RPC requests allow 60 seconds for large metadata/runtime artifacts; LOCAL requests retain a 15-second limit. A failed initial connection closes its transport. Transaction observation has its own 120-second limit: an uncertain result requires reconciliation of the saved attempt, not another automatic broadcast.
+
 Run the public-network compatibility check without opening a wallet or sending a transaction:
 
 ```bash
 npm run verify:testnet
 ```
 
-This checks the pinned profile, live contract code and reads, unsigned call encoding, and native signing-payload preparation. It writes a report under `.agent-workspace/verification/testnet/`. It does not sign or broadcast. The build also verifies the metadata hash, dependency lock and retained adapter-source hashes. Requalify changed runtime artifacts or adapters rather than changing their evidence to a passing status manually.
+This first verifies the metadata hash, dependency lock and retained adapter-source hashes, then checks the pinned profile, live contract code and reads, unsigned call encoding, and native signing-payload preparation. It writes a report under `.agent-workspace/verification/testnet/`. It does not sign or broadcast. The build performs the same artifact checks. Requalify changed runtime artifacts or adapters rather than changing their evidence to a passing status manually.
 
 The [isolated PortalDot integration checks](tests/integration/testnet/README.md) execute the exact testnet runtime locally, then exercise the real DEMO interface against that fork. Test tooling and generated state stay in `.agent-workspace`; they are not production dependencies. Passing compatibility checks does not fund wallets or authorize a public-network run.
 
@@ -59,7 +61,7 @@ The default route is **Home**, with a short product explanation and a three-step
 
 Connect the native network, then open **New workspace**. **Create multisig** derives the current group's address locally. **Connect existing** checks a supplied multisig address against the same complete membership. Both routes retain the existing two-of-three profile. A replacement group is entered only in **Control handoff**.
 
-An existing Pure and optional grant can be attached using the Pure creation block and transaction hashes. This uses the qualified LOCAL import verification path, including the exact creator, initial and current permissions, persistent mapping and contract history. Saving arbitrary address text does not establish provenance.
+An existing Pure and optional grant can be attached using the Pure creation block and transaction hashes. This uses the selected qualified network's descriptor and deployment, including the exact creator, initial and current permissions, persistent mapping and contract history. LOCAL and PortalDot DEMO imports require their own accepted profile. Saving arbitrary address text does not establish provenance.
 
 After a verified removal, **Start another handoff** reconstructs the native approval/removal evidence before advancing the current controller. Historical grant baseline, creator reserve, receipt references and wallet preferences survive. Closed grants can have their controller changed; a closed milestone is never presented as a new continuation action.
 
@@ -133,7 +135,7 @@ The public entry point is [packages/native-adapter/src/index.ts](packages/native
 
 | Files                                                                         | Responsibility                                                                                                       |
 | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `network-profile.ts`, `network-state.ts`                                      | LOCAL descriptor/profile qualification, anchored account and grant reads, baseline discovery and network projections |
+| `network-profile.ts`, `network-state.ts`                                      | Network-specific descriptor/profile qualification, anchored account and grant reads, baseline discovery and network projections |
 | `prepare-operation.ts`, `operation-parameters.ts`                             | Allowed user inputs, exact call plan, reviewed resource limits, frozen envelope and initial signing context          |
 | `operation-inputs.ts`, `accounting.ts`, `resources.ts`                        | Fresh preconditions, named reserve/hold accounting and user-facing resource review                                   |
 | `check-pending.ts`, `sign-operation.ts`                                       | Current signer/runtime/era/nonce/lease checks, explicit wallet request and durable signed-attempt recording          |

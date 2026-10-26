@@ -42,7 +42,7 @@
     "local:refresh-descriptor": "node scripts/local/refresh-descriptor.mjs",
     "generate:native": "node scripts/dev/generate-native.mjs",
     "verify:native": "node scripts/dev/verify-generated-native.mjs",
-    "verify:testnet": "node --dns-result-order=ipv4first --import tsx scripts/testnet/verify.mts",
+    "verify:testnet": "node scripts/testnet/verify-artifacts.mjs && node --dns-result-order=ipv4first --import tsx scripts/testnet/verify.mts",
     "testnet:fork": "node scripts/testnet/fork.mjs",
     "test:testnet:runtime": "node --import tsx tests/integration/testnet/runtime.mts",
     "test:testnet:browser": "playwright test --config tests/integration/testnet/playwright.config.ts"

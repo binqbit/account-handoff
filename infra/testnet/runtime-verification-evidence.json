@@ -1,0 +1,918 @@
+{
+  "observationTransport": {
+    "status": "passed",
+    "receipt": {
+      "txHash": "0x65d04e95841d4e6aac972a4f9ffca88692d432bca99415e8e669ab78c9b452a5",
+      "blockHash": "0xcdf2d354568b90d87a33fde0161f629c470e75a3999eafe1a2b720c231ef8ae6",
+      "blockNumber": 196379,
+      "txIndex": 1,
+      "events": [
+        {
+          "pallet": "Balances",
+          "name": "Withdraw",
+          "data": {
+            "who": "5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw",
+            "amount": "1430509939773"
+          },
+          "index": 1
+        },
+        {
+          "pallet": "Balances",
+          "name": "Deposit",
+          "data": {
+            "who": "5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z",
+            "amount": "1430509939773"
+          },
+          "index": 2
+        },
+        {
+          "pallet": "TransactionPayment",
+          "name": "TransactionFeePaid",
+          "data": {
+            "who": "5HGjWAeFDfFCWPsjFQdVV2Msvz2XtMktvgocEZcCj68kUMaw",
+            "actualFee": "1430509939773",
+            "tip": "0"
+          },
+          "index": 3
+        },
+        {
+          "pallet": "System",
+          "name": "ExtrinsicSuccess",
+          "data": {
+            "dispatchInfo": {
+              "weight": {
+                "refTime": "764602000",
+                "proofSize": "15777"
+              },
+              "class": "Normal",
+              "paysFee": "Yes"
+            }
+          },
+          "index": 4
+        }
+      ],
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "businessExecuted": true,
+      "failure": null
+    },
+    "receiptsSourceSha256": "1ac4a0d6cc93b8b3b5e4dfd708fdebeefc2ca885947efc7d4fc3c44f6c28b791"
+  },
+  "format": "account-handoff-runtime-verification-v1",
+  "status": "passed",
+  "checkedAt": "2026-10-26T00:44:16.753Z",
+  "scope": "Exact PortalDot runtime in an isolated Chopsticks fork; not a public-testnet execution or real consensus/finality proof.",
+  "runtimeCodeHash": "0xedc03c9dc81d39fea5c02893cc34cf2ec898d55d7ee8f8e89eb27597a724c7c2",
+  "metadataSha256": "cb987c63f3af905e46f8886a93d51a5d927ac6016f5d6e88f769340905d881b6",
+  "sourceBlock": 195611,
+  "genesisHash": "0xd4f9acbcf7f52388d8b095abe3c198d19fc510e0343e643e87cfbccb155283bd",
+  "tool": {
+    "chopsticks": "1.5.2",
+    "mockSignatureHost": false,
+    "allowUnresolvedImports": true
+  },
+  "fixtures": "Five known development signers with local balances; B/R1 and F/R2/S role overlap. No production signing keys.",
+  "pure": "0x07203b626f6cdc6947cdd23ae5bfe60b5f32bc9620f20b4f518c7852806198ba",
+  "grantId": "0",
+  "steps": [
+    {
+      "name": "fund-controller",
+      "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+      "callHash": "0xe70e9ad6af8481658f8f1f5a1fe176bd797b6437f7b2951f5c6f900c05c32176",
+      "transactionHash": "0x2b0a88845abba1ebb80202079ee3f939445a41656d04dd9d08aac3cf449bf9eb",
+      "blockHash": "0xcf20b6d107d38f2718f1dd50a82787d5ad4bb001e4d13a5d218e0cd2e5a70e37",
+      "blockNumber": 195613,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "create-pure-proposal",
+      "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+      "callHash": "0xc3ae9fcd8ed8db32acaf9ab3a304e40010a87c01a16e15ef1192b0f2d2e8957e",
+      "transactionHash": "0x39e7a7dfa54164010254505a0ddf43be6de4c39e2338d155104dba3979909d61",
+      "blockHash": "0x6760fa4ac3fd78d1677b519cf3651653bf1dc34834eee6e81e06f6c977d62cd7",
+      "blockNumber": 195614,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "create-pure-execute",
+      "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+      "callHash": "0x22fdcd48dc2d0023559a513e3dce5b8760afb0bbdd681288b1ee4a6d591a6279",
+      "transactionHash": "0xc11b5bea53ee64eae00ef187044600ded29be07a8919c5c74f7abfed068c561e",
+      "blockHash": "0x194a36b2cae347577f722b813e12dad928152821a9032420f06301a0ef4b3ee8",
+      "blockNumber": 195615,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "fund-pure",
+      "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+      "callHash": "0x8be89f45be447fcd31363b32d7bac31ff6c7434c5d422fc92ffbbca7727d411b",
+      "transactionHash": "0xed1ca06aa90cd9d6242cbdeed1bea7dd1cf41960530ca685b6677eff359341d2",
+      "blockHash": "0x170e498a14d601970685a099fe573e4d1c825ea827da2d8fd360cc62acab686a",
+      "blockNumber": 195616,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "create-grant",
+      "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+      "callHash": "0xfc79a17b68dc13cb5035fc103f584aa2339cd73b5f33de37d02cb76540ae0dd6",
+      "transactionHash": "0xd830b201db7d57dd53c3ba307f0ccaf1feda51f6db5cfab7c24f6437be07c380",
+      "blockHash": "0x58df9d34c964068a60c698ff7cb77e45310fd8e7a9112a7d7562d48b560a2736",
+      "blockNumber": 195617,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "submit-first-proposal",
+      "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+      "callHash": "0xc6ba93a8f40b3cd354472e3bd7ba39982712408e386fc5c8af14e6cd39a77fe8",
+      "transactionHash": "0xfedef7b0d1eea0bdbcaadbfa70fb9bbfc55ee9ec8abfbc184867639ed2a2e19b",
+      "blockHash": "0x81f96100e0e2e4c9cd4b1842d5a796aecf90b3acfa9b88212ca1706b7acb6857",
+      "blockNumber": 195618,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "submit-first-execute",
+      "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+      "callHash": "0x24975c04ab5425fc74aa828f5c5f98db637f269e29c86db5c33b9258a31418ca",
+      "transactionHash": "0xe52a94a871c74736710b48471667d13b5c49233ac8273b810bd975b3998a3b77",
+      "blockHash": "0xf90d80bb6b174d2f33a21e541a0759166fe287f3adb9b2fc632a2906a1a77fe5",
+      "blockNumber": 195619,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "review-first-B",
+      "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+      "callHash": "0xbf2e5cf030ce8da821bf16860bba065699be6643acd15ebaa9d1970a8a1fa359",
+      "transactionHash": "0x3bd4c9a5e7360d4245c8fdd31bc1064cfce95b8e2b9525a080c5a99b4226ab4a",
+      "blockHash": "0x96e9179a723df5122b3f392fd055a3b638f8de18eb144d0453b9591d8932f6f4",
+      "blockNumber": 195620,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "release-first-F",
+      "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+      "callHash": "0x6ec0fedafd114b05d232aba560ca39dbe8e5742431e403090a76795768c4ba12",
+      "transactionHash": "0xf83b80d98cb88bc7e79aca7129250a01cf011ad0bf8a0fe227c3a9dcac51d6b3",
+      "blockHash": "0x0f5f7546717721cdf7a94e80aa971734ad249a7e21040b36d71121bd37356ac2",
+      "blockNumber": 195621,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "add-M1-proposal",
+      "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+      "callHash": "0x1707a1857e0021446f6fe71f0eb863a4ef012506c9386042a0bf04225f5f09ce",
+      "transactionHash": "0xe41f3d7047ca6eee2992c75159ef38abe76c022c3b512d662f33cb860a0eb3a6",
+      "blockHash": "0x840395eecc4d697cdf5fcce6952cf939dd7ebbd0257e443ec5c01e892571a9b0",
+      "blockNumber": 195622,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "add-M1-execute",
+      "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+      "callHash": "0x64b4cbca9b579dbdb115807ecebfeac437ea73e8ba992fb1a85cd9c8e11acba5",
+      "transactionHash": "0x953c697e45fe0fee914fa57f5637244c3274774e5947e0222263cd2b9f5e46dc",
+      "blockHash": "0x455c566800c5856f16a63dab4ab073714cfbd6b2edd8847823087d89ac910107",
+      "blockNumber": 195623,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "remove-M0-proposal",
+      "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+      "callHash": "0x684e2bcd799bc86936d49b0e1b7d7142afe5fe63c3d58be6c43b5e93a4191893",
+      "transactionHash": "0xf7149364bebac48c686a03f2ec34067189a78fe704e9221f50a9cf9dc1bf93d5",
+      "blockHash": "0x94211170b0ee8e44b373d95ccd5f0d94207a2cc38d7b721cbeb3daaff8bf5ede",
+      "blockNumber": 195624,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "remove-M0-execute",
+      "signer": "0x306721211d5404bd9da88e0204360a1a9ab8b87c66c1bc2fcdd37f3c2222cc20",
+      "callHash": "0x123c8559406cdb0dee6c855a5543b86373050635e3b9303cb324298b8de1b1f4",
+      "transactionHash": "0x7b3b4be1084a8b9b32cb05f4dcf8922a278a6e0dfd89d24624b08015ae6b53c9",
+      "blockHash": "0x71c3cbe67fe8d9dfd2ea7b6547b764a4e74eb46c8764ba6940eefe197cbe5d7c",
+      "blockNumber": 195625,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "old-controller-denied-proposal",
+      "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+      "callHash": "0xc9b7850d0c2310d4a51a82c02d55377bc2b3635d23d5fe9dfb8330ad418ca145",
+      "transactionHash": "0x080323e01b3dacaee1ecf49c3da61d6719b56de17aac9e7dab94f82b64e64b13",
+      "blockHash": "0x0a480e5191e2c445d9d81c8b545ace5b67907948ee6f3f89a08311198bd07681",
+      "blockNumber": 195626,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "old-controller-denied-execute",
+      "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+      "callHash": "0x22dad79cc5d4182b391b658489c5ae1e8f263e683df8888432473f6a0e5425de",
+      "transactionHash": "0x092d455691d13ea127df87860e95c8f3242c0d7b594f257eb64f78c7cf901c08",
+      "blockHash": "0x4fe32b73b823046b281a8129c17ce77c90647119d1f24fc06adc6ddd16f803ae",
+      "blockNumber": 195627,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": false,
+      "expectedFailure": true
+    },
+    {
+      "name": "submit-second-proposal",
+      "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+      "callHash": "0xc73f6e8089cbebdb73ba0982944aff0ebae0d937d262eadd91179552f2a207c4",
+      "transactionHash": "0x5ef9075fe2364c4f27d2c9feb5be62402ba5cf0b622185722fe1a231c3d3f915",
+      "blockHash": "0x6c6c7d427e9ef6af145a5be727948d0066aaaa71be65ae0ddadaa9fd559bf02c",
+      "blockNumber": 195628,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "submit-second-execute",
+      "signer": "0x306721211d5404bd9da88e0204360a1a9ab8b87c66c1bc2fcdd37f3c2222cc20",
+      "callHash": "0x8dfa08bed97bafee523b91013c0b34bbde3f840656607d2dbe7ea8a85fc009fe",
+      "transactionHash": "0x96be45d43a5798caa96220be74f1a7fce818b53a42f77d8c42a32e07661c7888",
+      "blockHash": "0xe306d7d639b994b94aafad3d0df7b2d1a6c49f74d04e9feb9d763cf20b2a07d7",
+      "blockNumber": 195629,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "vest-other",
+      "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+      "callHash": "0x33e0b01193989564f0b51f6581bd1f8f2aba1fb74addc0a7140c10a8fc35b3f7",
+      "transactionHash": "0x033ce9ee325680788d5dc4cac9cf186c2b6f55cb6fa85bc0d49d6a503b31d7f5",
+      "blockHash": "0x6a4b606cba5840304ecb0098c3f2559b7bbf6714df24bf57705660e74302797f",
+      "blockNumber": 195831,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "return-add-M0-proposal",
+      "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+      "callHash": "0x7ffafae403f0b18fc8fee1f73a3bbe02de6f30ca8d28a0293892e0befe7740b6",
+      "transactionHash": "0x532c8eaed08b2aa50f02e7b3f213e59277ab0ba122e8eeeed013b4179374254c",
+      "blockHash": "0xa03cbe8d43cd8c153961f06f7a8f9c963e60daa871e7f64262e89dfe54c251f0",
+      "blockNumber": 195832,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "return-add-M0-execute",
+      "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+      "callHash": "0x9e8e536c5e720e0d6372a7adce8ba1eceeb3fca9d308983940df1aeba3fd0384",
+      "transactionHash": "0x29683134cdefc7870765f5ba058be3bffd9424d03e2a1439d085186e67e3b989",
+      "blockHash": "0x9ad5fbb55a460009936389a32d5db16b4bd68e5ac0a534483f4e6c3beb4e7ca0",
+      "blockNumber": 195833,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "return-remove-M1-proposal",
+      "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+      "callHash": "0x595147705ea32be147c987ddf6b8288e07ca5f2daf9064e71883dd11c87b84cb",
+      "transactionHash": "0xcb6a90c92a20a961719a69256b449fc7fd60458cb71e29c84e18ec2b6d655ea8",
+      "blockHash": "0x7b7a29d631e540707e73b1ff9d23c0b44e4f8a7e4414e16f7d015376c355e3cb",
+      "blockNumber": 195834,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "return-remove-M1-execute",
+      "signer": "0x90b5ab205c6974c9ea841be688864633dc9ca8a357843eeacf2314649965fe22",
+      "callHash": "0x54d264f2221141cda7739c84b6d7ec94caa69a866540e37c851aaf4cabaeb9dc",
+      "transactionHash": "0x8dd5e7454916d9502b9c842b94acca3812e741f5c2f32534aebe7ff76edc60e6",
+      "blockHash": "0xa196e6d51de8463a4d8c3442832445a2bff65e15cab2d4b4efc0361e8986712c",
+      "blockNumber": 195835,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "review-second-B",
+      "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+      "callHash": "0x955852bce7f82afc1c7d3bae03892e0423951111da203f45d920ca99c0aa6133",
+      "transactionHash": "0x8b8b9369be3889aa3606370f554fc984937e7c68a285e2f462389ac479d21239",
+      "blockHash": "0x61d565c35669e12279917dbed292fe8005039c60a4bfacbfe6684c8d18a7b5a6",
+      "blockNumber": 195836,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    },
+    {
+      "name": "release-second-F",
+      "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+      "callHash": "0x68c7be3c72688fbeacd4aa1232694f9741dacb2010e4bc93c88f14c2c0538cf0",
+      "transactionHash": "0x2e0e65deff8fbdb0721de5e5ecbbdcd98fdedaf0941c0cad7f07d0925e6aa43a",
+      "blockHash": "0x0438c0e990e3c909f3badfd302f3ef4f9ab93e2815d64d6c6936a3aacec00337",
+      "blockNumber": 195837,
+      "transactionIndex": 1,
+      "outerSuccess": true,
+      "nestedSuccess": true,
+      "expectedFailure": false
+    }
+  ],
+  "finalAccount": {
+    "address": "0x07203b626f6cdc6947cdd23ae5bfe60b5f32bc9620f20b4f518c7852806198ba",
+    "free": "1610000000000000",
+    "reserved": "0",
+    "frozen": "0",
+    "nonce": 0,
+    "proxies": [
+      {
+        "delegate": "0x49daa32c7287890f38b7e1a8cd2961723d36d20baa0bf3b82e0c4bdda93b1c0a",
+        "proxyType": "Any",
+        "delay": 0
+      }
+    ],
+    "proxyDeposit": "261000000000000",
+    "mappedAddress": "0xc78d8653434213a77a5e1c9ec08d4592be543817",
+    "mappedTo": "0x07203b626f6cdc6947cdd23ae5bfe60b5f32bc9620f20b4f518c7852806198ba",
+    "holds": [],
+    "vesting": [],
+    "namedReserves": []
+  },
+  "finalGrant": {
+    "funder": "0x203aedc6e1ee061f55ec52309d5ac8674d4e8352",
+    "threshold": 2,
+    "milestoneCount": 2,
+    "grantee": "0xc78d8653434213a77a5e1c9ec08d4592be543817",
+    "token": "0x0000000000000000000000000000000000000000",
+    "milestones": [
+      {
+        "amount": "10000000000000000000",
+        "deadline": "1793058072",
+        "vestingBlocks": 200,
+        "approvals": 2,
+        "round": 0,
+        "state": 2,
+        "metricTarget": "0x0000000000000000000000000000000000000000",
+        "metricSelector": "0x00000000",
+        "metricMin": "0"
+      },
+      {
+        "amount": "100000000000000000",
+        "deadline": "1793058072",
+        "vestingBlocks": 0,
+        "approvals": 2,
+        "round": 0,
+        "state": 2,
+        "metricTarget": "0x0000000000000000000000000000000000000000",
+        "metricSelector": "0x00000000",
+        "metricMin": "0"
+      }
+    ]
+  },
+  "recovery": "A read-only empty-block wait exceeded the initial harness timeout. The same Pure and grant were re-read and continued; no completed transaction was repeated.",
+  "browserApplication": {
+    "status": "passed",
+    "scope": "Real DEMO coordinator and DOM controls on the isolated fork, signature-only development wallet; not the public network or a wallet extension",
+    "checkedAt": "2026-10-26T00:43:27.826Z",
+    "adapterSourcesAtCapture": {
+      "packages/native-adapter/src/calls.ts": "7424ba4a7b0851efcb7dc18605ea5134ad5ccbee94f075aac3f5838b44236679",
+      "packages/native-adapter/src/connection.ts": "89045e4fb03f3a32517c16c8e81243f0155eb88383fd72694402bbb776d0738c",
+      "packages/native-adapter/src/index.ts": "aba82671fba93be5aeabfe44b9668b498f92346172beb101fea7a7624332efbd",
+      "packages/native-adapter/src/metadata.ts": "51ba14958bc1d0024aa5e79d20e00e4f446043da355c95a5c4992d99111d9ecc",
+      "packages/native-adapter/src/receipts.ts": "1ac4a0d6cc93b8b3b5e4dfd708fdebeefc2ca885947efc7d4fc3c44f6c28b791",
+      "packages/native-adapter/src/signing.ts": "fc13d4c04eabc558000f56f33429514cae06c6221d2b58fd97de8dde5b0f17fb",
+      "packages/native-adapter/src/state.ts": "5cb426253f6ba356b4d9d7f0d30f600698df416be6cfeb2c3a3352a15c51f109",
+      "packages/native-adapter/src/types.ts": "02ae400073cb5e46fef8185eefbe8fb588108dfaef46f4ed099d9ca27c335d86",
+      "packages/native-adapter/src/values.ts": "5ab5562de50f97072b47b78d94552be5867d728b78b0d223bcaf86b0eba3a10a"
+    },
+    "signatures": 22,
+    "canonicalReceiptsRechecked": 22,
+    "resumedAfterReload": true,
+    "pure": "0x35a69c6b4d89ab678602a400a6c65d0875380b1f906be1f982c11eabf51e139c",
+    "grantId": "3",
+    "receipts": [
+      {
+        "operationId": "GRC-SETUP-FUND-M0",
+        "phase": "direct",
+        "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+        "transactionHash": "0x17399aea2c3a7015feef4c5a22a990a16fe5b87c5f4ead6f01e45962ef1a818c",
+        "blockHash": "0x4b44a26501dff6ff66e31c8ffd26e3ce2405f453e7fd08ce552e10eb7145f680",
+        "blockNumber": "196106",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-SETUP-CREATE-PURE",
+        "phase": "multisig_first",
+        "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        "transactionHash": "0xb6f5d32ec22e0021088f32d63a7a695b545e1b9a3e52c711edc55b7fc57a40e6",
+        "blockHash": "0x312cd19da17d37cc76c37f2919ad6bfb289a781f40b3d4526e2b2f26dc337406",
+        "blockNumber": "196109",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "not_attempted"
+      },
+      {
+        "operationId": "GRC-SETUP-CREATE-PURE",
+        "phase": "multisig_final",
+        "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+        "transactionHash": "0xa97d0d551639b659d3e5dfa575dad3364510cb4306b457e6ed1df0452c341793",
+        "blockHash": "0x301f4dcc47e244e0ca7d7e834d8c1d8a426abda0863ce77e574804b3db8e5072",
+        "blockNumber": "196112",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-SETUP-FUND-P",
+        "phase": "direct",
+        "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+        "transactionHash": "0xef71472386031a45132e70a2a50cd118e2bd4c86804a7efc30e522b341f4a8c6",
+        "blockHash": "0x5fa0368e7c3bceeedba636d16618a18eafd769f6e5dd94b485a9d551a4a42b4c",
+        "blockNumber": "196115",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-GRANT-CREATE",
+        "phase": "direct",
+        "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+        "transactionHash": "0xacd77eca4e04ad5a42ada1f58d7c74b9eb6f6d16f5c583e008436ec1d65bc4fb",
+        "blockHash": "0x95e9b9053c0b8329e625f4342a2e37cc03508b7ffa499968a9ced39bedf6c0e7",
+        "blockNumber": "196119",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-GRANT-SUBMIT-M0",
+        "phase": "multisig_first",
+        "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        "transactionHash": "0x1cf9bc73f07b32e41466abbc2d39ec615a2f9e5baaa0b764b0599708bae78341",
+        "blockHash": "0x1d9bbe396aad37e91fa232f726fb30151758c3625cb99b4342afa3a978f467c4",
+        "blockNumber": "196123",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "not_attempted"
+      },
+      {
+        "operationId": "GRC-GRANT-SUBMIT-M0",
+        "phase": "multisig_final",
+        "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+        "transactionHash": "0x5e1564e5a2d3fb79d5de8816586cf4ddbfc5cfa4e04689f3c41736e5987215f9",
+        "blockHash": "0xbfbfe006179369b0ca43c8156e8efd432ded0169d5c3dec17c41b7287ac153b2",
+        "blockNumber": "196128",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-GRANT-APPROVE",
+        "phase": "direct",
+        "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+        "transactionHash": "0xc64aef012ad756ecb201d08d63528c4a1787e99db80af827185bc82bcaaee389",
+        "blockHash": "0x570a8f9da567b111e780381937337ecd42ed388db1384631e1584f734160d33b",
+        "blockNumber": "196132",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-GRANT-APPROVE",
+        "phase": "direct",
+        "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+        "transactionHash": "0xf443949f03c150292eecc8262159e1a93940d7b9c3957d6751f0d74e978426a2",
+        "blockHash": "0xf16f09570412887400cffb3bbcfea297734aaf7f26a09a04e8abe60651eda051",
+        "blockNumber": "196138",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-ROTATION-ADD-M1",
+        "phase": "multisig_first",
+        "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        "transactionHash": "0x98662cae1f8b5066b961ea10a2d6207209dc899239d1d1f0229488f48b36112f",
+        "blockHash": "0xac2e3fc65597e08db6efb8e2337a3f766622104a781f75e35ac9dd905b420ad4",
+        "blockNumber": "196144",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "not_attempted"
+      },
+      {
+        "operationId": "GRC-ROTATION-ADD-M1",
+        "phase": "multisig_final",
+        "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+        "transactionHash": "0x95e8eca2b0729ce2a9f78b1bab15f3b5d8b604c86d2932bae50f848e876eeb3c",
+        "blockHash": "0x6e0d17e663cfdf0cde9cc5fd2ff1f085d9e507628e69c053f4b9342740531e02",
+        "blockNumber": "196147",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-ROTATION-REMOVE-M0",
+        "phase": "multisig_first",
+        "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        "transactionHash": "0xae82209f1b406099780d86100ae19d27bf124cfc6969db2343908ddf57a412f0",
+        "blockHash": "0xd49bb1046f38bc713d7c1211fb2e48d807474c8f36dd3593d4853621a7d1d4b0",
+        "blockNumber": "196152",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "not_attempted"
+      },
+      {
+        "operationId": "GRC-ROTATION-REMOVE-M0",
+        "phase": "multisig_final",
+        "signer": "0x306721211d5404bd9da88e0204360a1a9ab8b87c66c1bc2fcdd37f3c2222cc20",
+        "transactionHash": "0x67d551225600245b1c317413cec6375e5ec26942ca5cd696e1787c3913c47df8",
+        "blockHash": "0x7d97709da0354d097d760f2ed4e047c3522f0087d6a3c968358fcd0084e6357b",
+        "blockNumber": "196157",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-GRANT-SUBMIT-M1",
+        "phase": "multisig_first",
+        "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        "transactionHash": "0xf50dbaad0b200752ba797d8f2469d8fb49bda41aafdb99aa46bea2f751d603be",
+        "blockHash": "0x15f0508e0bb87ae2e4f29690f3d268edef59880b7e64209d435f983f611b0f20",
+        "blockNumber": "196162",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "not_attempted"
+      },
+      {
+        "operationId": "GRC-GRANT-SUBMIT-M1",
+        "phase": "multisig_final",
+        "signer": "0x306721211d5404bd9da88e0204360a1a9ab8b87c66c1bc2fcdd37f3c2222cc20",
+        "transactionHash": "0x2968ed53cb112fe40307babb68da8343b8e54a5f743e83db401a4c4623b43434",
+        "blockHash": "0xe8e2c63ae8e280209a3db8b1eb1baff1ba2508dc215498a96cf57607ea35e81e",
+        "blockNumber": "196167",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-VESTING-VEST-OTHER",
+        "phase": "direct",
+        "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+        "transactionHash": "0x18285b27da507e4d6c7ce0d48b82a47e1a11d12bfc21a59598afe9e0bed6c2af",
+        "blockHash": "0x4c2408eb8d951b95a232a0e5cd99ee57ef2a085f0145152f6321db1d2ee7c47d",
+        "blockNumber": "196344",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-ROTATION-ADD-M1",
+        "phase": "multisig_first",
+        "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        "transactionHash": "0x1ca23801ead16c93aadc18e8a1962adbc49c39a541838b79e2de2dc548d7e33f",
+        "blockHash": "0xb901977780aff241a84ae6c9355428f4887db48dfb549ae7d009242812ecd4a0",
+        "blockNumber": "196349",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "not_attempted"
+      },
+      {
+        "operationId": "GRC-ROTATION-ADD-M1",
+        "phase": "multisig_final",
+        "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+        "transactionHash": "0x3a099a9c854c39206a715082cad9778344f55b3a3971c03af28754b4a0f356d7",
+        "blockHash": "0x5b40a0c38752b8016eea9dda38aca6ef39a5faefbf5891e3d6e66b4d47060608",
+        "blockNumber": "196354",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-ROTATION-REMOVE-M0",
+        "phase": "multisig_first",
+        "signer": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        "transactionHash": "0x09d0270dc33fa25ecb3f30c001d501f76282ea0643b64007860255cb5f9faa11",
+        "blockHash": "0x30802c8455eb23f1c6a7fc56c4471c06af3cae903f2f8ba9b81736046a5456b0",
+        "blockNumber": "196359",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "not_attempted"
+      },
+      {
+        "operationId": "GRC-ROTATION-REMOVE-M0",
+        "phase": "multisig_final",
+        "signer": "0x90b5ab205c6974c9ea841be688864633dc9ca8a357843eeacf2314649965fe22",
+        "transactionHash": "0xb56208474e6f99a292d318574c0d5de6c8edfd76441a82f748451dc9c18f02d5",
+        "blockHash": "0x23b1bc76c7a78094b7f71b13cde57a8925afa2c863c66c23bbef95b0ba5ed019",
+        "blockNumber": "196364",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-GRANT-APPROVE",
+        "phase": "direct",
+        "signer": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+        "transactionHash": "0x6e2d1da177494ff838365c25f2c43a08382322f16d7ba1c43a709e73dca41530",
+        "blockHash": "0x036b59e5710b48adbc2376e06401aa0990b6d721e1c8f7297db4b5ad644beada",
+        "blockNumber": "196369",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      },
+      {
+        "operationId": "GRC-GRANT-APPROVE",
+        "phase": "direct",
+        "signer": "0xe659a7a1628cdd93febc04a4e0646ea20e9f5f0ce097d9a05290d4a9e054df4e",
+        "transactionHash": "0x9f3f2c41bcfb33b67108c5f622c8699c8fcda59207b332b8ea36497033cebe23",
+        "blockHash": "0x135ef8227e21b6c2947e91f4d7b9aa76c33e57007e558d452adf963b5e913c05",
+        "blockNumber": "196374",
+        "transactionIndex": "1",
+        "status": "finalized_success",
+        "businessEffect": "historically_verified"
+      }
+    ],
+    "finalState": {
+      "address": "0x35a69c6b4d89ab678602a400a6c65d0875380b1f906be1f982c11eabf51e139c",
+      "free": "1610000000000000",
+      "reserved": "0",
+      "frozen": "0",
+      "nonce": 0,
+      "proxies": [
+        {
+          "delegate": "0x49daa32c7287890f38b7e1a8cd2961723d36d20baa0bf3b82e0c4bdda93b1c0a",
+          "proxyType": "Any",
+          "delay": 0
+        }
+      ],
+      "proxyDeposit": "261000000000000",
+      "mappedAddress": "0xdf491c82a01a60f81a27ed6c72de23451606d54c",
+      "mappedTo": "0x35a69c6b4d89ab678602a400a6c65d0875380b1f906be1f982c11eabf51e139c",
+      "holds": [],
+      "vesting": [],
+      "namedReserves": []
+    },
+    "finalGrant": {
+      "funder": "0x203aedc6e1ee061f55ec52309d5ac8674d4e8352",
+      "threshold": 2,
+      "milestoneCount": 2,
+      "grantee": "0xdf491c82a01a60f81a27ed6c72de23451606d54c",
+      "token": "0x0000000000000000000000000000000000000000",
+      "milestones": [
+        {
+          "amount": "10000000000000000000",
+          "deadline": "1793579472",
+          "vestingBlocks": 200,
+          "approvals": 2,
+          "round": 0,
+          "state": 2,
+          "metricTarget": "0x0000000000000000000000000000000000000000",
+          "metricSelector": "0x00000000",
+          "metricMin": "0"
+        },
+        {
+          "amount": "100000000000000000",
+          "deadline": "1793579472",
+          "vestingBlocks": 0,
+          "approvals": 2,
+          "round": 0,
+          "state": 2,
+          "metricTarget": "0x0000000000000000000000000000000000000000",
+          "metricSelector": "0x00000000",
+          "metricMin": "0"
+        }
+      ]
+    },
+    "finalUiCheck": {
+      "status": "passed",
+      "scope": "Restored actual completed journal; latest UI, no new signatures or transactions",
+      "checkedAt": "2026-10-26T00:45:23.609Z",
+      "assertions": [
+        "Grant complete",
+        "both milestones released",
+        "no unavailable submission suggestion",
+        "no obsolete testnet banner"
+      ],
+      "signatures": 0
+    }
+  },
+  "cancellation": {
+    "status": "passed",
+    "scope": "Local PortalDot fork: proposer cancellation, deposit refund and no inner transfer",
+    "receipts": [
+      {
+        "txHash": "0x42473aad8f7deaf5100aec7a39074827868911bde32dcc2e22bf3427f05ec77e",
+        "blockHash": "0xcafa25ab2da8da589825e629db702178aee6df0c4e773a1cfe1d4750f1744ea3",
+        "blockNumber": 196381,
+        "txIndex": 1,
+        "events": [
+          {
+            "pallet": "Balances",
+            "name": "Withdraw",
+            "data": {
+              "who": "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+              "amount": "2190815510812"
+            },
+            "index": 1
+          },
+          {
+            "pallet": "Balances",
+            "name": "Reserved",
+            "data": {
+              "who": "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+              "amount": "927000000000000"
+            },
+            "index": 2
+          },
+          {
+            "pallet": "Multisig",
+            "name": "NewMultisig",
+            "data": {
+              "approving": "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+              "multisig": "5DjYJStmdZ2rcqXbXGX7TW85JsrW6uG4y9MUcLq2BoPMpRA7",
+              "callHash": "0xd34e55ef2c7c0c9cd8085ffd9f9d122e6ae8f7433f533dcc18fe87a4d30acaca"
+            },
+            "index": 3
+          },
+          {
+            "pallet": "Balances",
+            "name": "Deposit",
+            "data": {
+              "who": "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+              "amount": "310910240"
+            },
+            "index": 4
+          },
+          {
+            "pallet": "Balances",
+            "name": "Deposit",
+            "data": {
+              "who": "5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z",
+              "amount": "2190504600572"
+            },
+            "index": 5
+          },
+          {
+            "pallet": "TransactionPayment",
+            "name": "TransactionFeePaid",
+            "data": {
+              "who": "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+              "actualFee": "2190504600572",
+              "tip": "0"
+            },
+            "index": 6
+          },
+          {
+            "pallet": "System",
+            "name": "ExtrinsicSuccess",
+            "data": {
+              "dispatchInfo": {
+                "weight": {
+                  "refTime": "755881886",
+                  "proofSize": "18995"
+                },
+                "class": "Normal",
+                "paysFee": "Yes"
+              }
+            },
+            "index": 7
+          }
+        ],
+        "outerSuccess": true,
+        "nestedSuccess": true,
+        "businessExecuted": false,
+        "failure": null
+      },
+      {
+        "txHash": "0x775dd96f938630791049ee67743390cb89992267ee73327217d5c260ea62428b",
+        "blockHash": "0xd6410b9d53ee7470c9300afb8013c523555a679f11b52d1b11fd07742fe1d5cf",
+        "blockNumber": 196383,
+        "txIndex": 1,
+        "events": [
+          {
+            "pallet": "Balances",
+            "name": "Withdraw",
+            "data": {
+              "who": "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+              "amount": "2160503719306"
+            },
+            "index": 1
+          },
+          {
+            "pallet": "Balances",
+            "name": "Unreserved",
+            "data": {
+              "who": "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+              "amount": "927000000000000"
+            },
+            "index": 2
+          },
+          {
+            "pallet": "Multisig",
+            "name": "MultisigCancelled",
+            "data": {
+              "cancelling": "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+              "timepoint": {
+                "height": 196381,
+                "index": 1
+              },
+              "multisig": "5DjYJStmdZ2rcqXbXGX7TW85JsrW6uG4y9MUcLq2BoPMpRA7",
+              "callHash": "0xd34e55ef2c7c0c9cd8085ffd9f9d122e6ae8f7433f533dcc18fe87a4d30acaca"
+            },
+            "index": 3
+          },
+          {
+            "pallet": "Balances",
+            "name": "Deposit",
+            "data": {
+              "who": "5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z",
+              "amount": "2160503719306"
+            },
+            "index": 4
+          },
+          {
+            "pallet": "TransactionPayment",
+            "name": "TransactionFeePaid",
+            "data": {
+              "who": "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+              "actualFee": "2160503719306",
+              "tip": "0"
+            },
+            "index": 5
+          },
+          {
+            "pallet": "System",
+            "name": "ExtrinsicSuccess",
+            "data": {
+              "dispatchInfo": {
+                "weight": {
+                  "refTime": "754445268",
+                  "proofSize": "18995"
+                },
+                "class": "Normal",
+                "paysFee": "Yes"
+              }
+            },
+            "index": 6
+          }
+        ],
+        "outerSuccess": true,
+        "nestedSuccess": true,
+        "businessExecuted": true,
+        "failure": null
+      }
+    ],
+    "depositReturned": "927000000000000",
+    "innerTransferExecuted": false,
+    "runtimeCodeHash": "0xedc03c9dc81d39fea5c02893cc34cf2ec898d55d7ee8f8e89eb27597a724c7c2",
+    "metadataSha256": "cb987c63f3af905e46f8886a93d51a5d927ac6016f5d6e88f769340905d881b6"
+  }
+}

@@ -20,6 +20,19 @@ assert.equal(
   proof.packageLockSha256,
 );
 if (proof.status === "passed") {
+  assert.equal(proof.evidenceLocator, "runtime-verification-evidence.json");
+  const evidenceBytes = await readFile(
+    `infra/testnet/${proof.evidenceLocator}`,
+  );
+  assert.equal(
+    hash(evidenceBytes),
+    proof.evidenceSha256,
+    "Runtime evidence was changed",
+  );
+  const evidence = JSON.parse(evidenceBytes);
+  assert.equal(evidence.status, "passed");
+  assert.equal(evidence.runtimeCodeHash, binding.runtimeCodeHash);
+  assert.equal(evidence.metadataSha256, binding.metadataSha256);
   assert(
     proof.adapterSources && Object.keys(proof.adapterSources).length > 0,
     "Missing verified adapter sources",

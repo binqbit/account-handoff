@@ -1,9 +1,31 @@
 {
-  "status": "pending",
+  "status": "passed",
+  "checkedAt": "2026-10-26T00:44:16.753Z",
   "runtimeCodeHash": "0xedc03c9dc81d39fea5c02893cc34cf2ec898d55d7ee8f8e89eb27597a724c7c2",
   "metadataSha256": "cb987c63f3af905e46f8886a93d51a5d927ac6016f5d6e88f769340905d881b6",
-  "capabilities": [],
-  "evidenceLocator": "",
-  "evidenceSha256": "",
-  "packageLockSha256": "76ba3dca4a9642256d746eb2dffb1cef2d9b40c590d1a34abf30a9748b27bd42"
+  "packageLockSha256": "76ba3dca4a9642256d746eb2dffb1cef2d9b40c590d1a34abf30a9748b27bd42",
+  "capabilities": [
+    "currency",
+    "automatic-mapping",
+    "vesting",
+    "native-codec",
+    "signing",
+    "receipts",
+    "proxy-multisig",
+    "revive-api"
+  ],
+  "evidenceLocator": "runtime-verification-evidence.json",
+  "evidenceSha256": "cfff1752932184831c412095fddb4a081ce83906956b2b813419173b1d3d415c",
+  "adapterSources": {
+    "packages/native-adapter/src/calls.ts": "7424ba4a7b0851efcb7dc18605ea5134ad5ccbee94f075aac3f5838b44236679",
+    "packages/native-adapter/src/connection.ts": "7d74d1407f67694e03be787405326e44cf630714e7a78bd5730ae970ce7cc3e7",
+    "packages/native-adapter/src/index.ts": "aba82671fba93be5aeabfe44b9668b498f92346172beb101fea7a7624332efbd",
+    "packages/native-adapter/src/metadata.ts": "51ba14958bc1d0024aa5e79d20e00e4f446043da355c95a5c4992d99111d9ecc",
+    "packages/native-adapter/src/receipts.ts": "1ac4a0d6cc93b8b3b5e4dfd708fdebeefc2ca885947efc7d4fc3c44f6c28b791",
+    "packages/native-adapter/src/signing.ts": "fc13d4c04eabc558000f56f33429514cae06c6221d2b58fd97de8dde5b0f17fb",
+    "packages/native-adapter/src/state.ts": "5cb426253f6ba356b4d9d7f0d30f600698df416be6cfeb2c3a3352a15c51f109",
+    "packages/native-adapter/src/types.ts": "02ae400073cb5e46fef8185eefbe8fb588108dfaef46f4ed099d9ca27c335d86",
+    "packages/native-adapter/src/values.ts": "5ab5562de50f97072b47b78d94552be5867d728b78b0d223bcaf86b0eba3a10a"
+  },
+  "publicTestnetJourneyExecuted": false
 }
