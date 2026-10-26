@@ -13,6 +13,8 @@ The server binds only `127.0.0.1:8059` and forks block 195611. Start from that c
 
 In Instant mode, the server also produces an idle block every six seconds so browser observation does not mistake a paused test chain for a disconnected node. Manual mode pauses that heartbeat while the test explicitly advances to the recorded vesting end block.
 
+For an independent rehearsal, set `AH_TESTNET_FORK_DATABASE` to a new file under `.agent-workspace/`. This preserves earlier evidence and the default fork database. Do not run two servers on the same port or database.
+
 In another terminal, from the repository root:
 
 ```bash

@@ -1,6 +1,6 @@
 /** Isolated runtime test server. Its upstream connection only supplies fork state. */
 import { readFile, mkdir } from "node:fs/promises";
-import { resolve, join } from "node:path";
+import { resolve, join, dirname, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { blake2AsHex } from "@polkadot/util-crypto";
 import network from "../../infra/testnet/network.json" with { type: "json" };
@@ -21,6 +21,12 @@ const [{ setupContext }, { createServer }, { handler }] = await Promise.all([
   load("rpc/index.js"),
 ]);
 await mkdir(directory, { recursive: true });
+const database = resolve(
+  process.env.AH_TESTNET_FORK_DATABASE ?? join(directory, "state.sqlite"),
+);
+if (!database.startsWith(resolve(".agent-workspace") + sep))
+  throw new Error("Fork databases must remain in the agent workspace");
+await mkdir(dirname(database), { recursive: true });
 const port = 8059;
 const context = await setupContext({
   endpoint: network.nativeRpc,
@@ -32,7 +38,7 @@ const context = await setupContext({
   // Unused StatementStore imports may be unresolved; invoking one still fails execution.
   "allow-unresolved-imports": true,
   "rpc-timeout": 60000,
-  db: join(directory, "state.sqlite"),
+  db: database,
   resume: process.env.AH_TESTNET_FORK_RESUME === "1",
 });
 const rpc = handler(context);
