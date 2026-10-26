@@ -7,7 +7,6 @@ import {
   assessBacking,
   hasPreservedSchedule,
   spendable,
-  vestingRemaining,
 } from "./accounting.js";
 import type { Blocker } from "./result.js";
 
@@ -424,15 +423,10 @@ export function validateFreshOperation(input: FreshOperationInput): Blocker[] {
         "The qualified native vesting clock must be read at the fresh anchor",
         ["SG-24"],
       );
-    else if (
-      !rotation &&
-      !input.baselineVesting?.some(
-        (tuple) => vestingRemaining(tuple, input.vestingBlockNumber!) > 0n,
-      )
-    )
+    else if (!rotation && !input.baselineVesting?.length)
       add(
-        "BaselineVestingExpired",
-        "The selected demonstration requires an active original vesting schedule",
+        "BaselineVestingMissing",
+        "Continuation requires the original source-bound vesting schedule",
         ["SG-24"],
       );
   }

@@ -38,4 +38,6 @@ The first workflow supports one submission per milestone in a known open round. 
 
 Rotated means that the expected new native controller is verified at the stated finalized checkpoint. Continued additionally means that this controller has successfully submitted the next milestone on the same grant. Neither label means that reviewers have approved the next tranche or that it has been paid.
 
+An open milestone can still be submitted after the original vesting period ends, provided the original schedule, grant identity and current authority still pass verification. The active-vesting continuity certificate remains stricter: a late submission does not receive that certificate, and the interface identifies the finalized submission separately.
+
 After a disconnect or uncertain wallet response, the application reconciles actual chain evidence before offering another action. It never substitutes a successful simulation, transaction hash or top-level event for the completed grant task.

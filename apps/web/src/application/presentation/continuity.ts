@@ -142,7 +142,17 @@ export function proof(
         "The baseline, separate M0 removal receipt and later M1 submission on the same grant are saved. The current beneficiary and controller match. This does not imply approval or release of the next tranche.",
     };
   }
-  if (removals.length && identityPreserved)
+  if (removals.length && identityPreserved) {
+    if (
+      submissions.some((submission) =>
+        removals.some((removal) => after(submission, removal)),
+      )
+    )
+      return {
+        continuity: "rotated",
+        detail:
+          "The replacement group submitted to the same grant. The active-vesting continuity certificate is unavailable; the separate finalized receipts remain in history.",
+      };
     return {
       continuity: "rotated",
       detail:
@@ -150,6 +160,7 @@ export function proof(
           ? "The replacement group controls the same beneficiary. There is no open milestone to submit; review the grant and its saved history."
           : "M0 removal has a separate finalized receipt. Submit the next milestone through M1 and verify its outcome to complete the handoff.",
     };
+  }
   if (!chain && workspace.history.length)
     return {
       continuity: "unknown",

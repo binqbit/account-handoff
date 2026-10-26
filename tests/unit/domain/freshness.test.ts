@@ -107,7 +107,7 @@ describe("fresh operation preconditions", () => {
     const codes = validateFreshOperation(input).map((value) => value.code);
     expect(codes).not.toContain("GrantScopeUnavailable");
     expect(codes).not.toContain("VestingContinuityUnknown");
-    expect(codes).not.toContain("BaselineVestingExpired");
+    expect(codes).not.toContain("BaselineVestingMissing");
     expect(codes).not.toContain("ContinuationUnavailable");
     expect(codes).toContain("AccountingUnreconciled");
     input.envelope.intent.operationId = "GRC-GRANT-SUBMIT-M1";
@@ -115,7 +115,31 @@ describe("fresh operation preconditions", () => {
       (value) => value.code,
     );
     expect(continuation).toContain("GrantScopeUnavailable");
-    expect(continuation).toContain("BaselineVestingExpired");
+    expect(continuation).toContain("BaselineVestingMissing");
+  });
+  it("allows a matured preserved schedule without dropping continuity guards", async () => {
+    const input = rotation(await base());
+    input.envelope.intent.operationId = "GRC-GRANT-SUBMIT-M1";
+    const tuple = {
+      locked: "100",
+      perBlock: "1",
+      startingBlock: "10",
+      clockDomain: "native-block-number" as const,
+    };
+    input.baselineVesting = [tuple];
+    input.currentVesting = [{ ...tuple }];
+    input.vestingBlockNumber = 110n;
+    let codes = validateFreshOperation(input).map((b) => b.code);
+    expect(codes).not.toContain("BaselineVestingMissing");
+    expect(codes).not.toContain("VestingContinuityUnknown");
+    expect(codes).toContain("AccountingUnreconciled");
+    input.currentVesting = [{ ...tuple, locked: "101" }];
+    codes = validateFreshOperation(input).map((b) => b.code);
+    expect(codes).toContain("VestingContinuityUnknown");
+    input.vestingBlockNumber = undefined;
+    expect(validateFreshOperation(input).map((b) => b.code)).toContain(
+      "VestingClockUnavailable",
+    );
   });
   it("requires exact current profile, review deadline and payer liquidity", async () => {
     const input = await base();

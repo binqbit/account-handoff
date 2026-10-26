@@ -439,6 +439,9 @@ describe("UI presentation preserves authoritative distinctions", () => {
     };
     // Historical booleans alone must never unlock a verified continuity state.
     expect(workspaceView(workspace, chain).continuity).toBe("rotated");
+    expect(workspaceView(workspace, chain).continuityDetail).toContain(
+      "active-vesting continuity certificate is unavailable",
+    );
     workspace.continuityCertificate = certificate(workspace, chain);
     expect(workspaceView(workspace, chain).continuity).toBe("continued");
     workspace.history[0]!.grantId = "1";
