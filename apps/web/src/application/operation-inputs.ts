@@ -15,6 +15,7 @@ import {
 import type { ChainView, WorkspaceRecord, PendingOperation } from "./models";
 import { workspaceView } from "./presentation";
 import { schedules } from "./values";
+import { hasMaturedReleaseSchedule } from "./continuity/vesting";
 export async function loadOperationInputs(
   {
     connection,
@@ -112,6 +113,21 @@ export async function loadOperationInputs(
     p.actionId,
   );
   const baseline = rotation ? (w.handoffBaseline ?? w.baseline) : w.baseline;
+  const maturedVestingVerified =
+    p.actionId === "GRC-VESTING-VEST-OTHER" &&
+    !!w.pure &&
+    p.envelope.intent.parameters.targetPure === w.pure &&
+    pure?.mappedTo === w.pure &&
+    grant?.grantee === contractAddress(w.pure) &&
+    !!baseline &&
+    baseline.blockHash === history?.firstVestingRelease?.blockHash &&
+    hasMaturedReleaseSchedule(
+      schedules(baseline.account.vesting),
+      schedules(pure.vesting),
+      history?.firstVestingRelease ?? null,
+      history?.complete ?? false,
+      BigInt(f.anchor.number),
+    );
   return {
     envelope: p.envelope,
     signer: p.signer,
@@ -152,5 +168,6 @@ export async function loadOperationInputs(
     continuityVerified: ["continued", "drift"].includes(
       workspaceView(w, chain).continuity,
     ),
+    maturedVestingVerified,
   };
 }

@@ -6,6 +6,8 @@ import {
 import type { ActionView, OperationField } from "../../ui-contract";
 import type { ChainView, WorkspaceRecord } from "../models";
 import testnet from "../../../../../infra/testnet/network.json";
+import { hasMaturedPreservedSchedule } from "@account-handoff/domain";
+import { schedules } from "../values";
 import { proof } from "./continuity";
 import {
   authority,
@@ -148,6 +150,20 @@ export function actionViews(
       ? requirePure()
       : ["Create or verify a grant for beneficiary P first."];
   const grant = chain?.grant;
+  let maturedVesting = false;
+  try {
+    maturedVesting =
+      !!chain &&
+      !!workspace.baseline &&
+      !!pureState &&
+      hasMaturedPreservedSchedule(
+        schedules(workspace.baseline.account.vesting),
+        schedules(pureState.vesting),
+        BigInt(chain.fingerprint.anchor.number),
+      );
+  } catch {
+    /* Malformed observations cannot enable maintenance. */
+  }
   const milestone = (index: number) => grant?.milestones[index];
   const requireOpen = (index: number): string[] => {
     const value = milestone(index);
@@ -543,8 +559,11 @@ export function actionViews(
         ...(!selectedRoles.includes("S")
           ? ["Select the designated operator S."]
           : []),
-        ...(!["continued", "drift"].includes(proofState.continuity)
-          ? ["Complete and verify grant continuation first."]
+        ...(!["continued", "drift"].includes(proofState.continuity) &&
+        !maturedVesting
+          ? [
+              "Verify grant continuation or wait for the preserved vesting schedule to mature.",
+            ]
           : []),
       ],
     ),

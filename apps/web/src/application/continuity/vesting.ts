@@ -1,6 +1,9 @@
 import type { VestingTuple } from "@account-handoff/contracts";
 import type { GrantHistoryEntry } from "@account-handoff/grant-adapter";
-import { abiToNative } from "@account-handoff/domain";
+import {
+  abiToNative,
+  hasMaturedPreservedSchedule,
+} from "@account-handoff/domain";
 import { bigint } from "./observations";
 
 /** Bind the schedule to this grant's release, not another grant on the same P. */
@@ -23,4 +26,16 @@ export function releasedVestingSchedule(
       tuple.startingBlock === String(release.blockNumber) &&
       tuple.clockDomain === "native-block-number",
   );
+}
+
+export function hasMaturedReleaseSchedule(
+  baseline: VestingTuple[],
+  current: VestingTuple[],
+  release: GrantHistoryEntry | null,
+  historyComplete: boolean,
+  atBlock: bigint,
+): boolean {
+  if (!historyComplete) return false;
+  const tuple = releasedVestingSchedule(baseline, release);
+  return !!tuple && hasMaturedPreservedSchedule([tuple], current, atBlock);
 }

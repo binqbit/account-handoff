@@ -40,4 +40,6 @@ Rotated means that the expected new native controller is verified at the stated 
 
 An open milestone can still be submitted after the original vesting period ends, provided the original schedule, grant identity and current authority still pass verification. The active-vesting continuity certificate remains stricter: a late submission does not receive that certificate, and the interface identifies the finalized submission separately.
 
+Refreshing an already matured vesting lock also remains available without that certificate. Preparation independently binds the preserved schedule to this grant's finalized first release, checks the current beneficiary and complete grant history, and verifies native-block maturity. This maintenance operation is not evidence that a handoff completed during active vesting.
+
 After a disconnect or uncertain wallet response, the application reconciles actual chain evidence before offering another action. It never substitutes a successful simulation, transaction hash or top-level event for the completed grant task.

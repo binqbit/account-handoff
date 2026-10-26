@@ -8,6 +8,7 @@ import {
   parseUnits,
   vestingDuration,
   vestingRemaining,
+  hasMaturedPreservedSchedule,
 } from "@account-handoff/domain";
 
 describe("integer units and native vesting", () => {
@@ -39,5 +40,27 @@ describe("integer units and native vesting", () => {
     expect(vestingRemaining(tuple, 99n)).toBe(10n);
     expect(vestingRemaining(tuple, 103n)).toBe(1n);
     expect(vestingRemaining(tuple, 104n)).toBe(0n);
+  });
+  it("permits matured maintenance only for a nonempty, preserved native schedule", () => {
+    const tuple = {
+      locked: "10",
+      perBlock: "3",
+      startingBlock: "100",
+      clockDomain: "native-block-number",
+    };
+    expect(hasMaturedPreservedSchedule([tuple], [tuple], 103n)).toBe(false);
+    expect(hasMaturedPreservedSchedule([tuple], [tuple], 104n)).toBe(true);
+    expect(hasMaturedPreservedSchedule([], [], 104n)).toBe(false);
+    expect(hasMaturedPreservedSchedule([tuple], [], 104n)).toBe(false);
+    expect(hasMaturedPreservedSchedule([tuple], [tuple, tuple], 104n)).toBe(
+      false,
+    );
+    expect(
+      hasMaturedPreservedSchedule(
+        [{ ...tuple, clockDomain: "unknown" }],
+        [tuple],
+        104n,
+      ),
+    ).toBe(false);
   });
 });

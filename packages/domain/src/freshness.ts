@@ -6,6 +6,7 @@ import type {
 import {
   assessBacking,
   hasPreservedSchedule,
+  hasMaturedPreservedSchedule,
   spendable,
 } from "./accounting.js";
 import type { Blocker } from "./result.js";
@@ -72,6 +73,7 @@ export interface FreshOperationInput {
   currentVesting?: readonly VestingTuple[];
   vestingBlockNumber?: bigint;
   continuityVerified?: boolean;
+  maturedVestingVerified?: boolean;
   reviewerAuthorized?: boolean;
 }
 
@@ -300,11 +302,22 @@ export function validateFreshOperation(input: FreshOperationInput): Blocker[] {
     );
   if (
     operationId === "GRC-VESTING-VEST-OTHER" &&
-    input.continuityVerified !== true
+    input.continuityVerified !== true &&
+    !(
+      input.maturedVestingVerified === true &&
+      input.baselineVesting &&
+      input.currentVesting &&
+      input.vestingBlockNumber !== undefined &&
+      hasMaturedPreservedSchedule(
+        input.baselineVesting,
+        input.currentVesting,
+        input.vestingBlockNumber,
+      )
+    )
   )
     add(
       "ContinuityProofRequired",
-      "Optional vesting refresh is available only after the completed continuity proof",
+      "Vesting refresh requires verified continuity or the preserved matured schedule from this grant's release",
       ["SG-24"],
     );
   if (operationId === "GRC-GRANT-APPROVE" && input.reviewerAuthorized !== true)

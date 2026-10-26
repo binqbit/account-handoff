@@ -59,6 +59,24 @@ export function hasPreservedSchedule(
   return [...expected].every(([key, count]) => actual.get(key) === count);
 }
 
+/** Maturity permits lock maintenance; it does not establish an active-vesting proof. */
+export function hasMaturedPreservedSchedule(
+  baseline: readonly VestingTuple[],
+  current: readonly VestingTuple[],
+  atBlock: bigint,
+): boolean {
+  return (
+    baseline.length > 0 &&
+    baseline.every(
+      (tuple) =>
+        tuple.clockDomain === "native-block-number" &&
+        integer(tuple.locked) > 0n,
+    ) &&
+    hasPreservedSchedule(baseline, current) &&
+    baseline.every((tuple) => vestingRemaining(tuple, atBlock) === 0n)
+  );
+}
+
 export function assessBacking(ledger: AccountingLedger): {
   backed: boolean;
   unexplained: bigint;

@@ -208,4 +208,31 @@ describe("fresh operation preconditions", () => {
       ),
     ).toBe(true);
   });
+  it("admits source-verified matured maintenance without granting an active-vesting certificate", async () => {
+    const input = await base();
+    input.envelope.intent.operationId = "GRC-VESTING-VEST-OTHER";
+    input.continuityVerified = false;
+    input.maturedVestingVerified = true;
+    const tuple = {
+      locked: "10",
+      perBlock: "1",
+      startingBlock: "100",
+      clockDomain: "native-block-number",
+    };
+    input.baselineVesting = [tuple];
+    input.currentVesting = [tuple];
+    input.vestingBlockNumber = 110n;
+    expect(validateFreshOperation(input).map((b) => b.code)).not.toContain(
+      "ContinuityProofRequired",
+    );
+    input.vestingBlockNumber = 109n;
+    expect(validateFreshOperation(input).map((b) => b.code)).toContain(
+      "ContinuityProofRequired",
+    );
+    input.vestingBlockNumber = 110n;
+    input.maturedVestingVerified = false;
+    expect(validateFreshOperation(input).map((b) => b.code)).toContain(
+      "ContinuityProofRequired",
+    );
+  });
 });

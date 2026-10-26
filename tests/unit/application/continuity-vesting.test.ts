@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { GrantHistoryEntry } from "@account-handoff/grant-adapter";
-import { releasedVestingSchedule } from "../../../apps/web/src/application/continuity/vesting";
+import {
+  hasMaturedReleaseSchedule,
+  releasedVestingSchedule,
+} from "../../../apps/web/src/application/continuity/vesting";
 
 const tuple = (startingBlock: string, locked = "1800000000000000") => ({
   locked,
@@ -50,5 +53,32 @@ describe("grant-specific vesting identity", () => {
         args: { ...release.args, amount: "10001" },
       }),
     ).toThrow();
+  });
+  it("requires complete release provenance and maturity before maintenance", () => {
+    const target = tuple("5822");
+    expect(
+      hasMaturedReleaseSchedule([target], [target], release, true, 7622n),
+    ).toBe(true);
+    expect(
+      hasMaturedReleaseSchedule([target], [target], release, true, 7621n),
+    ).toBe(false);
+    expect(
+      hasMaturedReleaseSchedule([target], [target], release, false, 7622n),
+    ).toBe(false);
+    expect(
+      hasMaturedReleaseSchedule([target], [target], null, true, 7622n),
+    ).toBe(false);
+    expect(hasMaturedReleaseSchedule([target], [], release, true, 7622n)).toBe(
+      false,
+    );
+    expect(
+      hasMaturedReleaseSchedule(
+        [tuple("5068")],
+        [target],
+        release,
+        true,
+        7622n,
+      ),
+    ).toBe(false);
   });
 });
