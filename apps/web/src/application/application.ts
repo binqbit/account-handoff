@@ -479,6 +479,10 @@ export class Application implements ApplicationFacade {
         "Connect the grant's Pure beneficiary and its creation receipt first.",
       );
     if (input.beneficiary && !verified) {
+      if (this.chain.profile.status !== "accepted")
+        throw new Error(
+          "Qualify the network before connecting an existing beneficiary.",
+        );
       if (!input.creation || !this.connection || !this.chain.descriptor)
         throw new Error(
           "Connecting a beneficiary requires its creation block and transaction on a qualified network.",

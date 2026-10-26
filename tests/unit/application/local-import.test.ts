@@ -16,6 +16,7 @@ import type {
   GrantState,
 } from "@account-handoff/grant-adapter";
 import type { LocalDescriptor } from "../../../apps/web/src/application/models";
+import type { TestnetDescriptor } from "../../../apps/web/src/application/network-descriptor";
 const readers = vi.hoisted(() => ({ history: vi.fn(), grant: vi.fn() }));
 vi.mock("@account-handoff/grant-adapter", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@account-handoff/grant-adapter")>()),
@@ -269,6 +270,52 @@ function fixture() {
 }
 beforeEach(() => vi.clearAllMocks());
 describe("LOCAL workspace import verifies original chain provenance", () => {
+  it("verifies an existing beneficiary and grant under the bound DEMO descriptor", async () => {
+    const f = fixture();
+    const endpoint = "wss://test-node-v3.portaldot.dev/";
+    Object.assign(f.connection, { mode: "DEMO", endpoint });
+    const original = f.fingerprint.getMockImplementation()!;
+    f.fingerprint.mockImplementation(async (block) => ({
+      ...(await original(block)),
+      specName: "portaldot-v3",
+      specVersion: 3002,
+    }));
+    f.state.mappedTo = P;
+    const expected: TestnetDescriptor = {
+      mode: "DEMO",
+      nativeRpc: endpoint,
+      genesisHash: h("e"),
+      runtimeCodeHash: h("f"),
+      metadataSha256: "1".repeat(64),
+      runtime: {
+        specName: "portaldot-v3",
+        specVersion: 3002,
+        nativeDecimals: 14,
+        nativeToEthRatio: "10000",
+        autoMap: true,
+      },
+      contract: f.expected.contract!,
+      verification: null,
+      nativeMetadataBinding: {
+        genesis: h("e"),
+        runtimeCodeHash: h("f"),
+        specVersion: 3002,
+        metadataSha256: "1".repeat(64),
+        rawMetadata: "0x00",
+        sourceAnchor: { blockHash: creationBlock, blockNumber: 10 },
+      },
+    };
+    const { newMembers: _next, ...input } = f.raw.input;
+    const result = await verifyWorkspaceConnection(
+      input,
+      { blockHash: creationBlock, transactionHash: creationHash },
+      f.connection,
+      expected,
+    );
+    expect(result.input.grantId).toBe("0");
+    expect(result.creator.account).toBe(M0);
+    expect(result.input.newMembers).toBeUndefined();
+  });
   it("recovers the original Pure creator when connecting a later controller", async () => {
     const f = fixture();
     const { newMembers: _next, ...input } = f.raw.input;

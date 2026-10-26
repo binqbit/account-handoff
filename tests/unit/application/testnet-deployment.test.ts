@@ -23,6 +23,28 @@ async function start(mode: string) {
 }
 
 describe("testnet deployment boundary", () => {
+  it("does not attach an existing beneficiary before network qualification", async () => {
+    const { app, access } = await start("testnet");
+    access.chain = {
+      fingerprint: { genesis: testnet.genesisHash },
+      profile: { status: "candidate" },
+    };
+    const id = (n: number) => `0x${String(n).repeat(64)}`;
+    await expect(
+      app.dispatch({
+        type: "create-workspace",
+        input: {
+          name: "Unqualified import",
+          oldMembers: [id(1), id(2), id(3)],
+          threshold: 2,
+          funder: id(4),
+          reviewers: [id(5), id(6)],
+          beneficiary: id(7),
+        },
+      }),
+    ).rejects.toThrow("Qualify the network");
+    expect(app.getSnapshot().workspaces).toEqual([]);
+  });
   it("starts the real coordinator in an isolated testnet journal without connecting", async () => {
     const { openJournal } = await import("@account-handoff/local-store");
     const local = await openJournal("account-handoff:local:ui");
