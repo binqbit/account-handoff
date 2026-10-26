@@ -68,13 +68,15 @@ export class NativeConnection {
   ): Promise<NativeConnection> {
     const url = safeEndpoint(endpoint, mode);
     const pinned = binding ? await validateMetadataBinding(binding) : undefined;
+    const provider = new WsProvider({
+      endpoint: url,
+      retryDelayMs: 1000,
+      maxRetryAttempts: 3,
+      // Immutable remote metadata/runtime responses can be several megabytes.
+      timeout: mode === "LOCAL" ? 15000 : 60000,
+    });
     const api = await DedotClient.legacy({
-      provider: new WsProvider({
-        endpoint: url,
-        retryDelayMs: 1000,
-        maxRetryAttempts: 3,
-        timeout: 15000,
-      }),
+      provider,
       cacheMetadata: false,
       throwOnUnknownApi: true,
       ...(pinned
@@ -85,6 +87,10 @@ export class NativeConnection {
             },
           }
         : {}),
+    }).catch(async (error) => {
+      // The SDK factory may reject before returning an API to disconnect.
+      await provider.disconnect().catch(() => {});
+      throw error;
     });
     const connection = new NativeConnection(api, url, mode, pinned);
     if (pinned) {
@@ -106,7 +112,7 @@ export class NativeConnection {
           );
         await connection.fingerprint();
       } catch (error) {
-        await api.disconnect();
+        await api.disconnect().catch(() => {});
         throw error;
       }
     }
