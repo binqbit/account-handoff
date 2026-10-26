@@ -5,7 +5,6 @@ import type {
 import {
   classifyAuthority,
   hasPreservedSchedule,
-  vestingRemaining,
 } from "@account-handoff/domain";
 import {
   NativeConnection,
@@ -193,15 +192,10 @@ export async function operationPostconditions(
     const backing =
       ledger?.status === "reconciled" &&
       ledger.unexplainedReservedDeltaNative === "0";
+    const baselineSchedules = schedules(baseline.account.vesting);
     const vesting =
-      hasPreservedSchedule(
-        schedules(baseline.account.vesting),
-        schedules(pure.vesting),
-      ) &&
-      (rotation ||
-        schedules(baseline.account.vesting).some(
-          (s) => vestingRemaining(s, BigInt(receipt.blockNumber)) > 0n,
-        ));
+      hasPreservedSchedule(baselineSchedules, schedules(pure.vesting)) &&
+      (rotation || baselineSchedules.length > 0);
     const grant = await readGrant(
       connection,
       w.pure!,
@@ -228,7 +222,7 @@ export async function operationPostconditions(
         anchor,
         observations: [],
         explanation:
-          "The original active vesting schedule and its multiplicity are preserved.",
+          "The original vesting schedule and its multiplicity are preserved. Active-vesting certification is assessed separately.",
       },
       {
         id: "grant-beneficiary",
