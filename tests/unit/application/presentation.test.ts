@@ -308,6 +308,44 @@ function certificate(
   return result;
 }
 describe("UI presentation preserves authoritative distinctions", () => {
+  it("offers history after a closed grant instead of another submission", () => {
+    const { workspace, chain } = fixture();
+    chain.accounts[P!]!.proxies = [
+      { delegate: M1!, proxyType: "Any", delay: 0 },
+    ];
+    chain.grant!.milestones.forEach((milestone) => {
+      milestone.state = 2;
+    });
+    expect(workspaceView(workspace, chain).currentTask).toEqual({
+      title: "Grant complete",
+      detail:
+        "All milestones are closed. Review the payment history or manage the signing group.",
+      destination: "history",
+    });
+  });
+  it("still removes dual control when the grant is closed", () => {
+    const { workspace, chain } = fixture();
+    chain.accounts[P!]!.proxies.push({
+      delegate: M1!,
+      proxyType: "Any",
+      delay: 0,
+    });
+    chain.grant!.milestones.forEach((milestone) => {
+      milestone.state = 2;
+    });
+    expect(workspaceView(workspace, chain).currentTask.actionId).toBe(
+      "GRC-ROTATION-REMOVE-M0",
+    );
+  });
+  it("offers reviewer approval for an already submitted milestone after rotation", () => {
+    const { workspace, chain } = fixture();
+    chain.accounts[P!]!.proxies = [
+      { delegate: M1!, proxyType: "Any", delay: 0 },
+    ];
+    expect(workspaceView(workspace, chain).currentTask.actionId).toBe(
+      "GRC-GRANT-APPROVE",
+    );
+  });
   it("keeps exactly fourteen actions and disables disconnected preparation", () => {
     const { workspace } = fixture();
     const actions = actionViews(workspace, null, null);

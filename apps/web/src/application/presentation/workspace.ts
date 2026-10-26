@@ -215,14 +215,31 @@ export function workspaceView(
       detail: "The delegate inventory differs from the configured groups.",
       destination: "team",
     };
+  else if (current === "DualControl")
+    currentTask = {
+      title: "Remove the current group",
+      detail:
+        "Both groups currently have authority. The replacement group performs the next step.",
+      actionId: "GRC-ROTATION-REMOVE-M0",
+    };
   else if (
-    milestones.some((item) => item.state === "Submitted") &&
-    !workspace.baseline
+    milestones.length > 0 &&
+    milestones.every((item) => ["Released", "Reclaimed"].includes(item.state))
   )
     currentTask = {
-      title: "The first milestone awaits reviewers",
+      title: "Grant complete",
       detail:
-        "R1 and R2 independently review the evidence and approve the first tranche release.",
+        "All milestones are closed. Review the payment history or manage the signing group.",
+      destination: "history",
+    };
+  else if (
+    milestones.some((item) => item.state === "Submitted") &&
+    !milestones.some((item) => item.state === "Open")
+  )
+    currentTask = {
+      title: "The milestone awaits reviewers",
+      detail:
+        "R1 and R2 independently review the submitted evidence and approve its release.",
       actionId: "GRC-GRANT-APPROVE",
     };
   else if (!workspace.baseline)
@@ -231,13 +248,6 @@ export function workspaceView(
       detail:
         "The first milestone must establish active vesting before control is handed off.",
       actionId: "GRC-GRANT-SUBMIT-M0",
-    };
-  else if (current === "DualControl")
-    currentTask = {
-      title: "Remove the current group",
-      detail:
-        "Both groups currently have authority. The replacement group performs the next step.",
-      actionId: "GRC-ROTATION-REMOVE-M0",
     };
   else if (current === "M1" && continuity.continuity !== "continued")
     currentTask = {

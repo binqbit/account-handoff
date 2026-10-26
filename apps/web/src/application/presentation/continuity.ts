@@ -146,7 +146,9 @@ export function proof(
     return {
       continuity: "rotated",
       detail:
-        "M0 removal has a separate finalized receipt. Submit the next milestone through M1 and verify its outcome to complete the handoff.",
+        chain?.grant && !chain.grant.milestones.some((m) => m.state === 0)
+          ? "The replacement group controls the same beneficiary. There is no open milestone to submit; review the grant and its saved history."
+          : "M0 removal has a separate finalized receipt. Submit the next milestone through M1 and verify its outcome to complete the handoff.",
     };
   if (!chain && workspace.history.length)
     return {

@@ -190,12 +190,19 @@ function Application({ application }: { application: ApplicationFacade }) {
             </div>
           )}
           <main className="main-content" id="main-content" tabIndex={-1}>
-            {deployment.isTestnet && (
-              <Notice tone="warning" title="PortalDot V3 testnet preview">
-                Network reads are available. Transaction support is pending
-                testnet qualification.
-              </Notice>
-            )}
+            {deployment.isTestnet &&
+              snapshot.network.connected &&
+              snapshot.network.readiness.some(
+                (row) => row.id === "profile" && row.status === "blocked",
+              ) && (
+                <Notice
+                  tone="warning"
+                  title="Testnet runtime needs verification"
+                >
+                  Network reads are available. Transaction support is pending
+                  testnet qualification.
+                </Notice>
+              )}
             {snapshot.storageError && (
               <Notice tone="negative" title="Storage unavailable">
                 {snapshot.storageError} Signing and sending require reliable
