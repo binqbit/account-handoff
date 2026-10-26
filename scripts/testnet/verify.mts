@@ -20,18 +20,22 @@ const output = resolve(
   process.argv[2] ??
     ".agent-workspace/verification/testnet/current-readonly.json",
 );
-const descriptor = await readTestnetDescriptor();
-const connection = await NativeConnection.connect(
-  descriptor.nativeRpc,
-  "DEMO",
-  descriptor.nativeMetadataBinding,
-);
 const report: Record<string, unknown> = {
+  status: "running",
   checkedAt: new Date().toISOString(),
   scope:
     "Public RPC reads and unsigned encoding only; no wallet, secrets, signature or submission.",
 };
+await mkdir(dirname(output), { recursive: true });
+await writeFile(output, JSON.stringify(report, null, 2) + "\n");
+let connection: NativeConnection | undefined;
 try {
+  const descriptor = await readTestnetDescriptor();
+  connection = await NativeConnection.connect(
+    descriptor.nativeRpc,
+    "DEMO",
+    descriptor.nativeMetadataBinding,
+  );
   const lockHash = createHash("sha256")
     .update(await readFile("package-lock.json"))
     .digest("hex");
@@ -100,7 +104,9 @@ try {
   report.error = String(error);
   process.exitCode = 1;
 } finally {
-  await connection.close();
+  await connection?.close().catch((error) => {
+    report.closeError = String(error);
+  });
   await mkdir(dirname(output), { recursive: true });
   await writeFile(
     output,
