@@ -85,16 +85,53 @@ export async function send(
   binding: NativeMetadataBinding | undefined,
   signedBytes: Hex,
   onProgress?: (result: ISubmittableResult) => void,
+  observationTimeoutMs = 120_000,
 ): Promise<NativeReceipt> {
   if (!binding)
     throw new Error("Sending requires an explicit verified metadata binding");
   await connection.fingerprint();
-  const result = await connection.api
-    .sendTx(signedBytes, onProgress ?? (() => {}))
-    .untilFinalized();
-  if (result.status.type !== "Finalized")
-    throw new Error("Finalized result is unavailable");
-  return connection.receiptAt(result.status.value.blockHash, result.txHash);
+  const pending = connection.api.sendTx(signedBytes, onProgress ?? (() => {}));
+  let unsubscribe: (() => Promise<void>) | undefined;
+  let unsubscribed = false;
+  let expired = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const stopWatching = async () => {
+    if (unsubscribe && !unsubscribed) {
+      unsubscribed = true;
+      await unsubscribe().catch(() => {});
+    }
+  };
+  try {
+    const subscribed = pending.then(async (stop) => {
+      unsubscribe = stop;
+      if (expired) await stopWatching();
+    });
+    // Observe both promises: an RPC rejection rejects the subscription promise,
+    // while a finalized/rejected extrinsic settles the finality promise.
+    const completion = Promise.all([subscribed, pending.untilFinalized()]);
+    const [, result] = await Promise.race([
+      completion,
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => {
+          expired = true;
+          reject(
+            new Error(
+              "Transaction observation timed out. Reconcile the saved transaction; do not submit it again.",
+            ),
+          );
+        }, observationTimeoutMs);
+      }),
+    ]);
+    if (result.status.type !== "Finalized")
+      throw new Error("Finalized result is unavailable");
+    return await connection.receiptAt(
+      result.status.value.blockHash,
+      result.txHash,
+    );
+  } finally {
+    if (timer) clearTimeout(timer);
+    await stopWatching();
+  }
 }
 
 export async function receiptAt(
