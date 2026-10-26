@@ -136,7 +136,7 @@ describe("fresh operation preconditions", () => {
     input.currentVesting = [{ ...tuple, locked: "101" }];
     codes = validateFreshOperation(input).map((b) => b.code);
     expect(codes).toContain("VestingContinuityUnknown");
-    input.vestingBlockNumber = undefined;
+    delete input.vestingBlockNumber;
     expect(validateFreshOperation(input).map((b) => b.code)).toContain(
       "VestingClockUnavailable",
     );
