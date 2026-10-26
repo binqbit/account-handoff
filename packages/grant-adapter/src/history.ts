@@ -20,6 +20,7 @@ export interface HistoryBlock {
 export interface FinalizedHistorySource {
   finalizedHeight(): Promise<number>;
   block(height: number): Promise<HistoryBlock>;
+  verifyCanonicalRange?(): Promise<void>;
 }
 export interface GrantHistoryEntry {
   blockNumber: number;
@@ -300,6 +301,16 @@ export async function scanGrantHistoryWithSource(
       break;
     }
   }
+  if (output.complete && source.verifyCanonicalRange) {
+    try {
+      await source.verifyCanonicalRange();
+    } catch (error) {
+      output.complete = false;
+      output.blockers.push(
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
   Object.assign(
     output,
     reduceGrantHistory(output.entries, output.complete, output.blockers),
@@ -313,7 +324,13 @@ export async function scanGrantHistory(
   connection: NativeConnection,
   options: ScanOptions,
 ): Promise<GrantHistory> {
-  return scanGrantHistoryWithSource(nativeHistorySource(connection), options);
+  return scanGrantHistoryWithSource(
+    nativeHistorySource(connection, {
+      fromBlock: options.fromBlock,
+      toBlock: options.toBlock,
+    }),
+    options,
+  );
 }
 
 export function roundAtSubmission(

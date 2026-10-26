@@ -14,7 +14,48 @@ function object(value: unknown): Record<string, unknown> {
 
 export function nativeHistorySource(
   connection: NativeConnection,
+  range?: { fromBlock: number; toBlock: number },
 ): FinalizedHistorySource {
+  if (
+    range &&
+    (!Number.isSafeInteger(range.fromBlock) ||
+      !Number.isSafeInteger(range.toBlock) ||
+      range.fromBlock < 0 ||
+      range.toBlock < range.fromBlock ||
+      range.toBlock - range.fromBlock + 1 > BLOCK_LIMIT)
+  )
+    throw new Error("Invalid canonical history range");
+  let rangeHashes: Promise<Map<number, Hex> | null> | undefined;
+  async function canonicalRange(): Promise<Map<number, Hex> | null> {
+    if (!range) return null;
+    const heights = Array.from(
+      { length: range.toBlock - range.fromBlock + 1 },
+      (_, i) => range.fromBlock + i,
+    );
+    let response: unknown;
+    try {
+      // Substrate's chain_getBlockHash accepts ListOrValue<NumberOrHex>.
+      response = await connection.api.provider.send("chain_getBlockHash", [
+        heights,
+      ]);
+    } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        error.code === -32602
+      )
+        return null;
+      throw error;
+    }
+    // Some local RPC replicas implement only the scalar form. Keep its exact checks.
+    if (typeof response === "string") return null;
+    if (!Array.isArray(response) || response.length !== heights.length)
+      throw new Error("Canonical block hash list has the wrong length");
+    return new Map(
+      heights.map((height, index) => [height, hex(response[index], 32)]),
+    );
+  }
   let cache = caches.get(connection);
   if (!cache) {
     cache = new Map();
@@ -29,7 +70,13 @@ export function nativeHistorySource(
       );
     },
     async block(height) {
-      const blockHash = await connection.api.rpc.chain_getBlockHash(height);
+      const hashes =
+        range && height >= range.fromBlock && height <= range.toBlock
+          ? await (rangeHashes ??= canonicalRange())
+          : null;
+      const blockHash =
+        hashes?.get(height) ??
+        (await connection.api.rpc.chain_getBlockHash(height));
       if (!blockHash) throw new Error("Historical block hash is unavailable");
       // Re-resolve the canonical hash even on a hit, including after a LOCAL reset.
       const key = hex(blockHash, 32);
@@ -45,6 +92,16 @@ export function nativeHistorySource(
       }
       // Callers may retain or annotate entries; never expose cached mutable evidence.
       return structuredClone(await pending);
+    },
+    async verifyCanonicalRange() {
+      if (!range || !rangeHashes) return;
+      const hashes = await rangeHashes;
+      if (!hashes) return;
+      const current = await connection.api.rpc.chain_getBlockHash(
+        range.toBlock,
+      );
+      if (current !== hashes.get(range.toBlock))
+        throw new Error("Canonical history changed during the scan");
     },
   };
   async function loadBlock(

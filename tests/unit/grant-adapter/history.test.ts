@@ -71,6 +71,21 @@ function source(
 }
 
 describe("finalized causal grant history", () => {
+  it("keeps an otherwise complete history unresolved if its canonical range changes", async () => {
+    const historySource = source({ 1: [emitted("GrantCreated")] });
+    historySource.verifyCanonicalRange = async () => {
+      throw new Error("canonical range changed");
+    };
+    const result = await scanGrantHistoryWithSource(historySource, {
+      contract,
+      grantId: "0",
+      fromBlock: 1,
+      toBlock: 4,
+    });
+    expect(result.complete).toBe(false);
+    expect(result.scope).toBe("ReconciliationRequired");
+    expect(result.blockers).toContain("canonical range changed");
+  });
   it("derives round0 from the ordered creation-to-submission history", async () => {
     const result = await scanGrantHistoryWithSource(
       source({
