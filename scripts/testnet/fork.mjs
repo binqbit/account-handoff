@@ -46,6 +46,28 @@ const server = await createServer(
       );
       return value === null ? null : blake2AsHex(value);
     }
+    if (request.method === "author_submitAndWatchExtrinsic") {
+      const normalized = {
+        ...subscriptions,
+        subscribe(method, id, onCancel) {
+          const callback = subscriptions.subscribe(method, id, onCancel);
+          return (value) => {
+            // Unit variants on real Substrate RPC are strings. Chopsticks emits {ready:null}.
+            const keys =
+              value && typeof value === "object" ? Object.keys(value) : [];
+            const key = keys.length === 1 ? keys[0] : undefined;
+            callback(
+              key &&
+                ["future", "ready", "dropped", "invalid"].includes(key) &&
+                value[key] === null
+                ? key
+                : value,
+            );
+          };
+        },
+      };
+      return rpc(request, normalized);
+    }
     return rpc(request, subscriptions);
   },
   port,
@@ -54,8 +76,23 @@ const server = await createServer(
 console.log(
   `FORK_READY ${server.addr}; local execution only, public state at block 195611`,
 );
+let heartbeatBusy = false;
+const heartbeat = setInterval(async () => {
+  if (heartbeatBusy || context.chain.txPool.mode !== "Instant") return;
+  heartbeatBusy = true;
+  try {
+    // Public networks keep producing blocks while a person reviews an operation.
+    await context.chain.newBlock({});
+  } catch (error) {
+    console.error("Local fork heartbeat failed", error);
+  } finally {
+    heartbeatBusy = false;
+  }
+}, 6000);
+heartbeat.unref();
 for (const signal of ["SIGINT", "SIGTERM"])
   process.on(signal, async () => {
+    clearInterval(heartbeat);
     await context.chain.close();
     await server.close();
     process.exit(0);

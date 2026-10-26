@@ -13,6 +13,7 @@ import {
   type NativeReceipt,
 } from "@account-handoff/native-adapter";
 import { decodeGrantEvent } from "@account-handoff/grant-adapter";
+import { buildBlocks } from "./blocks";
 export async function setupRuntimeTest() {
   const root = ".agent-workspace/implementation/testnet-pipeline/fork";
   const binding = JSON.parse(
@@ -44,21 +45,8 @@ export async function setupRuntimeTest() {
     metadataSha256: binding.metadataSha256,
     steps: [],
   };
-  async function build(params = {}) {
-    const response = await fetch("http://127.0.0.1:8059", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 7,
-        method: "dev_newBlock",
-        params: [params],
-      }),
-      signal: AbortSignal.timeout(900000),
-    });
-    const json = await response.json();
-    if (json.error) throw Error(JSON.stringify(json.error));
-    return json.result;
+  async function build(params: { count?: number } = {}) {
+    return buildBlocks(params.count ?? 1);
   }
   const save = () =>
     writeFileSync(

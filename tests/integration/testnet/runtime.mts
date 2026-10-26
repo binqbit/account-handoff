@@ -165,7 +165,19 @@ try {
     state.proxies.map((p) => p.delegate),
     [M1],
   );
-  await build({ count: 201 });
+  const schedule = (
+    state.vesting as {
+      locked: string;
+      perBlock: string;
+      startingBlock: number;
+    }[]
+  )[0]!;
+  const end =
+    BigInt(schedule.startingBlock) +
+    (BigInt(schedule.locked) + BigInt(schedule.perBlock) - 1n) /
+      BigInt(schedule.perBlock);
+  const height = BigInt((await c.fingerprint()).anchor.number);
+  await build({ count: Number(end > height ? end - height : 1n) });
   await tx("vest-other", 4, { kind: "vest-other", beneficiary: pure });
   state = await c.readAccount(pure);
   assert.equal((state.vesting as any[]).length, 0);

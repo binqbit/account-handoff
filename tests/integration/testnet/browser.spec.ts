@@ -5,7 +5,8 @@ import {
   contractAddress,
 } from "@account-handoff/native-adapter";
 import { readGrant } from "@account-handoff/grant-adapter";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { buildBlocks } from "./blocks";
 import { injectLocalWallet } from "../local/browser-wallet";
 import {
   performApproval,
@@ -83,14 +84,29 @@ test("complete DEMO application on the exact PortalDot runtime fork", async ({
     ).toBeVisible();
     const fingerprint = await c.fingerprint(),
       symbol = fingerprint.tokenSymbol;
+    const saveCheckpoint = async (stage: string) => {
+      await page.context().storageState({
+        path: testInfo.outputPath("checkpoint.storage.json"),
+        indexedDB: true,
+      });
+      writeFileSync(
+        testInfo.outputPath("checkpoint.json"),
+        JSON.stringify({ stage, walletRequests: w.requests }, null, 2) + "\n",
+      );
+    };
     const act = async (
       role: "A" | "B" | "C" | "D" | "F",
       id: string,
       fields = {},
-    ) => performApproval(page, role, w.accounts[role], id, fields);
+    ) => {
+      await performApproval(page, role, w.accounts[role], id, fields);
+      await saveCheckpoint(`${role}:${id}`);
+    };
     await act("F", "GRC-SETUP-FUND-M0", { [`Amount (${symbol})`]: "3" });
     for (const role of ["A", "B"] as const)
-      await act(role, "GRC-SETUP-CREATE-PURE", { "Pure index": "8" });
+      await act(role, "GRC-SETUP-CREATE-PURE", {
+        "Pure index": String(fingerprint.anchor.number % 65536),
+      });
     await page.getByRole("button", { name: "Overview", exact: true }).click();
     const card = page.locator(".card").filter({
       has: page.getByRole("heading", {
@@ -170,18 +186,21 @@ test("complete DEMO application on the exact PortalDot runtime fork", async ({
     await expect(page.getByText("Connected", { exact: true })).toBeVisible();
     await selectPersonalAccount(page, w.accounts.F);
     await c.api.provider.send("dev_setBlockBuildMode", ["Manual"]);
-    const response = await fetch("http://127.0.0.1:8059", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "dev_newBlock",
-        params: [{ count: 201 }],
-      }),
-      signal: AbortSignal.timeout(900000),
-    });
-    expect((await response.json()).error).toBeUndefined();
+    const schedules = (await c.readAccount(pure)).vesting as {
+      locked: string;
+      perBlock: string;
+      startingBlock: number;
+    }[];
+    expect(schedules).toHaveLength(1);
+    const schedule = schedules[0]!;
+    const end =
+      BigInt(schedule.startingBlock) +
+      (BigInt(schedule.locked) + BigInt(schedule.perBlock) - 1n) /
+        BigInt(schedule.perBlock);
+    const height = BigInt((await c.fingerprint()).anchor.number);
+    const count = Number(end > height ? end - height : 1n);
+    await saveCheckpoint("before-vesting-wait");
+    await buildBlocks(count);
     await c.api.provider.send("dev_setBlockBuildMode", ["Instant"]);
     await act("F", "GRC-VESTING-VEST-OTHER");
     await handoff([w.accounts.A, w.accounts.B, w.accounts.C], true);
