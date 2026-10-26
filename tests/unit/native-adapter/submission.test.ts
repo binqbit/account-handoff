@@ -61,4 +61,23 @@ describe("bounded native transaction observation", () => {
     expect(c.receiptAt).toHaveBeenCalledExactlyOnceWith("0x11", "0x22");
     expect(unsubscribe).toHaveBeenCalledOnce();
   });
+  it("cleans up a late subscription after finality has already rejected", async () => {
+    let open!: (stop: () => Promise<void>) => void;
+    const subscription = new Promise<() => Promise<void>>((resolve) => {
+      open = resolve;
+    });
+    const unsubscribe = vi.fn(async () => {});
+    const { connection, c } = fixture(
+      subscription,
+      Promise.reject(new Error("Observation disconnected")),
+    );
+    await expect(send(connection, binding, "0x00")).rejects.toThrow(
+      "Observation disconnected",
+    );
+    open(unsubscribe);
+    await subscription;
+    await Promise.resolve();
+    expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(c.api.sendTx).toHaveBeenCalledOnce();
+  });
 });

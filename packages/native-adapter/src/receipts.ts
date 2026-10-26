@@ -129,6 +129,8 @@ export async function send(
       result.txHash,
     );
   } finally {
+    // Finality may reject before the RPC subscription finishes opening.
+    expired = true;
     if (timer) clearTimeout(timer);
     await stopWatching();
   }
