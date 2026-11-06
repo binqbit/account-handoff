@@ -54,7 +54,19 @@ export function operationView(
     route: p.route,
     consequences: [
       "The operation uses the exact native calls shown.",
-      "The native proposal remains valid after this review is closed.",
+      ...(p.phase === "multisig_first"
+        ? [
+            "A first approval creates a native proposal. Closing this review does not cancel it.",
+          ]
+        : p.phase === "multisig_final"
+          ? [
+              "Closing this review does not cancel the existing native proposal.",
+            ]
+          : p.phase === "cancel"
+            ? [
+                "Cancellation does not undo an operation that has already executed.",
+              ]
+            : []),
     ],
     terms: [
       { label: "Network", value: p.prepared.fingerprint.specName },

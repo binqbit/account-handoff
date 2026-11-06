@@ -158,6 +158,15 @@ export class Application implements ApplicationFacade {
   private workspace(): WorkspaceRecord | null {
     return this.workspaces.find((w) => w.id === this.currentId) ?? null;
   }
+  private clearWorkspaceContext() {
+    this.chain = null;
+    this.grantHistory = null;
+    this.pending = null;
+    this.recovery = null;
+    // Close this view's journal handle; its durable attempts and leases stay saved.
+    this.journal?.close();
+    this.journal = null;
+  }
   private selected() {
     return (
       this.state.wallet.accounts.find(
@@ -237,9 +246,10 @@ export class Application implements ApplicationFacade {
         case "select-workspace":
           if (!this.workspaces.some((w) => w.id === command.id))
             throw new Error("Unknown workspace");
-          this.currentId = command.id;
-          this.pending = null;
-          this.recovery = null;
+          if (this.currentId !== command.id) {
+            this.currentId = command.id;
+            this.clearWorkspaceContext();
+          }
           await this.save();
           await this.refresh();
           break;
@@ -463,19 +473,28 @@ export class Application implements ApplicationFacade {
         await this.updateCertificate();
       }
     } catch (error) {
-      if (this.chain?.currentContinuity)
-        this.chain.currentContinuity = {
-          ...this.chain.currentContinuity,
-          status: "unavailable",
-          reasons: ["Fresh finalized observations are unavailable."],
-        };
+      // A refresh may follow a workspace switch. Retaining the previous chain view
+      // would present another workspace's grant and balances as current evidence.
+      this.chain = null;
+      this.grantHistory = null;
       this.state = {
         ...this.state,
         network: {
           ...this.state.network,
+          connected: false,
           checking: false,
           historyProgress: null,
           error: errorText(error),
+          readiness: this.state.network.readiness.map((item) =>
+            item.id === "wallet"
+              ? item
+              : {
+                  ...item,
+                  status: "unknown",
+                  detail:
+                    "Fresh finalized observations are unavailable. Refresh the network state before continuing.",
+                },
+          ),
         },
       };
       throw error;
@@ -526,7 +545,7 @@ export class Application implements ApplicationFacade {
     }
     this.workspaces.push(w);
     this.currentId = w.id;
-    this.pending = null;
+    this.clearWorkspaceContext();
     await this.save();
     await this.refresh();
     this.notify(
@@ -753,7 +772,16 @@ export class Application implements ApplicationFacade {
     if (p.stage !== "signed" || !p.signedBytes)
       throw new Error("A verified, saved signature is required");
     p.stage = "broadcast";
-    await this.saveRecovery(p);
+    const priorRecovery = this.recovery;
+    try {
+      await this.saveRecovery(p);
+    } catch (error) {
+      // No submission has begun. Keep the exact saved packet ready for a later,
+      // explicit send once the recovery checkpoint can be retained.
+      p.stage = "signed";
+      this.recovery = priorRecovery;
+      throw error;
+    }
     this.render();
     try {
       const receipt = await this.connection!.send(p.signedBytes);

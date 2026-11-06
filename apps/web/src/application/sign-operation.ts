@@ -50,7 +50,15 @@ export async function signOperation(
   });
   await journal.appendProgress(progress, p.lease);
   p.stage = "wallet-requested";
-  await saveRecovery(p);
+  try {
+    await saveRecovery(p);
+  } catch (error) {
+    // The wallet has not been invoked, so there is no uncertain signature outcome.
+    // Keep the same reviewed request usable after local storage becomes available.
+    p.stage = "prepared";
+    clearRecovery();
+    throw error;
+  }
   render();
   try {
     const signature = await requestSignature(
