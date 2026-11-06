@@ -8,7 +8,7 @@
   align-items: center;
   gap: 10px;
   border: 1px solid #49635c;
-  background: #111e20;
+  background: #101c15;
   border-radius: 9px;
   padding: 0 11px;
   color: var(--muted);
@@ -46,7 +46,7 @@
   border: 1px solid #49635c;
   border-radius: 9px;
   margin-top: 6px;
-  background: #142126;
+  background: var(--panel);
   box-shadow: 0 10px 24px #0003;
   overflow: hidden;
 }
@@ -140,7 +140,7 @@
   padding: 12px;
   border: 1px solid #3b5350;
   border-radius: 11px;
-  background: #142023;
+  background: #122017;
 }
 .address-list legend {
   color: #e0ebe4;

@@ -23,7 +23,7 @@
 .page-heading__content {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 16px;
   min-width: 0;
 }
 .page-heading__content > div {
@@ -32,10 +32,10 @@
 .page-heading__icon {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border: 1px solid #456754;
-  border-radius: 9px;
+  border-radius: 12px;
   flex-shrink: 0;
   color: var(--accent);
   background: var(--panel-soft);
@@ -51,9 +51,9 @@ textarea::placeholder {
   color: #95ada0;
 }
 .help-disclosure {
-  border: 1px solid #3c554b;
-  border-radius: 9px;
-  background: #1a2926;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: #1a2b20;
   margin: 0 0 12px;
 }
 .help-disclosure > summary {
@@ -64,7 +64,8 @@ textarea::placeholder {
   font-size: 0.81rem;
   font-weight: 550;
   cursor: pointer;
-  padding: 10px 12px;
+  padding: 13px 16px;
+  min-height: 44px;
   list-style: none;
 }
 .help-disclosure > summary::-webkit-details-marker {
@@ -77,7 +78,7 @@ textarea::placeholder {
   transform: rotate(180deg);
 }
 .help-disclosure__content {
-  padding: 0 12px 12px;
+  padding: 0 16px 16px;
   font-size: 0.83rem;
   color: #b8cdc0;
   overflow-wrap: anywhere;

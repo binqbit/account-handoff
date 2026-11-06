@@ -2,6 +2,44 @@ import { expect, test } from "@playwright/test";
 import { resolve } from "node:path";
 
 const harness = `/@fs${resolve("tests/browser/fixtures/ui.html")}`;
+const routes = [
+  "home",
+  "docs",
+  "overview",
+  "milestones",
+  "team",
+  "handoff",
+  "history",
+  "workspaces",
+  "setup",
+  "network",
+  "data",
+  "attention",
+  "review",
+];
+
+for (const width of [320, 390, 768, 1440]) {
+  test(`all destinations fit a ${width}px viewport without page errors`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    for (const route of routes) {
+      await page.goto(
+        `${harness}#${route}${route === "review" ? "?action=GRC-ROTATION-ADD-M1" : ""}`,
+      );
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        route,
+      ).toBe(true);
+    }
+    expect(errors).toEqual([]);
+  });
+}
 
 for (const [mode, label] of [
   ["LOCAL", "Local"],

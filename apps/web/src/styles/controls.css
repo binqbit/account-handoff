@@ -1,6 +1,6 @@
 .actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -9,11 +9,11 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  border: 1px solid #43564f;
-  border-radius: 7px;
-  padding: 8px 12px;
-  min-height: 40px;
-  font-size: 0.82rem;
+  border: 1px solid #49604e;
+  border-radius: 9px;
+  padding: 10px 16px;
+  min-height: 44px;
+  font-size: 0.85rem;
   font-weight: 550;
   line-height: 1.4;
   transition:
@@ -23,15 +23,18 @@
 .button--primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #183124;
+  color: var(--accent-dark);
+  box-shadow:
+    inset 0 1px 0 #ffffff33,
+    0 3px 12px #00000012;
 }
 .button--primary:hover:not(:disabled) {
   background: #d1f5df;
   border-color: #d1f5df;
 }
 .button--secondary {
-  background: #23322d;
-  color: #d5e6da;
+  background: #203126;
+  color: #dde9dc;
 }
 .button--secondary:hover:not(:disabled) {
   background: #2d4237;
@@ -70,9 +73,9 @@
   gap: 6px;
   border: 1px solid #43534e;
   background: #27342f;
-  border-radius: 6px;
+  border-radius: 7px;
   padding: 4px 8px;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 500;
   line-height: 1.45;
   color: #b5c7bd;
@@ -110,7 +113,7 @@
   justify-content: space-between;
   gap: 15px;
   align-items: center;
-  margin: 20px 0 12px;
+  margin: 28px 0 16px;
 }
 .section-heading h2 {
   font-size: 1.16rem;
@@ -126,6 +129,7 @@
   letter-spacing: -0.04em;
   margin-bottom: 22px;
   font-weight: 550;
+  font-variant-numeric: tabular-nums;
 }
 .milestone-amount span {
   font-size: 0.85rem;
@@ -139,9 +143,9 @@
   display: flex;
   justify-content: space-between;
   gap: 18px;
-  padding: 9px 0;
-  border-top: 1px solid #2f3e40;
-  font-size: 0.81rem;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  font-size: 0.84rem;
 }
 .key-values > div:first-child {
   border-top: 0;
@@ -186,7 +190,7 @@
   border: 1px solid #3d5750;
   border-left: 3px solid #9cc6ac;
   background: #1d2b26;
-  border-radius: 8px;
+  border-radius: 12px;
   color: #bbcfc2;
   margin: 0 0 20px;
   font-size: 0.84rem;

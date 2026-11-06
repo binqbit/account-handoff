@@ -93,7 +93,7 @@ export function SiteNavigation(
                 <Icon name={item.icon} size={16} />
                 <span>
                   {item.id === "milestones"
-                    ? "Grants"
+                    ? "Grant and milestones"
                     : item.id === "handoff"
                       ? "Handoff"
                       : item.label}

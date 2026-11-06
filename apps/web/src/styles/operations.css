@@ -19,18 +19,19 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 36px 20px;
-  border: 1px dashed #4a6355;
-  border-radius: 13px;
-  background: #17231b;
+  padding: 56px 28px;
+  border: 1px solid #455f46;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(ellipse at 50% 0%, #3a563026, transparent 75%), var(--panel);
   margin: 8px 0 18px;
 }
 .empty-state__icon {
-  height: 44px;
-  width: 44px;
+  height: 56px;
+  width: 56px;
   border: 1px solid #4c6855;
   background: #21362a;
-  border-radius: 12px;
+  border-radius: 16px;
   display: grid;
   place-items: center;
   color: #bfe2ca;

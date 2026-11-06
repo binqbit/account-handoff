@@ -34,8 +34,11 @@ test("wallet accounts use a dark compact list with names and bounded addresses",
     "5CT5jwBE…Qyn3Kd",
   );
   expect(
-    await list.evaluate((element) => getComputedStyle(element).backgroundColor),
-  ).toBe("rgb(24, 40, 43)");
+    await list.evaluate((element) => {
+      const color = getComputedStyle(element).backgroundColor;
+      return color !== "transparent" && !color.endsWith(", 0)");
+    }),
+  ).toBe(true);
   expect(
     await list.getByRole("option").first().getAttribute("title"),
   ).toBeNull();

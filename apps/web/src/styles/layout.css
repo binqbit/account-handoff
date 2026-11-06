@@ -20,10 +20,12 @@
   margin-left: 3px;
 }
 .brand-symbol {
-  width: 33px;
-  height: 33px;
-  border: 1px solid #7bbaa0;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #78937b;
+  border-radius: 11px;
+  background: linear-gradient(145deg, #29412e, #17271e);
+  box-shadow: inset 0 1px 0 #ffffff0a;
   display: grid;
   place-items: center;
   color: var(--accent);
@@ -117,9 +119,9 @@
   background: var(--panel-soft);
 }
 .main-content {
-  max-width: 1260px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 24px 28px 0;
+  padding: 36px 32px 0;
   min-height: calc(100vh - 77px);
   outline: none;
 }
@@ -128,17 +130,17 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 18px;
-  margin-bottom: 20px;
+  margin-bottom: 28px;
 }
 .page-heading .eyebrow {
   margin-bottom: 7px;
 }
 .lede {
-  color: #a8bab3;
-  font-size: 0.88rem;
+  color: var(--muted);
+  font-size: 0.94rem;
   line-height: 1.65;
   max-width: 680px;
-  margin: 8px 0 0;
+  margin: 10px 0 0;
 }
 .page-heading > .actions {
   padding-top: 5px;

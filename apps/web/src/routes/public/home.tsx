@@ -36,9 +36,9 @@ export function Home({ snapshot, navigate }: ScreenProps) {
             The team changes.<span>The grant stays.</span>
           </h1>
           <p className="home-hero__description">
-            Keep one grant beneficiary as your team evolves. Native multisig
-            controls who can act; a separate Pure account keeps the identity
-            that matters.
+            Give your grant a dedicated account that stays with the team. Change
+            the people who control it, verify every step, and continue work with
+            the same beneficiary and grant.
           </p>
           <div className="actions">
             <Button
