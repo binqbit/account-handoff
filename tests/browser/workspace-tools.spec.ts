@@ -37,14 +37,12 @@ test("the actual application retains rejected JSON and permits dismissing its er
   const json = page.getByLabel("Or paste JSON");
   await json.fill('{"broken":');
   await page
-    .getByRole("button", { name: "Verify and import", exact: true })
+    .getByRole("button", { name: "Review package", exact: true })
     .click();
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(json).toHaveValue('{"broken":');
   await expect(
-    page.getByText("The notification shows the validation result.", {
-      exact: false,
-    }),
+    page.getByRole("region", { name: "Package review", exact: true }),
   ).toHaveCount(0);
   await page
     .getByRole("button", { name: "Dismiss notification", exact: true })
@@ -67,7 +65,7 @@ test("oversized package files are rejected before their contents are read", asyn
   );
   await expect(page.getByLabel("Or paste JSON")).toHaveValue("");
   await expect(
-    page.getByRole("button", { name: "Verify and import", exact: true }),
+    page.getByRole("button", { name: "Review package", exact: true }),
   ).toBeDisabled();
 });
 
@@ -99,7 +97,7 @@ test("choosing a JSON file loads its exact contents and displays its name", asyn
   await expect(page.getByLabel("Or paste JSON")).toHaveValue(contents);
   await expect(page.getByText("workspace.json", { exact: true })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Verify and import", exact: true }),
+    page.getByRole("button", { name: "Review package", exact: true }),
   ).toBeEnabled();
 });
 
@@ -120,7 +118,7 @@ test("a package file read failure is visible and does not enable import", async 
   await expect(page.getByRole("alert")).toHaveText("Could not read the file.");
   await expect(page.getByLabel("Or paste JSON")).toHaveValue("");
   await expect(
-    page.getByRole("button", { name: "Verify and import", exact: true }),
+    page.getByRole("button", { name: "Review package", exact: true }),
   ).toBeDisabled();
 });
 

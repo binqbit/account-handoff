@@ -2,8 +2,7 @@ import type { NetworkDescriptor } from "./network-descriptor";
 import {
   canonicalJson,
   parseBoundedJson,
-  exportPortable,
-  importPortable,
+  sha256,
 } from "@account-handoff/contracts";
 import type {
   ChainProfile,
@@ -22,6 +21,7 @@ import {
 import type { WalletSession } from "@account-handoff/wallet-adapter";
 import { type GrantHistory } from "@account-handoff/grant-adapter";
 import { openJournal, type Journal } from "@account-handoff/local-store";
+import { deleteDB } from "idb";
 import type {
   ApplicationFacade,
   AppSnapshot,
@@ -30,6 +30,7 @@ import type {
   WorkspaceInput,
   OperationView,
   RuntimeMode,
+  PackageImportPreview,
 } from "../ui-contract";
 import type { ChainView, WorkspaceRecord, PendingOperation } from "./models";
 import { actionViews, workspaceView } from "./presentation";
@@ -58,6 +59,21 @@ import { resolveRecovery } from "./recover-operation";
 import { readNetworkDescriptor, qualifiedProfile } from "./network-profile";
 import { readWorkspaceState, connectedNetwork } from "./network-state";
 import { checkPendingOperation } from "./check-pending";
+import {
+  parseWorkspacePackage,
+  exportWorkspacePackage,
+  validateWorkspaceDescriptor,
+} from "./workspace-package";
+import {
+  descriptorInput,
+  completeDescriptor,
+  assertWorkspaceEvidence,
+  sameWorkspace,
+  restoreWorkspaceCandidate,
+  restoreWorkspaceHistory,
+  restoreCheckpointHints,
+  sameWorkspaceConfiguration,
+} from "./workspace-import";
 import { signOperation } from "./sign-operation";
 import { operationTabId } from "./tab-identity";
 import {
@@ -126,6 +142,7 @@ export class Application implements ApplicationFacade {
   private queuedNetworkRefresh: NativeConnection | null = null;
   private networkBlocked = false;
   private networkNoticeId: string | null = null;
+  private packageNoticeId: string | null = null;
   private constructor(
     private metadata: Journal,
     private tabId: string,
@@ -241,6 +258,23 @@ export class Application implements ApplicationFacade {
     return operationView(this.pending, this.recovery);
   }
   async dispatch(command: AppCommand): Promise<CommandResult | void> {
+    // Inspection is bounded and offline; a pending read-only connection must not
+    // prevent reviewing the local file or install any of its network claims.
+    if (command.type === "inspect-package") {
+      try {
+        const importPreview = await this.inspectPackage(command.contents);
+        if (this.state.notice?.id === this.packageNoticeId) {
+          this.state = { ...this.state, notice: null };
+          this.render();
+        }
+        this.packageNoticeId = null;
+        return { importPreview };
+      } catch (error) {
+        this.notify(errorText(error), "negative");
+        this.packageNoticeId = this.state.notice?.id ?? null;
+        throw error;
+      }
+    }
     if (command.type === "dismiss-notice") {
       this.state = { ...this.state, notice: null };
       this.render();
@@ -313,13 +347,15 @@ export class Application implements ApplicationFacade {
           }
           break;
         case "import-package":
-          await this.import(command.contents);
+          await this.import(command);
           break;
         case "export-package":
           return await this.export();
       }
     } catch (error) {
       this.notify(errorText(error), "negative");
+      if (command.type === "import-package")
+        this.packageNoticeId = this.state.notice?.id ?? null;
       if (command.type === "connect-network" || command.type === "refresh")
         this.networkNoticeId = this.state.notice?.id ?? null;
       throw error;
@@ -1164,8 +1200,72 @@ export class Application implements ApplicationFacade {
     }
     await this.finish(recovered, receipt!);
   }
-  private async import(contents: string) {
+  private async inspectPackage(
+    contents: string,
+  ): Promise<PackageImportPreview> {
     const raw = object(parseBoundedJson(contents));
+    const digest = await sha256(contents);
+    if (raw["format"] === "account-handoff-local-workspace") {
+      const input = object(raw["input"]);
+      return {
+        digest,
+        kind: "local",
+        recordCount: 0,
+        name: typeof input["name"] === "string" ? input["name"] : null,
+        mode: "LOCAL",
+        genesis:
+          typeof raw["genesisHash"] === "string" ? raw["genesisHash"] : null,
+        workspaceInput: null,
+        missingFields: [],
+        matchingWorkspaces: [],
+        warnings: [
+          "This LOCAL configuration must match the selected qualified local run. Provider settings from the file are never installed.",
+        ],
+      };
+    }
+    const candidate = await parseWorkspacePackage(contents);
+    const matchingWorkspaces = this.workspaces
+      .filter((w) => {
+        if (candidate.workspace.mode && candidate.workspace.mode !== w.mode)
+          return false;
+        if (
+          candidate.source === "workspace-package" &&
+          !sameWorkspace(w, candidate.workspace)
+        )
+          return false;
+        try {
+          assertWorkspaceEvidence(candidate.evidence.records, w);
+          return true;
+        } catch {
+          return false;
+        }
+      })
+      .map((w) => ({ id: w.id, name: w.name }));
+    return {
+      digest,
+      kind: candidate.source === "workspace-package" ? "workspace" : "evidence",
+      recordCount: candidate.evidence.records.length,
+      name: candidate.workspace.name ?? null,
+      mode: candidate.workspace.mode ?? null,
+      genesis: candidate.workspace.genesis ?? null,
+      workspaceInput: descriptorInput(candidate.workspace),
+      missingFields: candidate.missingFields,
+      warnings: candidate.warnings,
+      matchingWorkspaces,
+    };
+  }
+  private async import(
+    command: Extract<AppCommand, { type: "import-package" }>,
+  ) {
+    const { contents } = command;
+    const raw = object(parseBoundedJson(contents));
+    if (
+      command.previewDigest &&
+      command.previewDigest !== (await sha256(contents))
+    )
+      throw new Error(
+        "The package changed after review. Review it again before importing.",
+      );
     if (raw["format"] === "account-handoff-local-workspace") {
       if (
         !this.connection ||
@@ -1190,33 +1290,257 @@ export class Application implements ApplicationFacade {
       );
       return;
     }
-    const result = await importPortable(contents);
-    if (!this.chain || !this.journal)
-      throw new Error("Open the matching workspace first");
-    for (const record of result.records) {
+    const candidate = await parseWorkspacePackage(contents);
+    if (candidate.source === "workspace-package" && !command.previewDigest)
+      throw new Error("Review the workspace package before restoring it.");
+    if (
+      !this.connection ||
+      !this.chain ||
+      !this.state.network.connected ||
+      this.state.network.checking ||
+      this.state.network.reconnecting
+    )
+      throw new Error(
+        "Connect and verify the matching network before restoring this workspace. Your package is kept for retry.",
+      );
+    // Read a fresh network anchor without refreshing an unrelated selected
+    // workspace. A file may contain newer receipts than the last visible view.
+    const connection = this.connection;
+    const generation = this.generation;
+    const [fingerprint, networkDescriptor, genesis] = await Promise.all([
+      connection.fingerprint(),
+      this.descriptor(),
+      connection.api.rpc.chain_getBlockHash(0),
+    ]);
+    assertDeploymentGenesis(fingerprint.genesis);
+    if (hex(genesis, 32) !== fingerprint.genesis)
+      throw new Error(
+        "The endpoint genesis changed. Reconnect to the matching network.",
+      );
+    if (
+      networkDescriptor?.mode === "LOCAL" &&
+      new URL(networkDescriptor.nativeRpc).toString() !== connection.endpoint
+    )
+      throw new Error("The endpoint does not match the selected LOCAL run.");
+    const profile = await this.profile(fingerprint, networkDescriptor);
+    const current: ChainView = {
+      fingerprint,
+      descriptor: networkDescriptor,
+      profile,
+      accounts: {},
+      grant: null,
+    };
+    const assertCurrent = () => {
       if (
-        record.kind === "ChainProfile" &&
-        record.genesis !== this.chain.fingerprint.genesis
+        !connection ||
+        !current ||
+        connection !== this.connection ||
+        generation !== this.generation ||
+        !this.state.network.connected ||
+        this.state.network.checking ||
+        this.state.network.reconnecting
       )
-        throw new Error("The package belongs to another network");
-      if (record.kind === "FrozenEnvelope")
-        await this.journal.sealEnvelope(record);
-      else await this.journal.appendRecord(record);
+        throw new Error(
+          "Connect and verify the matching network before restoring this workspace. Your package is kept for retry.",
+        );
+    };
+    assertCurrent();
+    if (current!.profile.status !== "accepted")
+      throw new Error(
+        "The selected network must be qualified before restoring a workspace.",
+      );
+    let target = command.targetWorkspaceId
+      ? this.workspaces.find((w) => w.id === command.targetWorkspaceId)
+      : undefined;
+    if (command.targetWorkspaceId && !target)
+      throw new Error(
+        "The selected workspace is no longer available. Review the package again.",
+      );
+    if (
+      !target &&
+      !command.previewDigest &&
+      candidate.source === "legacy-evidence"
+    )
+      target = this.workspace() ?? undefined;
+    if (target) {
+      if (
+        target.mode !== this.state.network.mode ||
+        target.genesis !== current!.fingerprint.genesis
+      )
+        throw new Error(
+          "Connect to the selected workspace's matching network before importing.",
+        );
+      assertWorkspaceEvidence(candidate.evidence.records, target);
+      if (
+        candidate.source === "workspace-package" &&
+        !sameWorkspace(target, candidate.workspace)
+      )
+        throw new Error(
+          "The selected workspace does not match the package configuration.",
+        );
     }
-    this.notify(
-      "Package verified and saved for reconciliation. Importing does not authorize signing.",
-      "positive",
+    let descriptor: ReturnType<typeof validateWorkspaceDescriptor> | null =
+      null;
+    if (!target) {
+      if (candidate.source === "workspace-package")
+        descriptor = validateWorkspaceDescriptor(candidate.workspace);
+      else if (command.workspaceInput)
+        descriptor = completeDescriptor(
+          candidate.workspace,
+          command.workspaceInput,
+          this.state.network.mode,
+          candidate.workspace.genesis ?? current!.fingerprint.genesis,
+        );
+      else
+        throw new Error(
+          "This evidence file has no complete workspace configuration. Complete the missing details or select a matching workspace.",
+        );
+    }
+    if (descriptor) {
+      if (
+        descriptor.mode !== this.state.network.mode ||
+        descriptor.genesis !== current!.fingerprint.genesis
+      )
+        throw new Error(
+          "The package belongs to another network. Connect to its matching network before restoring it.",
+        );
+      const configured = createWorkspaceRecord(
+        descriptorInput(descriptor) as WorkspaceInput,
+        descriptor.mode,
+        descriptor.genesis,
+      );
+      assertWorkspaceEvidence(candidate.evidence.records, configured);
+      const matches = this.workspaces.filter(
+        (w) => w.mode === descriptor!.mode && sameWorkspace(w, descriptor!),
+      );
+      if (matches.length > 1)
+        throw new Error(
+          "Several local workspaces match this package. Select one in the review.",
+        );
+      target = matches[0];
+      if (target && !sameWorkspaceConfiguration(target, descriptor))
+        throw new Error(
+          "A local workspace has the same beneficiary but different controller or participant settings. Select it explicitly to merge evidence while keeping its configuration.",
+        );
+    }
+    const workspace = target
+      ? structuredClone(target)
+      : await restoreWorkspaceCandidate(
+          descriptor!,
+          candidate.evidence.records,
+          connection!,
+          current!.descriptor,
+          current!.fingerprint,
+        );
+    if (target && descriptor && candidate.source === "workspace-package")
+      await restoreWorkspaceCandidate(
+        descriptor,
+        candidate.evidence.records,
+        connection!,
+        current!.descriptor,
+        current!.fingerprint,
+      );
+    assertCurrent();
+    assertWorkspaceEvidence(candidate.evidence.records, workspace);
+    const observed = await readWorkspaceState(
+      connection!,
+      current!.fingerprint,
+      workspace,
+      this.state.wallet.accounts,
     );
+    if (descriptor)
+      await restoreCheckpointHints(
+        workspace,
+        descriptor,
+        connection!,
+        current!.fingerprint,
+      );
+    const { verifyWorkspaceEvidence } = await import("./workspace-evidence");
+    await verifyWorkspaceEvidence(
+      candidate.evidence.records,
+      {
+        ...workspace,
+        contract:
+          workspace.contract ?? current.descriptor?.contract?.address ?? null,
+      },
+      connection!,
+      current!.fingerprint,
+    );
+    await restoreWorkspaceHistory(
+      workspace,
+      candidate.evidence.records,
+      connection!,
+      current!.fingerprint,
+      workspace.handoffBaseline?.blockHash ?? null,
+    );
+    assertCurrent();
+    const namespace = `account-handoff:${workspace.mode.toLowerCase()}:${workspace.genesis}:${current!.descriptor?.mode === "LOCAL" ? current!.descriptor.runId : "network"}:${workspace.id}`;
+    const journal = await openJournal(namespace);
+    let published = false;
+    try {
+      await journal.importRecords(candidate.evidence.records);
+      assertCurrent();
+      const workspaces = target
+        ? this.workspaces.map((w) => (w.id === workspace.id ? workspace : w))
+        : [...this.workspaces, workspace];
+      await this.metadata.setPreferences({
+        workspaces: json(workspaces),
+        currentId: workspace.id,
+      });
+      published = true;
+      this.clearWorkspaceContext();
+      this.workspaces = workspaces;
+      this.currentId = workspace.id;
+      this.journal = journal;
+      if (generation === this.generation && connection === this.connection) {
+        this.chain = {
+          ...current!,
+          accounts: observed.accounts,
+          grant: observed.grant,
+        };
+        this.grantHistory = observed.history;
+        this.state = {
+          ...this.state,
+          network: connectedNetwork(
+            this.state.network,
+            current.fingerprint,
+            current.descriptor,
+            current.profile,
+            this.state.wallet.connected,
+          ),
+        };
+      }
+      this.notify(
+        "Workspace restored. Public configuration and unsigned evidence are saved; wallet access and signing remain your choice.",
+        "positive",
+      );
+      // Reconstruct continuity from the saved graph independently. No wallet or
+      // transaction command is scheduled by this read-only follow-up.
+      if (
+        generation === this.generation &&
+        connection === this.connection &&
+        this.state.network.connected
+      )
+        this.queuedNetworkRefresh = connection;
+    } finally {
+      if (!published) {
+        journal.close();
+        if (!target) await deleteDB(namespace);
+      }
+    }
   }
   private async export(): Promise<CommandResult> {
-    if (!this.journal) throw new Error("Open a workspace");
+    const workspace = this.workspace();
+    if (!this.journal || !workspace) throw new Error("Open a workspace");
     const records = await this.journal.listRecords();
-    const pkg = await exportPortable(records);
+    const pkg = await exportWorkspacePackage(workspace, records);
+    const contents = canonicalJson(pkg);
+    parseBoundedJson(contents);
     return {
       download: {
-        name: "account-handoff-evidence.json",
+        name: "account-handoff-workspace.json",
         mime: "application/json",
-        contents: canonicalJson(pkg),
+        contents,
       },
     };
   }

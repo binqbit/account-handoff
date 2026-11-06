@@ -1,4 +1,5 @@
 import React from "react";
+import { sha256 } from "@account-handoff/contracts";
 import {
   createWorkspaceRecord,
   planHandoff,
@@ -11,6 +12,8 @@ import type {
   AppSnapshot,
   ApplicationFacade,
   OperationView,
+  PackageImportPreview,
+  WorkspaceInput,
 } from "../../../apps/web/src/ui-contract";
 const addresses = Array.from(
   { length: 8 },
@@ -461,6 +464,70 @@ if (scenario === "approval-counts" || scenario === "approval-unknown")
   };
 const listeners = new Set<() => void>();
 const commands: AppCommand[] = [];
+let finishPackageReview: (() => void) | undefined;
+let packageReviewReleased = false;
+let finishManualConnect: (() => void) | undefined;
+const restoredInput: WorkspaceInput = {
+  name: "Restored Atlas workspace",
+  oldMembers: addresses.slice(0, 3),
+  threshold: 2,
+  funder: addresses[7]!,
+  reviewers: addresses.slice(5, 7),
+  beneficiary: addresses[4]!,
+  contract: `0x${"b".repeat(40)}`,
+  grantId: "0",
+  creation: {
+    blockHash: `0x${"a".repeat(64)}`,
+    transactionHash: `0x${"b".repeat(64)}`,
+  },
+};
+async function packagePreview(contents: string): Promise<PackageImportPreview> {
+  const legacy =
+    scenario === "package-legacy" ||
+    scenario === "package-legacy-unknown" ||
+    scenario === "package-matching";
+  const unknown = scenario === "package-legacy-unknown";
+  return {
+    digest: await sha256(contents),
+    kind: legacy ? "evidence" : "workspace",
+    recordCount: 2,
+    name: legacy ? null : restoredInput.name,
+    mode: scenario === "package-other-network" ? "DEMO" : snapshot.network.mode,
+    genesis: snapshot.network.genesis ?? `0x${"a".repeat(64)}`,
+    workspaceInput: !legacy
+      ? restoredInput
+      : unknown
+        ? {}
+        : {
+            beneficiary: restoredInput.beneficiary!,
+            contract: restoredInput.contract!,
+            grantId: "0",
+            creation: restoredInput.creation!,
+          },
+    missingFields: !legacy
+      ? []
+      : [
+          "name",
+          "M0",
+          "M1",
+          "participants.F",
+          "participants.R1",
+          "participants.R2",
+          ...(unknown ? ["pure", "contract", "grantId", "creation"] : []),
+        ],
+    warnings: legacy
+      ? [
+          "This evidence file does not contain a complete workspace configuration.",
+        ]
+      : [
+          "The package must be checked against the selected network before activation.",
+        ],
+    matchingWorkspaces:
+      scenario === "package-matching"
+        ? snapshot.workspaces.map(({ id, name }) => ({ id, name }))
+        : [],
+  };
+}
 let allowRejectedNetworkConnection = false;
 const publish = (next: AppSnapshot) => {
   snapshot = { ...next, revision: snapshot.revision + 1 };
@@ -497,6 +564,45 @@ const facade: ApplicationFacade = {
         });
       throw new Error(`Synthetic ${command.type} failure`);
     }
+    if (command.type === "inspect-package") {
+      const importPreview = await packagePreview(command.contents);
+      if (scenario === "slow-package-review" && !packageReviewReleased)
+        await new Promise<void>((resolve) => {
+          finishPackageReview = resolve;
+        });
+      return { importPreview };
+    }
+    if (command.type === "import-package") {
+      if (command.previewDigest !== (await sha256(command.contents)))
+        throw new Error("Package changed after review");
+      if (!command.targetWorkspaceId) {
+        const record = createWorkspaceRecord(
+          command.workspaceInput ?? restoredInput,
+          snapshot.network.mode,
+          (snapshot.network.genesis ?? `0x${"a".repeat(64)}`) as `0x${string}`,
+        );
+        const workspace = workspaceView(record, null);
+        publish({
+          ...snapshot,
+          workspace,
+          workspaces: [
+            ...snapshot.workspaces,
+            {
+              id: workspace.id,
+              name: workspace.name,
+              mode: snapshot.network.mode,
+            },
+          ],
+        });
+      }
+    }
+    if (
+      command.type === "connect-network" &&
+      scenario === "slow-manual-connect"
+    )
+      await new Promise<void>((resolve) => {
+        finishManualConnect = resolve;
+      });
     if (command.type === "connect-network")
       publish({
         ...snapshot,
@@ -682,6 +788,16 @@ Object.defineProperty(window, "__uiTest", {
     },
     allowNetworkConnection() {
       allowRejectedNetworkConnection = true;
+    },
+    finishPackageReview() {
+      packageReviewReleased = true;
+      finishPackageReview?.();
+    },
+    setBusy(busy: string | null) {
+      publish({ ...snapshot, busy });
+    },
+    finishManualConnect() {
+      finishManualConnect?.();
     },
   },
 });

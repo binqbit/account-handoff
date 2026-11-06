@@ -58,27 +58,25 @@ test("a rejected workspace selection stays in the workspace list", async ({
   ).toBeVisible();
 });
 
-test("a rejected package import keeps its contents without showing a completed verification", async ({
+test("a rejected package review keeps its contents without showing a confirmation", async ({
   page,
 }) => {
-  await page.goto(`${harness}?reject=import-package#data`);
+  await page.goto(`${harness}?reject=inspect-package#data`);
   const contents = '{"invalid":"package"}';
   await page.getByLabel("Or paste JSON").fill(contents);
   await page
-    .getByRole("button", { name: "Verify and import", exact: true })
+    .getByRole("button", { name: "Review package", exact: true })
     .click();
   await expect(page.getByRole("alert")).toContainText(
-    "Synthetic import-package failure",
+    "Synthetic inspect-package failure",
   );
   await expect(page.getByLabel("Or paste JSON")).toHaveValue(contents);
   await expect(
-    page.getByText("The notification shows the validation result.", {
-      exact: false,
-    }),
+    page.getByRole("region", { name: "Package review", exact: true }),
   ).toHaveCount(0);
 });
 
-test("successful commands without a returned payload still advance their screens", async ({
+test("successful workspace selection advances without a payload and package review still requires confirmation", async ({
   page,
 }) => {
   await page.goto(`${harness}#workspaces`);
@@ -91,11 +89,9 @@ test("successful commands without a returned payload still advance their screens
     .click();
   await page.getByLabel("Or paste JSON").fill('{"synthetic":true}');
   await page
-    .getByRole("button", { name: "Verify and import", exact: true })
+    .getByRole("button", { name: "Review package", exact: true })
     .click();
   await expect(
-    page.getByText("The notification shows the validation result.", {
-      exact: false,
-    }),
+    page.getByRole("region", { name: "Package review", exact: true }),
   ).toBeVisible();
 });

@@ -222,6 +222,18 @@ export interface WorkspaceInput {
   controllerAddress?: string;
   creation?: { blockHash: string; transactionHash: string };
 }
+export interface PackageImportPreview {
+  digest: string;
+  kind: "workspace" | "evidence" | "local";
+  recordCount: number;
+  name: string | null;
+  mode: RuntimeMode | null;
+  genesis: string | null;
+  workspaceInput: Partial<WorkspaceInput> | null;
+  missingFields: string[];
+  warnings: string[];
+  matchingWorkspaces: { id: string; name: string }[];
+}
 export type AppCommand =
   | { type: "connect-wallet" }
   | { type: "disconnect-wallet" }
@@ -242,10 +254,18 @@ export type AppCommand =
   | { type: "send-operation"; id: string }
   | { type: "reconcile-operation"; id: string }
   | { type: "discard-operation"; id: string }
-  | { type: "import-package"; contents: string }
+  | { type: "inspect-package"; contents: string }
+  | {
+      type: "import-package";
+      contents: string;
+      previewDigest?: string;
+      workspaceInput?: WorkspaceInput;
+      targetWorkspaceId?: string;
+    }
   | { type: "export-package" }
   | { type: "dismiss-notice"; id: string };
 export interface CommandResult {
+  importPreview?: PackageImportPreview;
   message?: string;
   download?: { name: string; mime: string; contents: string };
 }

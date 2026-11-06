@@ -16,8 +16,10 @@ import { ReadinessCards } from "../../components/readiness";
 import { deployment } from "../../config/deployment";
 import { networkReady, networkStatus } from "../../components/network-status";
 
-export function Network(props: ScreenProps & { returnToSetup?: boolean }) {
-  const { snapshot, run, navigate, returnToSetup } = props;
+export function Network(
+  props: ScreenProps & { returnToSetup?: boolean; returnToData?: boolean },
+) {
+  const { snapshot, run, navigate, returnToSetup, returnToData } = props;
   const network = snapshot.network;
   const ready = networkReady(network);
   const status = networkStatus(network);
@@ -57,7 +59,11 @@ export function Network(props: ScreenProps & { returnToSetup?: boolean }) {
         title="Check the environment before acting"
         description="Connect a node and check readiness before signing."
         actions={
-          returnToSetup ? (
+          returnToData ? (
+            <Button onClick={() => navigate("data")} icon="back">
+              Back to package import
+            </Button>
+          ) : returnToSetup ? (
             <Button onClick={() => navigate("setup")} icon="back">
               Back to workspace setup
             </Button>

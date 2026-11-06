@@ -41,6 +41,7 @@ import {
   type WorkspaceSetupDraft,
 } from "./routes/utilities/setup/draft";
 import "./styles/app.css";
+import { createDataDraft } from "./routes/utilities/data-draft";
 
 function saveDownload(download: NonNullable<CommandResult["download"]>) {
   const url = URL.createObjectURL(
@@ -78,10 +79,15 @@ function Application({ application }: { application: ApplicationFacade }) {
     Partial<Record<RuntimeMode, WorkspaceSetupDraft>>
   >({});
   const [localBusy, setLocalBusy] = useState<string | null>(null);
+  const [dataDraft, setDataDraft] = useState(createDataDraft);
+  const [networkReturn, setNetworkReturn] = useState<"setup" | "data" | null>(
+    null,
+  );
   const pending = useRef(false);
   const [localNotice, setLocalNotice] = useState<{
     message: string;
     error: boolean;
+    source?: "package";
   } | null>(null);
   const snapshot =
     localBusy && !sourceSnapshot.busy
@@ -89,6 +95,27 @@ function Application({ application }: { application: ApplicationFacade }) {
       : sourceSnapshot;
   const run = useCallback(
     async (command: AppCommand): Promise<CommandOutcome> => {
+      if (command.type === "inspect-package") {
+        try {
+          const result = await application.dispatch(command);
+          setLocalNotice((current) =>
+            current?.source === "package" ? null : current,
+          );
+          return { succeeded: true, result };
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Could not review this package.";
+          const notice = application.getSnapshot().notice;
+          setLocalNotice(
+            notice?.tone === "negative" && notice.message === message
+              ? null
+              : { message, error: true, source: "package" },
+          );
+          return { succeeded: false };
+        }
+      }
       if (pending.current) return { succeeded: false };
       pending.current = true;
       setLocalBusy(command.type);
@@ -110,7 +137,13 @@ function Application({ application }: { application: ApplicationFacade }) {
         setLocalNotice(
           facadeNotice?.tone === "negative" && facadeNotice.message === message
             ? null
-            : { message, error: true },
+            : {
+                message,
+                error: true,
+                ...(command.type === "import-package"
+                  ? { source: "package" as const }
+                  : {}),
+              },
         );
         return { succeeded: false };
       } finally {
@@ -180,6 +213,7 @@ function Application({ application }: { application: ApplicationFacade }) {
             }
             onConnectNetwork={() => {
               updateSetupDraft({});
+              setNetworkReturn("setup");
               navigate("network");
             }}
           />
@@ -188,11 +222,26 @@ function Application({ application }: { application: ApplicationFacade }) {
         return (
           <Network
             {...screenProps}
-            returnToSetup={Object.keys(setupDrafts).length > 0}
+            returnToSetup={
+              networkReturn !== "data" && Object.keys(setupDrafts).length > 0
+            }
+            returnToData={networkReturn === "data" && !!dataDraft.contents}
           />
         );
       case "data":
-        return <Data {...screenProps} />;
+        return (
+          <Data
+            {...screenProps}
+            draft={dataDraft}
+            onDraftChange={(change) =>
+              setDataDraft((current) => ({ ...current, ...change }))
+            }
+            onConnectNetwork={() => {
+              setNetworkReturn("data");
+              navigate("network");
+            }}
+          />
+        );
       case "attention":
         return <Attention {...screenProps} />;
       case "review":

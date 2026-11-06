@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Button,
   Card,
@@ -7,23 +7,31 @@ import {
   PageHeader,
 } from "../../components/ui";
 import type { ScreenProps } from "../screen-types";
+import type { AppCommand } from "../../ui-contract";
+import { createDataDraft, type DataDraftControls } from "./data-draft";
+import { DataReview } from "./data-review";
 
-export function Data(props: ScreenProps) {
-  const { snapshot, run } = props;
-  const [contents, setContents] = useState("");
+export function Data(props: ScreenProps & DataDraftControls) {
+  const { snapshot, run, navigate, draft, onDraftChange } = props;
+  const { contents, fileName, preview } = draft;
   const [error, setError] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
-  const [fileName, setFileName] = useState("");
-  const [inspected, setInspected] = useState(false);
   const [reading, setReading] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [applying, setApplying] = useState(false);
   const inputVersion = useRef(0);
+  useEffect(
+    () => () => {
+      inputVersion.current += 1;
+    },
+    [],
+  );
   const maxSize = 5 * 1024 * 1024;
   async function loadFile(file: File | undefined) {
     if (!file) return;
     const version = ++inputVersion.current;
     setError("");
-    setInspected(false);
-    setFileName("");
+    onDraftChange({ ...createDataDraft(), contents });
     setReading(false);
     if (file.size > maxSize) {
       setError("The package exceeds 5 MiB. The file was not read.");
@@ -33,8 +41,7 @@ export function Data(props: ScreenProps) {
     try {
       const nextContents = await file.text();
       if (inputVersion.current !== version) return;
-      setContents(nextContents);
-      setFileName(file.name);
+      onDraftChange({ contents: nextContents, fileName: file.name });
     } catch {
       if (inputVersion.current === version)
         setError("Could not read the file.");
@@ -50,88 +57,136 @@ export function Data(props: ScreenProps) {
       return;
     }
     const version = inputVersion.current;
-    const outcome = await run({ type: "import-package", contents });
-    if (inputVersion.current === version) setInspected(outcome.succeeded);
+    setReviewing(true);
+    try {
+      const outcome = await run({ type: "inspect-package", contents });
+      if (inputVersion.current !== version) return;
+      const nextPreview = outcome.succeeded
+        ? outcome.result?.importPreview
+        : undefined;
+      if (outcome.succeeded && nextPreview) {
+        onDraftChange({
+          preview: nextPreview,
+          workspaceInput: structuredClone(nextPreview.workspaceInput ?? {}),
+          targetWorkspaceId:
+            nextPreview.kind === "evidence"
+              ? (nextPreview.matchingWorkspaces[0]?.id ?? "")
+              : "",
+          membersInput: "",
+          reviewersInput: "",
+          replacementInput: "",
+          beneficiaryChoice: "",
+          grantChoice: "",
+          replacementChoice: "",
+        });
+      } else if (outcome.succeeded)
+        setError(
+          "The package could not be reviewed. Select it again and retry.",
+        );
+    } finally {
+      setReviewing(false);
+    }
+  }
+  async function confirm(
+    command: Extract<AppCommand, { type: "import-package" }>,
+  ) {
+    const version = inputVersion.current;
+    setApplying(true);
+    try {
+      const outcome = await run(command);
+      if (outcome.succeeded && inputVersion.current === version) {
+        onDraftChange(createDataDraft());
+        navigate("overview");
+      }
+    } finally {
+      setApplying(false);
+    }
   }
   return (
     <>
       <PageHeader
         icon="download"
         eyebrow="Workspace data"
-        title="Transfer context between devices"
-        description="The package contains data and evidence for independent verification. Signatures, endpoints and local permissions are excluded."
+        title="Restore or back up a workspace"
+        description="Review a package, then explicitly restore its public workspace configuration and unsigned evidence. Wallet access, signed transactions and endpoints are excluded."
       />
       <div className="equal-grid">
-        <Card title="Import a package" eyebrow="Verify first">
-          <form onSubmit={(event) => void inspect(event)}>
-            <input
-              type="file"
-              ref={fileInput}
-              tabIndex={-1}
-              accept="application/json,.json"
-              className="sr-only"
-              aria-label="Choose a JSON package"
-              onChange={(event) => void loadFile(event.target.files?.[0])}
-            />
-            <Button
-              type="button"
-              icon="upload"
-              onClick={() => fileInput.current?.click()}
-            >
-              Choose a JSON file
-            </Button>
-            {fileName && <p className="muted">{fileName}</p>}
-            {reading && <p role="status">Reading the selected package…</p>}
-            <div className="field">
-              <label htmlFor="import-json">Or paste JSON</label>
-              <textarea
-                id="import-json"
-                rows={10}
-                value={contents}
-                onChange={(event) => {
-                  inputVersion.current += 1;
-                  setContents(event.target.value);
-                  setFileName("");
-                  setReading(false);
-                  setInspected(false);
-                }}
-                placeholder="Unsigned package contents"
-                spellCheck={false}
+        <div>
+          <Card title="Choose a package" eyebrow="Step 1 of 2">
+            <form onSubmit={(event) => void inspect(event)}>
+              <input
+                type="file"
+                ref={fileInput}
+                tabIndex={-1}
+                accept="application/json,.json"
+                className="sr-only"
+                disabled={applying}
+                aria-label="Choose a JSON package"
+                onChange={(event) => void loadFile(event.target.files?.[0])}
               />
-              <p className="field__help">
-                Up to 5 MiB. Unsupported versions, conflicting records and
-                signed packages are rejected or quarantined.
-              </p>
-            </div>
-            {error && (
-              <p role="alert" className="form-error">
-                {error}
-              </p>
-            )}
-            <Button
-              variant="primary"
-              type="submit"
-              icon="shield"
-              disabled={reading || !contents.trim() || !!snapshot.busy}
-            >
-              Verify and import
-            </Button>
-            {inspected && (
-              <p className="field__help">
-                The notification shows the validation result. Current network
-                facts require a separate refresh.
-              </p>
-            )}
-          </form>
-        </Card>
+              <Button
+                type="button"
+                icon="upload"
+                disabled={applying}
+                onClick={() => fileInput.current?.click()}
+              >
+                Choose a JSON file
+              </Button>
+              {fileName && <p className="muted">{fileName}</p>}
+              {reading && <p role="status">Reading the selected package…</p>}
+              <div className="field">
+                <label htmlFor="import-json">Or paste JSON</label>
+                <textarea
+                  id="import-json"
+                  rows={10}
+                  value={contents}
+                  disabled={applying}
+                  onChange={(event) => {
+                    inputVersion.current += 1;
+                    setError("");
+                    onDraftChange({
+                      ...createDataDraft(),
+                      contents: event.target.value,
+                    });
+                    setReading(false);
+                  }}
+                  placeholder="Workspace backup or unsigned evidence JSON"
+                  spellCheck={false}
+                />
+                <p className="field__help">
+                  Up to 5 MiB. Unsupported versions, conflicting records and
+                  signed payloads are rejected. Reviewing a file does not save
+                  it.
+                </p>
+              </div>
+              {error && (
+                <p role="alert" className="form-error">
+                  {error}
+                </p>
+              )}
+              <Button
+                variant="primary"
+                type="submit"
+                icon="shield"
+                disabled={reading || !contents.trim() || reviewing || applying}
+              >
+                {reviewing ? "Reviewing package…" : "Review package"}
+              </Button>
+            </form>
+          </Card>
+          {preview && (
+            <DataReview {...props} onConfirm={confirm} applying={applying} />
+          )}
+        </div>
         <div>
           <Card
-            title="Export the current workspace"
+            title="Back up the current workspace"
             eyebrow="Signed payloads excluded"
           >
             <p className="muted">
-              Export collects related records and evidence. Local signatures and
-              wallet metadata remain in this browser.
+              Save the public workspace configuration and unsigned evidence so
+              another browser can restore it. Signatures and wallet access
+              remain in this browser.
             </p>
             <KeyValues
               rows={[

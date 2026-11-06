@@ -40,6 +40,14 @@ Stop with `docker compose down`. The container stores no application data. Works
 
 Network identity is recorded in `network.json`. The build checks genesis `0xd4f9acbcf7f52388d8b095abe3c198d19fc510e0343e643e87cfbccb155283bd` and permits only DEMO mode. The EVM gateway uses chain ID `420420777`; its HTTP URL is not a replacement for the native WebSocket URL.
 
+## Move a workspace to another browser
+
+1. Open the workspace, then **Workspace data** and **Download package**. Keep the resulting `account-handoff-workspace.json` separate from this website ZIP.
+2. In the other browser, open **Workspace data**, choose or paste that JSON, and select **Review package**. Check the displayed network, signer groups, beneficiary and grant, including grant ID `0` when applicable.
+3. Let the testnet connect, then confirm **Restore workspace**. The app checks provenance and current state using your selected endpoint before saving. If the same local beneficiary has different configuration, choose an explicit evidence merge or resolve the difference; its configuration is not silently overwritten.
+
+The backup contains public workspace configuration and unsigned evidence. Wallet access, signing permission, signed transaction bytes, endpoints and local operation ownership remain in their original browser. A file cannot authorize a transaction. Existing `account-handoff-evidence.json` files contain evidence only: select a matching workspace or complete the missing configuration shown during review. The app never guesses that a missing beneficiary or grant means one should be created. Your file, preview and entered details survive a visit to network setup while the page remains open; a reload clears this unsaved form.
+
 Primary network reference: [PortalDot V3 testnet guide](https://github.com/ItsCogumellum/portaldot-v3-testnet-guide).
 
 ## Publish the static website
