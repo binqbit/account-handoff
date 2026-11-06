@@ -271,6 +271,8 @@ if (scenario === "rotated")
     oldController: { ...snapshot.workspace!.oldController, active: false },
     newController: { ...snapshot.workspace!.newController!, active: true },
   };
+if (scenario === "fresh-setup")
+  snapshot = { ...snapshot, workspace: null, workspaces: [] };
 if (scenario === "empty")
   snapshot = {
     ...snapshot,

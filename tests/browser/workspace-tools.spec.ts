@@ -242,3 +242,37 @@ test("keyboard file selection reaches the visible chooser without a hidden input
   });
   await expect(page.getByLabel("Or paste JSON")).toHaveValue("{}");
 });
+
+test("creating a workspace works when the funder is the last completed field", async ({
+  page,
+}) => {
+  await page.goto(`${harness}?scenario=fresh-setup#setup`);
+  await page.getByLabel("Workspace name").fill("Last field funder");
+  for (const [label, members] of [
+    ["Current signers", [1, 2, 3]],
+    ["Reviewer accounts", [2, 4]],
+  ] as const) {
+    for (const member of members) {
+      const field = page.getByRole("combobox", {
+        name: `Add account to ${label}`,
+        exact: true,
+      });
+      await field.fill(`0x${String(member).repeat(64)}`);
+      await field.press("Enter");
+    }
+  }
+  await page
+    .getByRole("combobox", { name: "Funder account", exact: true })
+    .fill(`0x${"1".repeat(64)}`);
+  await page
+    .getByRole("button", { name: "Create workspace", exact: true })
+    .click();
+  await expect(page).toHaveURL(/#overview$/);
+  expect(
+    await page.evaluate(() =>
+      (
+        window as unknown as { __uiTest: { commands: { type: string }[] } }
+      ).__uiTest.commands.map((command) => command.type),
+    ),
+  ).toEqual(["create-workspace"]);
+});

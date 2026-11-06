@@ -1,3 +1,7 @@
+.address-picker__control {
+  position: relative;
+  min-width: 0;
+}
 .address-picker__input {
   position: relative;
   display: flex;
@@ -34,6 +38,11 @@
   border-color: var(--negative);
 }
 .address-picker__panel {
+  position: absolute;
+  z-index: 20;
+  top: 100%;
+  left: 0;
+  right: 0;
   border: 1px solid #49635c;
   border-radius: 9px;
   margin-top: 6px;

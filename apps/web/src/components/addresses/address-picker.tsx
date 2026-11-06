@@ -132,138 +132,142 @@ export function AddressPicker({
         {label}
         {required && <span aria-hidden="true"> *</span>}
       </label>
-      <div
-        className={`address-picker__input ${error ? "address-picker__input--invalid" : ""}`}
-        onClick={(event) => {
-          if ((event.target as Element).closest("button")) return;
-          input.current?.focus();
-          openOptions();
-        }}
-      >
-        <Icon name={kind === "contract" ? "contract" : "search"} size={18} />
-        <input
-          ref={input}
-          id={id}
-          type="text"
-          role="combobox"
-          value={displayAddress(value, addressFormat)}
-          className={
-            hasSelection && !editing ? "address-picker__named" : undefined
-          }
-          required={required}
-          disabled={disabled}
-          autoComplete="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          aria-autocomplete="list"
-          aria-expanded={open}
-          aria-controls={`${id}-options`}
-          aria-activedescendant={
-            open && activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined
-          }
-          aria-describedby={`${id}-help${hasSelection ? ` ${id}-selected` : ""}${error ? ` ${id}-error` : ""}`}
-          aria-invalid={!!error}
-          placeholder={
-            placeholder ??
-            (kind === "contract"
-              ? "Select or paste a contract address (0x…)"
-              : "Search accounts or paste a native address")
-          }
-          onFocus={openOptions}
-          onBlur={() => setEditing(false)}
-          onPaste={onPaste}
-          onKeyDown={keyDown}
-          onChange={(event) => {
-            onChange(event.target.value);
-            setFiltering(true);
-            setActive(-1);
-            setTouched(false);
-            setOpen(true);
-          }}
-        />
-        {hasSelection && !editing && (
-          <span className="address-picker__name" aria-hidden="true">
-            {displayValue}
-          </span>
-        )}
-        <button
-          type="button"
-          className="icon-button"
-          aria-label={`Show suggestions for ${label}`}
-          disabled={disabled}
-          onMouseDown={(event) => event.preventDefault()}
-          aria-expanded={open}
-          aria-controls={`${id}-options`}
-          onClick={() => {
-            const next = !open;
+      <div className="address-picker__control">
+        <div
+          className={`address-picker__input ${error ? "address-picker__input--invalid" : ""}`}
+          onClick={(event) => {
+            if ((event.target as Element).closest("button")) return;
             input.current?.focus();
-            if (next && addressKey(value, kind)) setFiltering(false);
-            setOpen(next);
+            openOptions();
           }}
         >
-          <Icon name="down" size={16} />
-        </button>
-      </div>
-      {open && (
-        <div className="address-picker__panel">
-          <div className="address-picker__caption">
-            {matches.length ? "Known accounts" : "Enter an address"}
-          </div>
-          <div
-            role="listbox"
-            id={`${id}-options`}
-            aria-label={`${label} suggestions`}
-            className="address-picker__options"
-          >
-            {matches.map((option, index) => (
-              <div
-                key={option.address}
-                id={`${id}-option-${index}`}
-                role="option"
-                aria-selected={chosen?.address === option.address}
-                className={`address-option ${index === activeIndex ? "address-option--active" : ""}`}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => select(option.address)}
-              >
-                <span className="account-mark">
-                  <Icon name="wallet" size={17} />
-                </span>
-                <span className="address-option__body">
-                  <strong>{option.label}</strong>
-                  <small title={option.detail}>{option.detail}</small>
-                  <code title={displayAddress(option.address, addressFormat)}>
-                    {compactAddress(
-                      displayAddress(option.address, addressFormat),
-                    )}
-                  </code>
-                  <span className="sr-only">
-                    Full address:{" "}
-                    {displayAddress(option.address, addressFormat)}
-                  </span>
-                </span>
-                {chosen?.address === option.address && (
-                  <Icon name="check" size={16} />
-                )}
-              </div>
-            ))}
-          </div>
-          {!matches.length && (
-            <p className="address-picker__empty">
-              {options.length
-                ? "No matching account. "
-                : "No known accounts yet. Connect a wallet to see suggestions, or "}
-              Paste a public {kind === "contract" ? "contract" : "native"}{" "}
-              address.{onSelect ? " Press Enter to add it." : ""}
-            </p>
+          <Icon name={kind === "contract" ? "contract" : "search"} size={18} />
+          <input
+            ref={input}
+            id={id}
+            type="text"
+            role="combobox"
+            value={displayAddress(value, addressFormat)}
+            className={
+              hasSelection && !editing ? "address-picker__named" : undefined
+            }
+            required={required}
+            disabled={disabled}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            aria-autocomplete="list"
+            aria-expanded={open}
+            aria-controls={`${id}-options`}
+            aria-activedescendant={
+              open && activeIndex >= 0
+                ? `${id}-option-${activeIndex}`
+                : undefined
+            }
+            aria-describedby={`${id}-help${hasSelection ? ` ${id}-selected` : ""}${error ? ` ${id}-error` : ""}`}
+            aria-invalid={!!error}
+            placeholder={
+              placeholder ??
+              (kind === "contract"
+                ? "Select or paste a contract address (0x…)"
+                : "Search accounts or paste a native address")
+            }
+            onFocus={openOptions}
+            onBlur={() => setEditing(false)}
+            onPaste={onPaste}
+            onKeyDown={keyDown}
+            onChange={(event) => {
+              onChange(event.target.value);
+              setFiltering(true);
+              setActive(-1);
+              setTouched(false);
+              setOpen(true);
+            }}
+          />
+          {hasSelection && !editing && (
+            <span className="address-picker__name" aria-hidden="true">
+              {displayValue}
+            </span>
           )}
+          <button
+            type="button"
+            className="icon-button"
+            aria-label={`Show suggestions for ${label}`}
+            disabled={disabled}
+            onMouseDown={(event) => event.preventDefault()}
+            aria-expanded={open}
+            aria-controls={`${id}-options`}
+            onClick={() => {
+              const next = !open;
+              input.current?.focus();
+              if (next && addressKey(value, kind)) setFiltering(false);
+              setOpen(next);
+            }}
+          >
+            <Icon name="down" size={16} />
+          </button>
         </div>
-      )}
+        {open && (
+          <div className="address-picker__panel">
+            <div className="address-picker__caption">
+              {matches.length ? "Known accounts" : "Enter an address"}
+            </div>
+            <div
+              role="listbox"
+              id={`${id}-options`}
+              aria-label={`${label} suggestions`}
+              className="address-picker__options"
+            >
+              {matches.map((option, index) => (
+                <div
+                  key={option.address}
+                  id={`${id}-option-${index}`}
+                  role="option"
+                  aria-selected={chosen?.address === option.address}
+                  className={`address-option ${index === activeIndex ? "address-option--active" : ""}`}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => select(option.address)}
+                >
+                  <span className="account-mark">
+                    <Icon name="wallet" size={17} />
+                  </span>
+                  <span className="address-option__body">
+                    <strong>{option.label}</strong>
+                    <small title={option.detail}>{option.detail}</small>
+                    <code title={displayAddress(option.address, addressFormat)}>
+                      {compactAddress(
+                        displayAddress(option.address, addressFormat),
+                      )}
+                    </code>
+                    <span className="sr-only">
+                      Full address:{" "}
+                      {displayAddress(option.address, addressFormat)}
+                    </span>
+                  </span>
+                  {chosen?.address === option.address && (
+                    <Icon name="check" size={16} />
+                  )}
+                </div>
+              ))}
+            </div>
+            {!matches.length && (
+              <p className="address-picker__empty">
+                {options.length
+                  ? "No matching account. "
+                  : "No known accounts yet. Connect a wallet to see suggestions, or "}
+                Paste a public {kind === "contract" ? "contract" : "native"}{" "}
+                address.{onSelect ? " Press Enter to add it." : ""}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
       {hasSelection && (
         <span id={`${id}-selected`} className="sr-only">
           Selected address: {displayAddress(value, addressFormat)}
         </span>
       )}
-      {hasSelection && !editing && !open && (
+      {hasSelection && (
         <div className="address-picker__selected">
           <Address
             value={value}
