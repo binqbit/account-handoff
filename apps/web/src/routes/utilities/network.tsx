@@ -18,6 +18,9 @@ import { deployment } from "../../config/deployment";
 export function Network(props: ScreenProps) {
   const { snapshot, run } = props;
   const network = snapshot.network;
+  const readinessBlocked = network.readiness.some(
+    (row) => row.status !== "ready",
+  );
   const [mode, setMode] = useState<RuntimeMode>(network.mode);
   const [endpoint, setEndpoint] = useState(network.endpoint);
   const [error, setError] = useState("");
@@ -164,8 +167,8 @@ export function Network(props: ScreenProps) {
         <Card
           title="Current profile"
           action={
-            <Badge tone={network.connected ? "positive" : "warning"}>
-              {network.connected ? "Connected" : "Disconnected"}
+            <Badge tone={network.connected ? "neutral" : "warning"}>
+              {network.connected ? "RPC connected" : "Disconnected"}
             </Badge>
           }
         >
@@ -196,10 +199,16 @@ export function Network(props: ScreenProps) {
               },
             ]}
           />
+          {network.connected && readinessBlocked && (
+            <p className="footnote">
+              The node is connected. Review the capability checks below before
+              preparing a transaction.
+            </p>
+          )}
           {network.error && <Notice tone="negative">{network.error}</Notice>}
         </Card>
       </div>
-      <Card title="Capability readiness">
+      <Card title="Transaction readiness">
         <ReadinessCards rows={network.readiness} />
         {!network.readiness.length && (
           <p className="muted">

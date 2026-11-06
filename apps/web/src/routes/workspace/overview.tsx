@@ -91,11 +91,15 @@ export function Overview(props: ScreenProps) {
           </div>
           <div className="identity-secondary">
             <span>Contract recipient (H160)</span>
-            <Address
-              value={workspace.beneficiary?.mappedAddress}
-              format="hex"
-              compact
-            />
+            {workspace.beneficiary?.mappedAddress ? (
+              <Address
+                value={workspace.beneficiary.mappedAddress}
+                format="hex"
+                compact
+              />
+            ) : (
+              <span className="unknown-value">Mapping not verified</span>
+            )}
           </div>
         </Card>
       </div>
@@ -120,8 +124,12 @@ export function Overview(props: ScreenProps) {
           <p>
             {workspace.grantId
               ? `Grant #${workspace.grantId}`
-              : "Grant not linked yet"}{" "}
-            · {workspace.milestones.length} milestones
+              : "Grant not linked yet"}
+            {workspace.milestones.length > 0
+              ? ` · ${workspace.milestones.length} milestones`
+              : workspace.grantId
+                ? " · Milestone data unavailable"
+                : ""}
           </p>
         </Card>
         <Card eyebrow="Control">
@@ -176,7 +184,9 @@ export function Overview(props: ScreenProps) {
       ) : (
         <Card>
           <p className="muted">
-            Milestones appear here after a grant is created or linked.
+            {workspace.grantId
+              ? "Refresh the workspace to verify this grant's milestone state."
+              : "Milestones appear here after a grant is created or linked."}
           </p>
         </Card>
       )}

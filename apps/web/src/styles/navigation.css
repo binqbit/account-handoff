@@ -3,14 +3,16 @@
   top: 0;
   z-index: 40;
   border-bottom: 1px solid var(--border);
-  background: #101e23;
+  background: #101c16f5;
+  box-shadow: 0 1px 0 #00000020;
+  backdrop-filter: blur(18px);
 }
 .site-header__main {
   display: flex;
   align-items: center;
   gap: 20px;
   max-width: 1320px;
-  padding: 14px 28px;
+  padding: 18px 32px;
   margin: auto;
 }
 .site-header .brand {
@@ -29,17 +31,18 @@
   justify-content: center;
   gap: 5px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 8px;
   background: transparent;
-  padding: 8px 10px;
+  padding: 10px 12px;
+  min-height: 42px;
   color: var(--muted);
-  font-size: 0.81rem;
+  font-size: 0.84rem;
   white-space: nowrap;
 }
 .site-nav button:hover,
 .site-nav button[aria-current="page"] {
-  background: #243a31;
-  color: #d2eddb;
+  background: #293c29;
+  color: #e0efda;
 }
 .site-nav .site-nav__create {
   border-color: #4b6c58;
@@ -51,6 +54,7 @@
   min-height: 0;
   border: 0;
   background: transparent;
+  min-width: 0;
 }
 .site-header .topbar-actions {
   gap: 10px;
@@ -60,10 +64,12 @@
   align-items: center;
   gap: 6px;
   border: 0;
-  padding: 5px 0;
+  padding: 8px 6px;
+  min-height: 40px;
   color: var(--muted);
   background: transparent;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
+  border-radius: 8px;
 }
 .header-network__state {
   max-width: 90px;
@@ -74,7 +80,10 @@
   display: grid;
   place-items: center;
   border: 0;
-  padding: 5px;
+  padding: 10px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 8px;
   background: transparent;
   color: var(--muted);
 }
@@ -86,7 +95,7 @@
   align-items: center;
   gap: 24px;
   max-width: 1320px;
-  padding: 0 28px;
+  padding: 0 32px;
   margin: auto;
 }
 .workspace-choice {
@@ -111,7 +120,7 @@
 .workspace-tabs {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
   overflow-x: auto;
 }
@@ -121,15 +130,15 @@
   gap: 6px;
   border: 0;
   border-bottom: 2px solid transparent;
-  padding: 10px 8px;
+  padding: 13px 10px;
   color: var(--muted);
   background: transparent;
   white-space: nowrap;
-  font-size: 0.8rem;
+  font-size: 0.84rem;
 }
 .workspace-tabs button[aria-current="page"] {
   color: #c8edd6;
-  border-bottom-color: #91c8a5;
+  border-bottom-color: var(--accent);
 }
 .workspace-tabs button:hover {
   color: #e0efe5;
@@ -163,48 +172,65 @@
     display: none;
   }
   .site-header .brand-symbol {
-    width: 29px;
-    height: 29px;
+    width: 36px;
+    height: 36px;
+  }
+  .site-header .topbar {
+    flex: 1 1 0;
+    padding: 0;
   }
   .site-header .topbar-actions {
-    gap: 5px;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex-shrink: 1;
   }
   .site-header .wallet-avatar {
     display: none;
   }
   .site-header .wallet-details {
-    max-width: 140px;
+    max-width: 125px;
   }
   .site-header .attention-button,
   .header-icon {
-    padding: 4px;
+    padding: 10px;
   }
   .header-network__mode {
-    display: none;
+    display: inline;
+    font-size: 0.75rem;
   }
   .site-nav {
     justify-content: space-between;
     gap: 3px;
+    flex-wrap: wrap;
   }
   .site-nav button {
     font-size: 0.78rem;
-    padding: 7px 8px;
+    padding: 8px 4px;
+    min-width: 40px;
   }
   .site-header__workspace {
     display: block;
     padding: 0 14px;
   }
   .workspace-choice {
-    display: none;
+    display: flex;
+    max-width: 100%;
+    min-height: 40px;
+    padding: 7px 0;
+    font-size: 0.8rem;
   }
   .workspace-tabs {
-    justify-content: space-between;
-    gap: 0;
+    justify-content: flex-start;
+    gap: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: #5b7355 transparent;
+    padding-bottom: 3px;
   }
   .workspace-tabs button {
-    font-size: 0.74rem;
-    padding: 9px 5px;
-    gap: 4px;
+    font-size: 0.8rem;
+    padding: 12px 6px;
+    gap: 6px;
   }
   .workspace-tabs svg {
     width: 14px;
@@ -214,8 +240,20 @@
 
 .site-header .wallet-control {
   padding: 4px 6px;
-  border: 1px solid #2e4647;
-  background: #17292b;
+  border: 1px solid #3c5140;
+  background: #1b2c21;
+  border-radius: 10px;
+}
+.header-icon:hover,
+.header-network:hover,
+.attention-button:hover {
+  background: var(--panel-soft);
+  color: var(--text);
+}
+.site-header .attention-button {
+  min-width: 40px;
+  min-height: 40px;
+  justify-content: center;
   border-radius: 8px;
 }
 .site-header .wallet-account-trigger {

@@ -45,7 +45,9 @@ test("complete DEMO application on the exact PortalDot runtime fork", async ({
     await page
       .getByRole("button", { name: "Connect and verify", exact: true })
       .click();
-    await expect(page.getByText("Connected", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("RPC connected", { exact: true }),
+    ).toBeVisible();
     await page
       .getByRole("button", { name: "Connect wallet", exact: true })
       .click();
@@ -183,7 +185,9 @@ test("complete DEMO application on the exact PortalDot runtime fork", async ({
     await page
       .getByRole("button", { name: "Connect and verify", exact: true })
       .click();
-    await expect(page.getByText("Connected", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("RPC connected", { exact: true }),
+    ).toBeVisible();
     await selectPersonalAccount(page, w.accounts.F);
     await c.api.provider.send("dev_setBlockBuildMode", ["Manual"]);
     const schedules = (await c.readAccount(pure)).vesting as {

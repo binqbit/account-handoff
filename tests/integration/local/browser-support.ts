@@ -54,7 +54,7 @@ export async function connectNetworkAndWallet(page: Page, endpoint: string) {
   await page
     .getByRole("button", { name: "Connect and verify", exact: true })
     .click();
-  await expect(page.getByText("Connected", { exact: true })).toBeVisible();
+  await expect(page.getByText("RPC connected", { exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Connect wallet", exact: true })
     .click();

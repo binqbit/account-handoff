@@ -20,13 +20,20 @@ export function Topbar({
           type="button"
           className="header-network"
           aria-label="Network and readiness"
+          title="Network and readiness"
           aria-current={destination === "network" ? "page" : undefined}
           onClick={() => navigate("network")}
         >
           <span
             className={`connection-dot ${snapshot.network.connected ? "connected" : ""}`}
           />
-          <span className="header-network__mode">{snapshot.network.mode}</span>
+          <span className="header-network__mode">
+            {snapshot.network.mode === "DEMO"
+              ? "Testnet"
+              : snapshot.network.mode === "LIVE"
+                ? "Mainnet"
+                : "Local"}
+          </span>
           <span className="header-network__state">
             {snapshot.network.connected ? "RPC online" : "Network disconnected"}
           </span>
@@ -35,6 +42,7 @@ export function Topbar({
           type="button"
           className="header-icon"
           aria-label="Workspace data"
+          title="Workspace data and backup"
           aria-current={destination === "data" ? "page" : undefined}
           onClick={() => navigate("data")}
         >
@@ -43,6 +51,7 @@ export function Topbar({
         <button
           type="button"
           className="attention-button"
+          title="Needs attention"
           onClick={() => navigate("attention")}
           aria-label={`Needs attention${unresolved ? `: ${unresolved}` : ""}`}
         >

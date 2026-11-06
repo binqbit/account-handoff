@@ -157,6 +157,9 @@ let snapshot: AppSnapshot = {
 };
 const scenario = new URLSearchParams(location.search).get("scenario");
 const rejectedCommand = new URLSearchParams(location.search).get("reject");
+const requestedMode = new URLSearchParams(location.search).get("mode");
+if (requestedMode === "DEMO" || requestedMode === "LIVE")
+  snapshot.network.mode = requestedMode;
 if (scenario?.startsWith("identity-") && snapshot.workspace) {
   const missing = scenario === "identity-unknown";
   snapshot.workspace.identityComparison =
@@ -271,6 +274,23 @@ if (scenario === "rotated")
     oldController: { ...snapshot.workspace!.oldController, active: false },
     newController: { ...snapshot.workspace!.newController!, active: true },
   };
+if (scenario === "disconnected-linked")
+  snapshot = {
+    ...snapshot,
+    network: {
+      ...snapshot.network,
+      connected: false,
+      blockHash: null,
+      blockNumber: null,
+    },
+    workspace: {
+      ...snapshot.workspace!,
+      grantId: "0",
+      milestones: [],
+      grantTotal: null,
+      beneficiary: { ...snapshot.workspace!.beneficiary!, mappedAddress: null },
+    },
+  };
 if (scenario === "fresh-setup")
   snapshot = { ...snapshot, workspace: null, workspaces: [] };
 if (scenario === "empty")
@@ -319,6 +339,28 @@ if (scenario === "unknown-history" && snapshot.workspace)
         { label: "Business outcome", value: "Unknown" },
       ],
       evidence: { kind: "synthetic", callHash: `0x${"c".repeat(64)}` },
+    },
+  ];
+if (scenario === "blocked-review")
+  snapshot.operation = {
+    ...reviewOperation(),
+    canSign: false,
+    canSend: false,
+    canReconcile: false,
+    blockers: ["Account changed. A new review is required."],
+  };
+if (scenario === "cancellation")
+  snapshot.actions = [
+    {
+      id: "GRC-MULTISIG-CANCEL",
+      title: "Cancel the pending proposal",
+      description:
+        "The original depositor can cancel this exact native proposal.",
+      category: "recovery",
+      actor: "M0",
+      enabled: true,
+      blockers: [],
+      fields: [],
     },
   ];
 if (scenario === "read-only")

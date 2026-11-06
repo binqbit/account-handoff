@@ -161,7 +161,7 @@ export function registerBaselineScenarios() {
         .getByRole("button", { name: "Connect and verify", exact: true })
         .click();
       await expect(
-        otherTab.getByText("Connected", { exact: true }),
+        otherTab.getByText("RPC connected", { exact: true }),
       ).toBeVisible();
       await otherTab.evaluate(() => {
         window.location.hash = "review?action=GRC-ROTATION-ADD-M1";
@@ -185,7 +185,9 @@ export function registerBaselineScenarios() {
       await page
         .getByRole("button", { name: "Connect and verify", exact: true })
         .click();
-      await expect(page.getByText("Connected", { exact: true })).toBeVisible();
+      await expect(
+        page.getByText("RPC connected", { exact: true }),
+      ).toBeVisible();
       await page.evaluate(() => {
         window.location.hash = "review?action=GRC-ROTATION-ADD-M1";
       });

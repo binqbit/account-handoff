@@ -3,6 +3,55 @@ import { resolve } from "node:path";
 
 const harness = `/@fs${resolve("tests/browser/fixtures/ui.html")}`;
 
+for (const [mode, label] of [
+  ["LOCAL", "Local"],
+  ["DEMO", "Testnet"],
+  ["LIVE", "Mainnet"],
+]) {
+  test(`${label} remains visible in the mobile network control`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 900 });
+    await page.goto(`${harness}?mode=${mode}#overview`);
+    const network = page.getByRole("button", {
+      name: "Network and readiness",
+      exact: true,
+    });
+    await expect(network.getByText(label!, { exact: true })).toBeVisible();
+  });
+}
+
+for (const scenario of ["unknown", "blocked-review", "cancellation"]) {
+  test(`${scenario} does not show a contradictory all-clear state`, async ({
+    page,
+  }) => {
+    await page.goto(`${harness}?scenario=${scenario}#attention`);
+    await expect(
+      page.getByRole("heading", {
+        name: "No unresolved attempts found",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", {
+        name:
+          scenario === "cancellation" ? "Review cancellation" : "Open attempt",
+        exact: true,
+      }),
+    ).toBeVisible();
+  });
+}
+
+test("network connection is distinct from transaction readiness", async ({
+  page,
+}) => {
+  await page.goto(`${harness}#network`);
+  await expect(page.getByText("RPC connected", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Transaction readiness", exact: true }),
+  ).toBeVisible();
+});
+
 for (const route of ["docs", "review?action=GRC-ROTATION-ADD-M1"]) {
   test(`skip navigation preserves the ${route} route and focuses its content`, async ({
     page,
@@ -91,3 +140,25 @@ for (const route of ["handoff", "history"]) {
       .toBe(true);
   });
 }
+
+test("a disconnected linked grant keeps its identity while unread facts remain unavailable", async ({
+  page,
+}) => {
+  await page.goto(`${harness}?scenario=disconnected-linked#overview`);
+  await expect(
+    page.getByText("Grant #0 · Milestone data unavailable", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Mapping not verified", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("0 milestones", { exact: false })).toHaveCount(0);
+  await expect(
+    page.getByText("Grant not linked yet", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText(
+      "Refresh the workspace to verify this grant's milestone state.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+});
