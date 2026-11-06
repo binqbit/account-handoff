@@ -56,12 +56,10 @@ describe("continuation receipt vesting provenance", () => {
                 : { address, reserved: 0n },
             ),
           } as never,
-          accounting: vi
-            .fn()
-            .mockResolvedValue({
-              status: "reconciled",
-              unexplainedReservedDeltaNative: "0",
-            }),
+          accounting: vi.fn().mockResolvedValue({
+            status: "reconciled",
+            unexplainedReservedDeltaNative: "0",
+          }),
         },
         {
           actionId: "GRC-GRANT-SUBMIT-M1",

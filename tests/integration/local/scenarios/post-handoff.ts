@@ -150,9 +150,10 @@ export async function finishSetupJourney(
     page.getByRole("button", { name: "Prepare for review", exact: true }),
   ).toBeDisabled();
   await expect(
-    page.getByText("Complete and verify grant continuation first.", {
-      exact: true,
-    }),
+    page.getByText(
+      "Verify grant continuation or wait for the preserved vesting schedule to mature.",
+      { exact: true },
+    ),
   ).toBeVisible();
   await completeGrantFromUi(page, testInfo, {
     connection,
