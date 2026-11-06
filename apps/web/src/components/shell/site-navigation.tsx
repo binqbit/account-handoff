@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { Destination } from "../../ui-contract";
 import type { ScreenProps } from "../../routes/screen-types";
 import { navigation } from "../../state/navigation";
@@ -10,6 +11,19 @@ export function SiteNavigation(
   },
 ) {
   const { snapshot, navigate, destination } = props;
+  const tabs = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const container = tabs.current;
+    const active = container?.querySelector('[aria-current="page"]');
+    if (!container || !active) return;
+    const bounds = container.getBoundingClientRect();
+    const target = active.getBoundingClientRect();
+    // Reveal the selected task without moving the page's vertical position.
+    if (target.left < bounds.left)
+      container.scrollLeft += target.left - bounds.left;
+    else if (target.right > bounds.right)
+      container.scrollLeft += target.right - bounds.right;
+  }, [destination, snapshot.workspace?.id]);
   return (
     <header className="site-header">
       <div className="site-header__main">
@@ -67,7 +81,7 @@ export function SiteNavigation(
             <span>{snapshot.workspace.name}</span>
             <Icon name="down" size={13} />
           </button>
-          <nav className="workspace-tabs" aria-label="Workspace">
+          <nav ref={tabs} className="workspace-tabs" aria-label="Workspace">
             {navigation.map((item) => (
               <button
                 type="button"

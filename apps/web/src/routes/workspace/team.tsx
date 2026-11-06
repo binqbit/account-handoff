@@ -114,7 +114,12 @@ export function Team(props: ScreenProps) {
             title="Budgets and identities"
             eyebrow="Funds for executing operations"
           >
-            <div className="table-scroll">
+            <div
+              className="table-scroll"
+              role="region"
+              aria-label="Operating budgets of participants and the beneficiary"
+              tabIndex={0}
+            >
               <table>
                 <caption className="sr-only">
                   Operating budgets of participants and the beneficiary

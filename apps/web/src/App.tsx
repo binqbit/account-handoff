@@ -155,7 +155,14 @@ function Application({ application }: { application: ApplicationFacade }) {
   }
   return (
     <>
-      <a className="skip-link" href="#main-content">
+      <a
+        className="skip-link"
+        href="#main-content"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("main-content")?.focus();
+        }}
+      >
         Skip to main content
       </a>
       <div className="app-shell">
