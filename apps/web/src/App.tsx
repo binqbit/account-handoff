@@ -9,6 +9,7 @@ import type {
   AppCommand,
   ApplicationFacade,
   CommandResult,
+  RuntimeMode,
 } from "./ui-contract";
 import { Icon, Notice } from "./components/ui";
 import { InterfaceBoundary } from "./components/shell/interface-boundary";
@@ -35,6 +36,10 @@ import {
 } from "./routes/utilities";
 import type { CommandOutcome, ScreenProps } from "./routes/screen-types";
 import { deployment } from "./config/deployment";
+import {
+  createWorkspaceSetupDraft,
+  type WorkspaceSetupDraft,
+} from "./routes/utilities/setup/draft";
 import "./styles/app.css";
 
 function saveDownload(download: NonNullable<CommandResult["download"]>) {
@@ -69,6 +74,9 @@ function Application({ application }: { application: ApplicationFacade }) {
     getSnapshot,
   );
   const { destination, actionId, navigate } = useRoute();
+  const [setupDrafts, setSetupDrafts] = useState<
+    Partial<Record<RuntimeMode, WorkspaceSetupDraft>>
+  >({});
   const [localBusy, setLocalBusy] = useState<string | null>(null);
   const pending = useRef(false);
   const [localNotice, setLocalNotice] = useState<{
@@ -115,6 +123,17 @@ function Application({ application }: { application: ApplicationFacade }) {
     document.title = `${titles[destination]} · Account Handoff`;
   }, [destination]);
   const screenProps: ScreenProps = { snapshot, navigate, run, openAction };
+  const setupMode = snapshot.network.mode;
+  const setupDraft = setupDrafts[setupMode] ?? createWorkspaceSetupDraft();
+  function updateSetupDraft(change: Partial<WorkspaceSetupDraft>) {
+    setSetupDrafts((drafts) => ({
+      ...drafts,
+      [setupMode]: {
+        ...(drafts[setupMode] ?? createWorkspaceSetupDraft()),
+        ...change,
+      },
+    }));
+  }
   const notice =
     localNotice ??
     (snapshot.notice
@@ -142,9 +161,31 @@ function Application({ application }: { application: ApplicationFacade }) {
       case "workspaces":
         return <Workspaces {...screenProps} />;
       case "setup":
-        return <Setup {...screenProps} />;
+        return (
+          <Setup
+            {...screenProps}
+            draft={setupDraft}
+            onDraftChange={updateSetupDraft}
+            onDraftReset={() =>
+              setSetupDrafts((drafts) => {
+                const next = { ...drafts };
+                delete next[setupMode];
+                return next;
+              })
+            }
+            onConnectNetwork={() => {
+              updateSetupDraft({});
+              navigate("network");
+            }}
+          />
+        );
       case "network":
-        return <Network {...screenProps} />;
+        return (
+          <Network
+            {...screenProps}
+            returnToSetup={Object.keys(setupDrafts).length > 0}
+          />
+        );
       case "data":
         return <Data {...screenProps} />;
       case "attention":

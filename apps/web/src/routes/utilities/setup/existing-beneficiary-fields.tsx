@@ -11,7 +11,7 @@ export function ExistingBeneficiaryFields({
   onChange(value: Partial<WorkspaceInput>): void;
   disabled: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(() => Object.keys(value).length > 0);
   const update = (change: Partial<WorkspaceInput>) =>
     onChange({ ...value, ...change });
   return (
@@ -21,6 +21,7 @@ export function ExistingBeneficiaryFields({
         className="text-button"
         aria-expanded={open}
         aria-controls="existing-beneficiary"
+        disabled={disabled}
         onClick={() => {
           setOpen(!open);
           if (open) onChange({});

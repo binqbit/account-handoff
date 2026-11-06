@@ -158,8 +158,16 @@ let snapshot: AppSnapshot = {
 const scenario = new URLSearchParams(location.search).get("scenario");
 const rejectedCommand = new URLSearchParams(location.search).get("reject");
 const requestedMode = new URLSearchParams(location.search).get("mode");
-if (requestedMode === "DEMO" || requestedMode === "LIVE")
+const fixtureEndpoint = (mode: AppSnapshot["network"]["mode"]) =>
+  mode === "LOCAL"
+    ? "ws://127.0.0.1:9944"
+    : mode === "DEMO"
+      ? "wss://test-node-v3.portaldot.dev"
+      : "wss://mainnet.invalid";
+if (requestedMode === "DEMO" || requestedMode === "LIVE") {
   snapshot.network.mode = requestedMode;
+  snapshot.network.endpoint = fixtureEndpoint(requestedMode);
+}
 if (scenario?.startsWith("identity-") && snapshot.workspace) {
   const missing = scenario === "identity-unknown";
   snapshot.workspace.identityComparison =
@@ -291,8 +299,24 @@ if (scenario === "disconnected-linked")
       beneficiary: { ...snapshot.workspace!.beneficiary!, mappedAddress: null },
     },
   };
-if (scenario === "fresh-setup")
+if (
+  scenario === "fresh-setup" ||
+  scenario === "fresh-setup-disconnected" ||
+  scenario === "setup-checking" ||
+  scenario === "setup-network-error"
+)
   snapshot = { ...snapshot, workspace: null, workspaces: [] };
+if (scenario === "fresh-setup-disconnected") snapshot.network.connected = false;
+if (scenario === "setup-checking") {
+  snapshot.network.checking = true;
+  snapshot.busy = "connect-network";
+}
+if (scenario === "setup-network-error")
+  snapshot.network = {
+    ...snapshot.network,
+    connected: false,
+    error: "Synthetic startup connection failure",
+  };
 if (scenario === "empty")
   snapshot = {
     ...snapshot,
@@ -410,6 +434,7 @@ if (scenario === "approval-counts" || scenario === "approval-unknown")
   };
 const listeners = new Set<() => void>();
 const commands: AppCommand[] = [];
+let allowRejectedNetworkConnection = false;
 const publish = (next: AppSnapshot) => {
   snapshot = { ...next, revision: snapshot.revision + 1 };
   listeners.forEach((listener) => listener());
@@ -422,8 +447,23 @@ const facade: ApplicationFacade = {
   },
   async dispatch(command) {
     commands.push(command);
-    if (command.type === rejectedCommand)
+    if (
+      command.type === rejectedCommand &&
+      !(command.type === "connect-network" && allowRejectedNetworkConnection)
+    )
       throw new Error(`Synthetic ${command.type} failure`);
+    if (command.type === "connect-network")
+      publish({
+        ...snapshot,
+        network: {
+          ...snapshot.network,
+          mode: command.mode,
+          endpoint: command.endpoint,
+          connected: true,
+          checking: false,
+          error: null,
+        },
+      });
     if (command.type === "select-account")
       publish({
         ...snapshot,
@@ -539,7 +579,32 @@ const facade: ApplicationFacade = {
   },
 };
 Object.defineProperty(window, "__uiTest", {
-  value: { commands, getSnapshot: () => snapshot },
+  value: {
+    commands,
+    getSnapshot: () => snapshot,
+    setNetworkConnected(
+      connected: boolean,
+      mode: AppSnapshot["network"]["mode"] = snapshot.network.mode,
+    ) {
+      publish({
+        ...snapshot,
+        network: {
+          ...snapshot.network,
+          mode,
+          endpoint:
+            mode === snapshot.network.mode
+              ? snapshot.network.endpoint
+              : fixtureEndpoint(mode),
+          connected,
+          checking: false,
+          error: null,
+        },
+      });
+    },
+    allowNetworkConnection() {
+      allowRejectedNetworkConnection = true;
+    },
+  },
 });
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

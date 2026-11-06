@@ -11,15 +11,25 @@ import {
 import type { WorkspaceInput } from "../../../ui-contract";
 import type { ScreenProps } from "../../screen-types";
 import { ExistingBeneficiaryFields } from "./existing-beneficiary-fields";
+import type { SetupDraftControls } from "./draft";
 
-export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
-  const [mode, setMode] = useState<"create" | "connect">("create");
-  const [name, setName] = useState("");
-  const [members, setMembers] = useState<string[]>([]);
-  const [controllerAddress, setControllerAddress] = useState("");
-  const [funder, setFunder] = useState("");
-  const [reviewers, setReviewers] = useState<string[]>([]);
-  const [existing, setExisting] = useState<Partial<WorkspaceInput>>({});
+export function TeamForm({
+  snapshot,
+  run,
+  navigate,
+  draft,
+  onDraftChange,
+  onDraftReset,
+}: ScreenProps & SetupDraftControls) {
+  const {
+    mode,
+    name,
+    members,
+    controllerAddress,
+    funder,
+    reviewers,
+    existing,
+  } = draft;
   const [formError, setFormError] = useState("");
   const options = participantOptions(snapshot);
   const busy = !!snapshot.busy;
@@ -81,7 +91,10 @@ export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
     };
     if (mode === "connect") input.controllerAddress = controllerAddress.trim();
     const outcome = await run({ type: "create-workspace", input });
-    if (outcome.succeeded) navigate("overview");
+    if (outcome.succeeded) {
+      onDraftReset();
+      navigate("overview");
+    }
   }
   return (
     <Card title="Your multisig">
@@ -95,7 +108,8 @@ export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
             type="button"
             variant={mode === "create" ? "primary" : "secondary"}
             aria-pressed={mode === "create"}
-            onClick={() => setMode("create")}
+            onClick={() => onDraftChange({ mode: "create" })}
+            disabled={busy}
           >
             Create multisig
           </Button>
@@ -103,7 +117,8 @@ export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
             type="button"
             variant={mode === "connect" ? "primary" : "secondary"}
             aria-pressed={mode === "connect"}
-            onClick={() => setMode("connect")}
+            onClick={() => onDraftChange({ mode: "connect" })}
+            disabled={busy}
           >
             Connect existing
           </Button>
@@ -113,7 +128,7 @@ export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
           <input
             id="workspace-name"
             value={name}
-            onChange={(event) => setName(event.target.value)}
+            onChange={(event) => onDraftChange({ name: event.target.value })}
             placeholder="e.g. Atlas Research"
             maxLength={80}
             required
@@ -124,7 +139,9 @@ export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
           <AddressPicker
             label="Existing multisig address"
             value={controllerAddress}
-            onChange={setControllerAddress}
+            onChange={(controllerAddress) =>
+              onDraftChange({ controllerAddress })
+            }
             options={[]}
             required
             disabled={busy}
@@ -134,7 +151,11 @@ export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
         <AddressList
           label="Current signers"
           values={members}
-          onChange={setMembers}
+          onChange={(members) => onDraftChange({ members })}
+          inputDraft={{
+            value: draft.membersInput,
+            onChange: (membersInput) => onDraftChange({ membersInput }),
+          }}
           count={3}
           options={options}
           disabled={busy}
@@ -153,7 +174,7 @@ export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
         <AddressPicker
           label="Funder account"
           value={funder}
-          onChange={setFunder}
+          onChange={(funder) => onDraftChange({ funder })}
           options={options}
           required
           disabled={busy}
@@ -162,7 +183,11 @@ export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
         <AddressList
           label="Reviewer accounts"
           values={reviewers}
-          onChange={setReviewers}
+          onChange={(reviewers) => onDraftChange({ reviewers })}
+          inputDraft={{
+            value: draft.reviewersInput,
+            onChange: (reviewersInput) => onDraftChange({ reviewersInput }),
+          }}
           options={options}
           count={2}
           disabled={busy}
@@ -171,7 +196,7 @@ export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
         {mode === "connect" && (
           <ExistingBeneficiaryFields
             value={existing}
-            onChange={setExisting}
+            onChange={(existing) => onDraftChange({ existing })}
             disabled={busy}
           />
         )}

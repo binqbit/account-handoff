@@ -1,0 +1,413 @@
+import { expect, test, type Page } from "@playwright/test";
+import { resolve } from "node:path";
+import type { AppCommand, RuntimeMode } from "../../apps/web/src/ui-contract";
+
+const harness = `/@fs${resolve("tests/browser/fixtures/ui.html")}`;
+const address = (index: number) => `0x${String(index).repeat(64)}`;
+type UiFixture = {
+  commands: AppCommand[];
+  setNetworkConnected(connected: boolean, mode?: RuntimeMode): void;
+  allowNetworkConnection(): void;
+};
+
+async function commands(page: Page) {
+  return page.evaluate(
+    () => (window as unknown as { __uiTest: UiFixture }).__uiTest.commands,
+  );
+}
+async function connection(page: Page, connected: boolean, mode?: RuntimeMode) {
+  await page.evaluate(
+    ({ connected, mode }) =>
+      (
+        window as unknown as { __uiTest: UiFixture }
+      ).__uiTest.setNetworkConnected(connected, mode),
+    { connected, mode },
+  );
+}
+async function addAccount(page: Page, group: string, index: number) {
+  const field = page.getByRole("combobox", {
+    name: `Add account to ${group}`,
+    exact: true,
+  });
+  await field.fill(address(index));
+  await field.press("Enter");
+}
+async function fillTeam(page: Page, name: string) {
+  await page.getByLabel("Workspace name").fill(name);
+  for (const index of [1, 2, 3])
+    await addAccount(page, "Current signers", index);
+  for (const index of [2, 4])
+    await addAccount(page, "Reviewer accounts", index);
+  await page
+    .getByRole("combobox", { name: "Funder account", exact: true })
+    .fill(address(1));
+  await page.getByLabel("Workspace name").focus();
+}
+async function teamValues(page: Page) {
+  return {
+    name: await page.getByLabel("Workspace name").inputValue(),
+    members: await page
+      .getByRole("group", { name: "Current signers", exact: true })
+      .locator(".address-full code")
+      .allTextContents(),
+    reviewers: await page
+      .getByRole("group", { name: "Reviewer accounts", exact: true })
+      .locator(".address-full code")
+      .allTextContents(),
+    funder: await page
+      .getByRole("combobox", { name: "Funder account", exact: true })
+      .inputValue(),
+    multisig: await page
+      .locator(".derived-address .address-full code")
+      .textContent(),
+  };
+}
+async function expectGate(page: Page) {
+  await expect(page.getByLabel("Workspace name")).toHaveCount(0);
+  await expect(
+    page.getByRole("combobox", {
+      name: "Add account to Current signers",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Open network setup", exact: true }),
+  ).toBeVisible();
+}
+async function openNetwork(page: Page) {
+  await page
+    .getByRole("button", { name: "Open network setup", exact: true })
+    .click();
+  await expect(page).toHaveURL(/#network$/);
+  await expect(
+    page.getByRole("button", { name: "Back to workspace setup", exact: true }),
+  ).toBeVisible();
+}
+async function backToSetup(page: Page) {
+  await page
+    .getByRole("button", { name: "Back to workspace setup", exact: true })
+    .click();
+  await expect(page).toHaveURL(/#setup$/);
+}
+
+// The facade supplies network transitions only. Production TESTNET bootstrap is
+// tested separately; this App fixture never opens a native RPC or wallet signer.
+test("disconnected setup offers a manual connection route before editing, with a return even without a draft", async ({
+  page,
+}) => {
+  await page.goto(
+    `${harness}?scenario=fresh-setup-disconnected&mode=DEMO#setup`,
+  );
+  await expectGate(page);
+  await openNetwork(page);
+  await backToSetup(page);
+  await expectGate(page);
+  expect(await commands(page)).toEqual([]);
+});
+
+for (const scenario of ["setup-checking", "setup-network-error"]) {
+  test(`${scenario} keeps the editing form behind the connection gate`, async ({
+    page,
+  }) => {
+    await page.goto(`${harness}?scenario=${scenario}&mode=DEMO#setup`);
+    await expectGate(page);
+    if (scenario === "setup-checking")
+      await expect(
+        page.getByRole("heading", {
+          name: "Connecting to the network…",
+          exact: true,
+        }),
+      ).toBeVisible();
+    else
+      await expect(
+        page.getByText("Synthetic startup connection failure", { exact: true }),
+      ).toBeVisible();
+    expect(await commands(page)).toEqual([]);
+  });
+}
+
+test("explicit manual retry makes the form available only after connection succeeds", async ({
+  page,
+}) => {
+  await page.goto(
+    `${harness}?scenario=fresh-setup-disconnected&mode=DEMO#setup`,
+  );
+  await openNetwork(page);
+  expect(await commands(page)).toEqual([]);
+  await page
+    .getByRole("button", { name: "Connect and verify", exact: true })
+    .click();
+  await expect(page.getByText("RPC connected", { exact: true })).toBeVisible();
+  await backToSetup(page);
+  await expect(page.getByLabel("Workspace name")).toBeVisible();
+  await expect(page.getByLabel("Workspace name")).toHaveValue("");
+  await expect(
+    page.getByRole("button", { name: "Open network setup", exact: true }),
+  ).toHaveCount(0);
+  expect(await commands(page)).toEqual([
+    {
+      type: "connect-network",
+      mode: "DEMO",
+      endpoint: "wss://test-node-v3.portaldot.dev",
+    },
+  ]);
+});
+
+test("a filled create draft survives lost connection and a visit to advanced network setup", async ({
+  page,
+}) => {
+  await page.goto(`${harness}?scenario=fresh-setup&mode=DEMO#setup`);
+  await fillTeam(page, "Preserved create draft");
+  const before = await teamValues(page);
+  await connection(page, false);
+  await expectGate(page);
+  await openNetwork(page);
+  await backToSetup(page);
+  await expectGate(page);
+  await connection(page, true);
+  await expect(page.getByLabel("Workspace name")).toBeVisible();
+  expect(await teamValues(page)).toEqual(before);
+  await expect(
+    page.getByRole("button", { name: "Create workspace", exact: true }),
+  ).toBeEnabled();
+  expect(await commands(page)).toEqual([]);
+});
+
+test("failed reconnection preserves an existing-account draft and its grant-zero attachment for explicit retry", async ({
+  page,
+}) => {
+  await page.goto(
+    `${harness}?scenario=fresh-setup&mode=DEMO&reject=connect-network#setup`,
+  );
+  await page
+    .getByRole("button", { name: "Connect existing", exact: true })
+    .click();
+  await fillTeam(page, "Preserved existing draft");
+  const controller = (await teamValues(page)).multisig!;
+  await page
+    .getByRole("combobox", { name: "Existing multisig address", exact: true })
+    .fill(controller);
+  await page
+    .getByRole("button", {
+      name: "Attach an existing beneficiary or grant",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole("combobox", { name: "Pure beneficiary address", exact: true })
+    .fill(address(5));
+  await page.getByLabel("Creation block hash").fill(`0x${"a".repeat(64)}`);
+  await page
+    .getByLabel("Creation transaction hash")
+    .fill(`0x${"b".repeat(64)}`);
+  await page
+    .getByRole("combobox", { name: "Grant contract (optional)", exact: true })
+    .fill(`0x${"b".repeat(40)}`);
+  await page.getByLabel("Grant ID (optional)", { exact: true }).fill("0");
+  const before = await teamValues(page);
+  const beneficiary = await page
+    .getByRole("combobox", { name: "Pure beneficiary address", exact: true })
+    .inputValue();
+  await connection(page, false);
+  await expectGate(page);
+  await openNetwork(page);
+  await page
+    .getByRole("button", { name: "Connect and verify", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Synthetic connect-network failure",
+  );
+  await backToSetup(page);
+  await expectGate(page);
+  await openNetwork(page);
+  await page.evaluate(() =>
+    (
+      window as unknown as { __uiTest: UiFixture }
+    ).__uiTest.allowNetworkConnection(),
+  );
+  await page
+    .getByRole("button", { name: "Connect and verify", exact: true })
+    .click();
+  await expect(page.getByText("RPC connected", { exact: true })).toBeVisible();
+  await backToSetup(page);
+  await expect(
+    page.getByRole("button", { name: "Connect existing", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  expect(await teamValues(page)).toEqual(before);
+  await expect(
+    page.getByRole("combobox", {
+      name: "Existing multisig address",
+      exact: true,
+    }),
+  ).toHaveValue(controller);
+  await expect(
+    page.getByRole("button", {
+      name: "Attach an existing beneficiary or grant",
+      exact: true,
+    }),
+  ).toHaveAttribute("aria-expanded", "true");
+  await expect(
+    page.getByRole("combobox", {
+      name: "Pure beneficiary address",
+      exact: true,
+    }),
+  ).toHaveValue(beneficiary);
+  await expect(page.getByLabel("Creation block hash")).toHaveValue(
+    `0x${"a".repeat(64)}`,
+  );
+  await expect(page.getByLabel("Creation transaction hash")).toHaveValue(
+    `0x${"b".repeat(64)}`,
+  );
+  await expect(
+    page.getByRole("combobox", {
+      name: "Grant contract (optional)",
+      exact: true,
+    }),
+  ).toHaveValue(`0x${"b".repeat(40)}`);
+  await expect(
+    page.getByLabel("Grant ID (optional)", { exact: true }),
+  ).toHaveValue("0");
+  const sent = await commands(page);
+  expect(sent.map((command) => command.type)).toEqual([
+    "connect-network",
+    "connect-network",
+  ]);
+});
+
+test("uncommitted member and reviewer input survives navigation and disconnection without adding accounts", async ({
+  page,
+}) => {
+  await page.goto(`${harness}?scenario=fresh-setup&mode=DEMO#setup`);
+  await page.getByLabel("Workspace name").fill("Pending account input");
+  await addAccount(page, "Current signers", 1);
+  await addAccount(page, "Reviewer accounts", 2);
+  const members = page.getByRole("combobox", {
+    name: "Add account to Current signers",
+    exact: true,
+  });
+  const reviewers = page.getByRole("combobox", {
+    name: "Add account to Reviewer accounts",
+    exact: true,
+  });
+  await members.fill("5Grwva");
+  await reviewers.fill(address(4));
+  const pendingReviewer = await reviewers.inputValue();
+  await page
+    .getByRole("button", { name: "Network and readiness", exact: true })
+    .click();
+  await backToSetup(page);
+  await expect(members).toHaveValue("5Grwva");
+  await expect(reviewers).toHaveValue(pendingReviewer);
+  await connection(page, false);
+  await expectGate(page);
+  await connection(page, true);
+  await expect(members).toHaveValue("5Grwva");
+  await expect(reviewers).toHaveValue(pendingReviewer);
+  await expect(
+    page
+      .getByRole("group", { name: "Current signers", exact: true })
+      .getByRole("listitem"),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .getByRole("group", { name: "Reviewer accounts", exact: true })
+      .getByRole("listitem"),
+  ).toHaveCount(1);
+  expect(await commands(page)).toEqual([]);
+});
+
+test("runtime modes retain separate drafts and a successful save clears only its own draft", async ({
+  page,
+}) => {
+  await page.goto(`${harness}?scenario=fresh-setup#setup`);
+  await page.getByLabel("Workspace name").fill("Local draft");
+  await page
+    .getByRole("button", { name: "Network and readiness", exact: true })
+    .click();
+  await page
+    .getByRole("group", { name: "Environment", exact: true })
+    .getByRole("button", { name: /^DEMO/ })
+    .click();
+  await page
+    .getByLabel("Native WebSocket endpoint", { exact: true })
+    .fill("wss://test-node-v3.portaldot.dev");
+  await page
+    .getByRole("button", { name: "Connect and verify", exact: true })
+    .click();
+  await expect(page.getByText("RPC connected", { exact: true })).toBeVisible();
+  await backToSetup(page);
+  await expect(page.getByLabel("Workspace name")).toHaveValue("");
+  await fillTeam(page, "Testnet draft");
+  const demo = await teamValues(page);
+  await connection(page, true, "LOCAL");
+  await expect(page.getByLabel("Workspace name")).toHaveValue("Local draft");
+  await connection(page, true, "DEMO");
+  expect(await teamValues(page)).toEqual(demo);
+  await page
+    .getByRole("button", { name: "Create workspace", exact: true })
+    .click();
+  await expect(page).toHaveURL(/#overview$/);
+  await page
+    .getByRole("button", { name: "Create a new workspace", exact: true })
+    .click();
+  await expect(page.getByLabel("Workspace name")).toHaveValue("");
+  await expect(
+    page
+      .getByRole("group", { name: "Current signers", exact: true })
+      .getByRole("listitem"),
+  ).toHaveCount(0);
+  await expect(
+    page
+      .getByRole("group", { name: "Reviewer accounts", exact: true })
+      .getByRole("listitem"),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("combobox", { name: "Funder account", exact: true }),
+  ).toHaveValue("");
+  await expect(
+    page.getByRole("button", { name: "Create multisig", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.getByRole("combobox", {
+      name: "Add account to Current signers",
+      exact: true,
+    }),
+  ).toHaveValue("");
+  await expect(
+    page.getByRole("combobox", {
+      name: "Add account to Reviewer accounts",
+      exact: true,
+    }),
+  ).toHaveValue("");
+  await connection(page, true, "LOCAL");
+  await expect(page.getByLabel("Workspace name")).toHaveValue("Local draft");
+  expect((await commands(page)).map((command) => command.type)).toEqual([
+    "connect-network",
+    "create-workspace",
+  ]);
+});
+
+test("a rejected workspace save keeps the draft across route changes", async ({
+  page,
+}) => {
+  await page.goto(
+    `${harness}?scenario=fresh-setup&mode=DEMO&reject=create-workspace#setup`,
+  );
+  await fillTeam(page, "Rejected save draft");
+  const before = await teamValues(page);
+  await page
+    .getByRole("button", { name: "Create workspace", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toContainText(
+    "Synthetic create-workspace failure",
+  );
+  await expect(page).toHaveURL(/#setup$/);
+  await page.getByRole("button", { name: "Docs", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Create a new workspace", exact: true })
+    .click();
+  expect(await teamValues(page)).toEqual(before);
+  expect((await commands(page)).map((command) => command.type)).toEqual([
+    "create-workspace",
+  ]);
+});

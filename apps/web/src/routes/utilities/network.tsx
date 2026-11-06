@@ -15,8 +15,8 @@ import type { ScreenProps } from "../screen-types";
 import { ReadinessCards } from "../../components/readiness";
 import { deployment } from "../../config/deployment";
 
-export function Network(props: ScreenProps) {
-  const { snapshot, run } = props;
+export function Network(props: ScreenProps & { returnToSetup?: boolean }) {
+  const { snapshot, run, navigate, returnToSetup } = props;
   const network = snapshot.network;
   const readinessBlocked = network.readiness.some(
     (row) => row.status !== "ready",
@@ -53,6 +53,13 @@ export function Network(props: ScreenProps) {
         eyebrow="Network and readiness"
         title="Check the environment before acting"
         description="Connect a node and check readiness before signing."
+        actions={
+          returnToSetup ? (
+            <Button onClick={() => navigate("setup")} icon="back">
+              Back to workspace setup
+            </Button>
+          ) : undefined
+        }
       />
       <div className="overview-grid">
         <Card title="Native node connection">

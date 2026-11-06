@@ -12,6 +12,7 @@ export function AddressList({
   count,
   help,
   disabled = false,
+  inputDraft,
 }: {
   label: string;
   values: string[];
@@ -20,11 +21,14 @@ export function AddressList({
   count: number;
   help: string;
   disabled?: boolean;
+  inputDraft?: { value: string; onChange(value: string): void };
 }) {
   const id = useId();
   const group = useRef<HTMLFieldSetElement>(null);
   const focusLastAccount = useRef(false);
-  const [draft, setDraft] = useState("");
+  const [localDraft, setLocalDraft] = useState("");
+  const draft = inputDraft?.value ?? localDraft;
+  const setDraft = inputDraft?.onChange ?? setLocalDraft;
   const [error, setError] = useState("");
   const keys = values.map((value) => addressKey(value));
   useEffect(() => {
