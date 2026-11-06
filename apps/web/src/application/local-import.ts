@@ -244,6 +244,7 @@ async function validateWorkspaceImport(
   raw: unknown,
   connection: NativeConnection,
   expectedRun: NetworkDescriptor,
+  replacement?: Controller,
 ): Promise<VerifiedLocalWorkspaceImport> {
   const packet = object(raw);
   exactFields(
@@ -288,8 +289,9 @@ async function validateWorkspaceImport(
     "Imported workspace belongs to another genesis",
   );
   requireValue(
-    new URL(connection.endpoint).toString() ===
-      new URL(expectedRun.nativeRpc).toString(),
+    expectedRun.mode !== "LOCAL" ||
+      new URL(connection.endpoint).toString() ===
+        new URL(expectedRun.nativeRpc).toString(),
     "Connection differs from the qualified LOCAL endpoint",
   );
   requireValue(
@@ -461,12 +463,23 @@ async function validateWorkspaceImport(
   );
   if (currentOnly) {
     const now = await connection.readAccount(pure, current.anchor.hash);
+    const allowed = replacement
+      ? [M0.account, replacement.account]
+      : [M0.account];
     requireValue(
-      now.proxies.length === 1 &&
-        now.proxies[0]!.delegate === M0.account &&
-        now.proxies[0]!.proxyType === "Any" &&
-        now.proxies[0]!.delay === 0,
-      "The connected multisig is not the beneficiary's sole Any/0 controller",
+      now.proxies.length >= 1 &&
+        now.proxies.length <= allowed.length &&
+        new Set(now.proxies.map((proxy) => proxy.delegate)).size ===
+          now.proxies.length &&
+        now.proxies.every(
+          (proxy) =>
+            allowed.includes(proxy.delegate) &&
+            proxy.proxyType === "Any" &&
+            proxy.delay === 0,
+        ),
+      replacement
+        ? "The beneficiary's current authority differs from the imported controller configuration"
+        : "The connected multisig is not the beneficiary's sole Any/0 controller",
     );
     if (hasGrant)
       requireValue(
@@ -580,6 +593,7 @@ export async function verifyWorkspaceConnection(
   creation: { blockHash: string; transactionHash: string },
   connection: NativeConnection,
   expectedRun: NetworkDescriptor,
+  restoreReplacement?: readonly string[],
 ): Promise<VerifiedLocalWorkspaceImport> {
   const blockHash = hex(creation.blockHash, 32);
   const transactionHash = hex(creation.transactionHash, 32);
@@ -590,6 +604,19 @@ export async function verifyWorkspaceConnection(
     newMembers: _next,
     ...current
   } = input;
+  let replacement: Controller | undefined;
+  if (restoreReplacement) {
+    const members = accounts([...restoreReplacement], 3, "Replacement group");
+    const currentMembers = input.oldMembers.map(account);
+    requireValue(
+      currentMembers.filter((member) => members.includes(member)).length === 2,
+      "A restored replacement must retain two current members",
+    );
+    replacement = makeController(members, 2, "M1", {
+      deriveMultisig: (signers, threshold) =>
+        u8aToHex(createKeyMulti([...signers], threshold)),
+    });
+  }
   return validateWorkspaceImport(
     {
       format:
@@ -615,6 +642,7 @@ export async function verifyWorkspaceConnection(
     },
     connection,
     expectedRun,
+    replacement,
   );
 }
 

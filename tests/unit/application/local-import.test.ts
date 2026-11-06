@@ -535,3 +535,147 @@ describe("LOCAL workspace import verifies original chain provenance", () => {
     expect(f.connection.endpoint).toBe("ws://127.0.0.1:9955");
   });
 });
+
+describe("restoring a declared replacement without weakening ordinary connection", () => {
+  const M1 = u8aToHex(createKeyMulti([A, B, D], 2));
+  const tuple = (delegate: string, proxyType = "Any", delay = 0) => ({
+    delegate: delegate as Hex,
+    proxyType,
+    delay,
+  });
+  function restoration(proxies: NativeAccountState["proxies"]) {
+    const f = fixture();
+    const current: NativeAccountState = { ...f.state, mappedTo: P, proxies };
+    vi.mocked(f.connection.readAccount).mockImplementation(
+      async (_address, block) => (block === creationBlock ? f.state : current),
+    );
+    const { newMembers: _next, ...input } = f.raw.input;
+    return { ...f, input, current };
+  }
+
+  it.each([
+    ["current-only", [tuple(M0)]],
+    ["dual control", [tuple(M1), tuple(M0)]],
+    ["replacement-only", [tuple(M1)]],
+  ] as const)(
+    "verifies the exact %s inventory with an explicitly declared replacement",
+    async (_label, proxies) => {
+      const f = restoration([...proxies]);
+      const result = await verifyWorkspaceConnection(
+        f.input,
+        { blockHash: creationBlock, transactionHash: creationHash },
+        f.connection,
+        f.expected,
+        [A, B, D],
+      );
+      expect(result.creator.account).toBe(M0);
+      expect(result.input.oldMembers).toEqual([A, B, C]);
+      expect(result.creationEvidence[0]?.sourceId).toBe(creationHash);
+      expect(result.input.grantId).toBe("0");
+      expect(result.input.newMembers).toBeUndefined();
+    },
+  );
+
+  it("keeps ordinary existing-account connection strict even if its input names a replacement", async () => {
+    const f = restoration([tuple(M0), tuple(M1)]);
+    await expect(
+      verifyWorkspaceConnection(
+        { ...f.input, newMembers: [A, B, D] },
+        { blockHash: creationBlock, transactionHash: creationHash },
+        f.connection,
+        f.expected,
+      ),
+    ).rejects.toThrow("sole Any/0 controller");
+  });
+
+  it.each([
+    ["empty authority", []],
+    ["foreign controller", [tuple(F)]],
+    ["third controller", [tuple(M0), tuple(M1), tuple(F)]],
+    ["duplicate controller", [tuple(M1), tuple(M1)]],
+    ["delayed current proxy", [tuple(M0, "Any", 1)]],
+    ["delayed replacement proxy", [tuple(M1, "Any", 1)]],
+    ["restricted current proxy", [tuple(M0, "NonTransfer")]],
+    ["restricted replacement proxy", [tuple(M1, "NonTransfer")]],
+  ] as const)("rejects %s during restoration", async (_label, proxies) => {
+    const f = restoration([...proxies]);
+    await expect(
+      verifyWorkspaceConnection(
+        f.input,
+        { blockHash: creationBlock, transactionHash: creationHash },
+        f.connection,
+        f.expected,
+        [A, B, D],
+      ),
+    ).rejects.toThrow("current authority differs");
+  });
+
+  it.each([
+    ["unchanged group", [A, B, C]],
+    ["only one retained member", [A, F, D]],
+    ["duplicate members", [A, B, B]],
+    ["wrong member count", [A, B]],
+  ])(
+    "rejects a replacement with %s before qualifying chain state",
+    async (_label, members) => {
+      const f = restoration([tuple(M0)]);
+      await expect(
+        verifyWorkspaceConnection(
+          f.input,
+          { blockHash: creationBlock, transactionHash: creationHash },
+          f.connection,
+          f.expected,
+          members,
+        ),
+      ).rejects.toThrow(/retain two|duplicate|exactly 3/);
+      expect(f.fingerprint).not.toHaveBeenCalled();
+    },
+  );
+
+  it("derives the original creator after an earlier rotation while verifying a later planned replacement", async () => {
+    const currentMembers = [A, B, D];
+    const nextMembers = [A, B, F];
+    const currentController = u8aToHex(createKeyMulti(currentMembers, 2));
+    const nextController = u8aToHex(createKeyMulti(nextMembers, 2));
+    const f = restoration([tuple(currentController), tuple(nextController)]);
+    const result = await verifyWorkspaceConnection(
+      { ...f.input, oldMembers: currentMembers },
+      { blockHash: creationBlock, transactionHash: creationHash },
+      f.connection,
+      f.expected,
+      nextMembers,
+    );
+    expect(result.creator.account).toBe(M0);
+    expect(new Set(result.creator.members)).toEqual(new Set([A, B, C]));
+    expect(result.input.oldMembers).toEqual(currentMembers);
+    expect(result.creator.account).not.toBe(currentController);
+  });
+
+  it("never relaxes the original Pure creation inventory for a declared replacement", async () => {
+    const f = restoration([tuple(M0), tuple(M1)]);
+    f.state.proxies.push(tuple(M1));
+    await expect(
+      verifyWorkspaceConnection(
+        f.input,
+        { blockHash: creationBlock, transactionHash: creationHash },
+        f.connection,
+        f.expected,
+        [A, B, D],
+      ),
+    ).rejects.toThrow("initial authority");
+  });
+
+  it("still requires persistent beneficiary mapping for its grant", async () => {
+    const f = restoration([tuple(M1)]);
+    f.current.mappedTo = null;
+    await expect(
+      verifyWorkspaceConnection(
+        f.input,
+        { blockHash: creationBlock, transactionHash: creationHash },
+        f.connection,
+        f.expected,
+        [A, B, D],
+      ),
+    ).rejects.toThrow("persistent mapping");
+  });
+});
