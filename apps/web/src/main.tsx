@@ -7,7 +7,8 @@ if (!root) throw new Error("Application root is missing");
 createApplication()
   .then((application) => {
     createRoot(root).render(<App application={application} />);
-    connectTestnetAtStartup(application);
+    const stopConnection = connectTestnetAtStartup(application);
+    import.meta.hot?.dispose(stopConnection);
   })
   .catch((error) => {
     root.replaceChildren();

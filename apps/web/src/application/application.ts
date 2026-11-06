@@ -13,6 +13,7 @@ import type {
 import { type FreshOperationInput } from "@account-handoff/domain";
 import {
   NativeConnection,
+  safeEndpoint,
   hex,
   object,
   type NativeReceipt,
@@ -65,6 +66,15 @@ import {
   WALLET_PREFERENCE,
 } from "./wallet-connection";
 import {
+  NETWORK_PREFERENCE,
+  readNetworkPreference,
+  type NetworkPreference,
+} from "./network-preference";
+import {
+  isRetryableNetworkFailure,
+  normalizeNetworkFailure,
+} from "./network-failure";
+import {
   deployment,
   assertDeploymentMode,
   assertDeploymentGenesis,
@@ -111,6 +121,11 @@ export class Application implements ApplicationFacade {
   private profiles = new Map<string, ChainProfile>();
   private commandRunning = false;
   private grantHistory: GrantHistory | null = null;
+  private networkPreference: NetworkPreference | null = null;
+  private networkSubscriptions: (() => void)[] = [];
+  private queuedNetworkRefresh: NativeConnection | null = null;
+  private networkBlocked = false;
+  private networkNoticeId: string | null = null;
   private constructor(
     private metadata: Journal,
     private tabId: string,
@@ -146,6 +161,25 @@ export class Application implements ApplicationFacade {
     const wallet = readWalletPreference(
       await app.metadata.getPreference<unknown>(WALLET_PREFERENCE),
     );
+    app.networkPreference = readNetworkPreference(
+      await app.metadata.getPreference<unknown>(NETWORK_PREFERENCE),
+    );
+    if (app.networkPreference) {
+      const { mode, endpoint } = app.networkPreference;
+      app.state = {
+        ...app.state,
+        network: {
+          ...app.state.network,
+          mode,
+          endpoint,
+          name: deployment.isTestnet
+            ? deployment.defaultName
+            : mode === "LOCAL"
+              ? "Account Handoff LOCAL"
+              : `PortalDot ${mode}`,
+        },
+      };
+    }
     app.render();
     if (wallet) void app.walletConnection.restore(wallet);
     return app;
@@ -286,11 +320,14 @@ export class Application implements ApplicationFacade {
       }
     } catch (error) {
       this.notify(errorText(error), "negative");
+      if (command.type === "connect-network" || command.type === "refresh")
+        this.networkNoticeId = this.state.notice?.id ?? null;
       throw error;
     } finally {
       this.commandRunning = false;
       this.state = { ...this.state, busy: null };
       this.render();
+      void this.drainNetworkRefresh();
     }
   }
   private invalidateReview(reason: string) {
@@ -320,16 +357,139 @@ export class Application implements ApplicationFacade {
   private async descriptor(): Promise<NetworkDescriptor | null> {
     return readNetworkDescriptor(this.state.network.mode);
   }
-  private async connectNetwork(mode: RuntimeMode, endpoint: string) {
-    assertDeploymentMode(mode);
+  private stopNetworkObservers() {
+    for (const stop of this.networkSubscriptions.splice(0)) stop();
+    this.queuedNetworkRefresh = null;
+  }
+  private invalidateNetwork(
+    connection: NativeConnection,
+    reconnecting: boolean,
+    error: string,
+    retryable = true,
+  ) {
+    if (connection !== this.connection) return;
     this.generation++;
-    this.invalidateReview("Network changed");
-    if (this.connection) await this.connection.close();
-    this.connection = null;
+    this.queuedNetworkRefresh = null;
     this.chain = null;
+    this.grantHistory = null;
+    this.invalidateReview(
+      "The network connection changed. Review fresh state before signing.",
+    );
+    const previouslyBlocked = this.networkBlocked;
+    if (!retryable) this.networkBlocked = true;
+    const blocked = this.networkBlocked;
     this.state = {
       ...this.state,
       network: {
+        ...this.state.network,
+        connected: false,
+        checking: false,
+        reconnecting: reconnecting && !blocked,
+        retryable: retryable && !blocked,
+        historyProgress: null,
+        error:
+          previouslyBlocked && this.state.network.error
+            ? this.state.network.error
+            : error,
+        readiness: this.state.network.readiness.map((item) =>
+          item.id === "wallet"
+            ? item
+            : {
+                ...item,
+                status: "unknown",
+                detail:
+                  "Fresh finalized observations are unavailable. Reconnect before continuing.",
+              },
+        ),
+      },
+    };
+    this.render();
+  }
+  private observeNetwork(connection: NativeConnection) {
+    this.stopNetworkObservers();
+    const ready = () => {
+      if (connection !== this.connection || this.networkBlocked) return;
+      this.invalidateNetwork(
+        connection,
+        true,
+        "Rechecking finalized network state.",
+      );
+      this.queuedNetworkRefresh = connection;
+      this.state = {
+        ...this.state,
+        network: { ...this.state.network, checking: true },
+      };
+      this.render();
+      void this.drainNetworkRefresh();
+    };
+    this.networkSubscriptions = [
+      connection.api.on("disconnected", () => {
+        this.invalidateNetwork(
+          connection,
+          false,
+          "The network connection was interrupted.",
+        );
+      }),
+      connection.api.on("reconnecting", () => {
+        this.invalidateNetwork(
+          connection,
+          true,
+          "Reconnecting to the native network.",
+        );
+      }),
+      connection.api.on("ready", ready),
+      connection.api.on("runtimeUpgraded", () => ready()),
+      connection.api.on("error", (failure) => {
+        if (connection !== this.connection) return;
+        const error = normalizeNetworkFailure(failure);
+        this.invalidateNetwork(
+          connection,
+          isRetryableNetworkFailure(error) &&
+            connection.api.status === "reconnecting",
+          errorText(error),
+          isRetryableNetworkFailure(error),
+        );
+      }),
+    ];
+  }
+  /** API events cannot compete with wallet requests, broadcasts or manual commands. */
+  private async drainNetworkRefresh() {
+    if (this.commandRunning || !this.queuedNetworkRefresh) return;
+    const connection = this.queuedNetworkRefresh;
+    this.queuedNetworkRefresh = null;
+    if (connection !== this.connection) return;
+    this.commandRunning = true;
+    this.state = { ...this.state, busy: "refresh" };
+    this.render();
+    try {
+      await this.refresh();
+    } catch {
+      // refresh retains the visible error; an automatic read does not add toasts.
+    } finally {
+      this.commandRunning = false;
+      this.state = { ...this.state, busy: null };
+      this.render();
+      void this.drainNetworkRefresh();
+    }
+  }
+  private async connectNetwork(mode: RuntimeMode, endpoint: string) {
+    assertDeploymentMode(mode);
+    endpoint = safeEndpoint(endpoint, mode);
+    this.generation++;
+    this.networkBlocked = false;
+    this.invalidateReview("Network changed");
+    this.stopNetworkObservers();
+    const previous = this.connection;
+    this.connection = null;
+    this.chain = null;
+    this.grantHistory = null;
+    const sameTarget =
+      this.state.network.mode === mode &&
+      this.state.network.endpoint === endpoint;
+    this.state = {
+      ...this.state,
+      network: {
+        ...(sameTarget ? this.state.network : {}),
         mode,
         name: deployment.isTestnet
           ? deployment.defaultName
@@ -339,10 +499,17 @@ export class Application implements ApplicationFacade {
         endpoint,
         connected: false,
         checking: true,
+        reconnecting: sameTarget && !!this.state.network.updatedAt,
+        retryable: false,
+        error: null,
+        historyProgress: null,
         readiness: [],
       },
     };
     this.render();
+    // A stopped SDK may already have discarded its socket. Cleanup must not
+    // prevent connecting the explicitly selected target.
+    await previous?.close().catch(() => {});
     try {
       const descriptor = await this.descriptor();
       if (
@@ -358,9 +525,14 @@ export class Application implements ApplicationFacade {
         mode,
         descriptor?.nativeMetadataBinding,
       );
+      this.observeNetwork(this.connection);
       await this.refresh();
-    } catch (error) {
-      await this.connection?.close();
+    } catch (failure) {
+      const error = normalizeNetworkFailure(failure);
+      // Local persistence can fail after the network itself was verified.
+      if (this.chain && this.state.network.connected) throw error;
+      this.stopNetworkObservers();
+      await this.connection?.close().catch(() => {});
       this.connection = null;
       this.chain = null;
       this.state = {
@@ -369,6 +541,8 @@ export class Application implements ApplicationFacade {
           ...this.state.network,
           connected: false,
           checking: false,
+          reconnecting: false,
+          retryable: isRetryableNetworkFailure(error),
           error: errorText(error),
         },
       };
@@ -391,6 +565,9 @@ export class Application implements ApplicationFacade {
     const connection = this.connection;
     if (!connection) return;
     const generation = this.generation;
+    const current = () =>
+      generation === this.generation && connection === this.connection;
+    let observationsReady = false;
     this.state = {
       ...this.state,
       network: {
@@ -401,13 +578,21 @@ export class Application implements ApplicationFacade {
     };
     this.render();
     try {
-      const [f, d] = await Promise.all([
+      const [f, d, genesis] = await Promise.all([
         connection.fingerprint(),
         this.descriptor(),
+        connection.api.rpc.chain_getBlockHash(0),
       ]);
       assertDeploymentGenesis(f.genesis);
+      if (!current()) return;
+      // Dedot retains api.genesisHash across a reconnect. A fresh transport
+      // must independently confirm it before cached client identity is reused.
+      if (hex(genesis, 32) !== f.genesis)
+        throw new Error(
+          "The endpoint genesis changed. Connect to the verified network again.",
+        );
       if (
-        d &&
+        d?.mode === "LOCAL" &&
         d.nativeRpc !== connection.endpoint &&
         new URL(d.nativeRpc).toString() !== connection.endpoint
       )
@@ -415,16 +600,18 @@ export class Application implements ApplicationFacade {
           "The endpoint does not match the active network descriptor",
         );
       const profile = await this.profile(f, d);
+      if (!current()) return;
       const w = this.workspace();
+      const observedWorkspace = w ? { ...w } : null;
       this.grantHistory = null;
       let lastHistoryProgressAt = 0;
       const observed = await readWorkspaceState(
         connection,
         f,
-        w,
+        observedWorkspace,
         this.state.wallet.accounts,
         (completed, total) => {
-          if (generation !== this.generation) return;
+          if (!current()) return;
           const now = Date.now();
           if (completed !== total && now - lastHistoryProgressAt < 200) return;
           lastHistoryProgressAt = now;
@@ -438,10 +625,9 @@ export class Application implements ApplicationFacade {
           this.render();
         },
       );
+      if (!current()) return;
       this.grantHistory = observed.history;
-      if (observed.baselineChanged) await this.save();
       const { accounts, grant } = observed;
-      if (generation !== this.generation) return;
       this.chain = {
         fingerprint: f,
         accounts,
@@ -459,30 +645,85 @@ export class Application implements ApplicationFacade {
           this.state.wallet.connected,
         ),
       };
+      observationsReady = true;
+      this.networkBlocked = false;
+      if (w && observed.baselineChanged && observedWorkspace) {
+        w.baseline = observedWorkspace.baseline;
+        await this.save();
+        if (!current()) return;
+      }
       if (w) {
         await this.journal?.close();
-        this.journal = await openJournal(
+        const journal = await openJournal(
           `account-handoff:${w.mode.toLowerCase()}:${f.genesis}:${d?.mode === "LOCAL" ? d.runId : "network"}:${w.id}`,
         );
+        if (!current()) {
+          journal.close();
+          return;
+        }
+        this.journal = journal;
         await this.journal.appendRecord(profile);
+        if (!current()) return;
         if (!this.pending)
           this.recovery =
             (await this.journal.getPreference<OperationRecovery | null>(
               "recovery",
             )) ?? null;
+        if (!current()) return;
         await this.updateCertificate();
       }
-    } catch (error) {
+      if (!current()) return;
+      const preference = readNetworkPreference({
+        version: 1,
+        mode: this.state.network.mode,
+        endpoint: connection.endpoint,
+      });
+      if (
+        preference &&
+        (preference.mode !== this.networkPreference?.mode ||
+          preference.endpoint !== this.networkPreference?.endpoint)
+      ) {
+        await this.metadata.setPreference(NETWORK_PREFERENCE, preference);
+        if (!current()) return;
+        this.networkPreference = preference;
+      }
+      if (this.state.notice?.id === this.networkNoticeId)
+        this.state = { ...this.state, notice: null };
+      this.networkNoticeId = null;
+    } catch (failure) {
+      if (!current()) return;
+      const error = normalizeNetworkFailure(failure);
+      if (observationsReady && !isRetryableNetworkFailure(error)) {
+        // Chain observations remain fresh if saving local configuration or
+        // journal data fails. Storage failure is not a transport disconnect.
+        this.networkBlocked = true;
+        this.state = {
+          ...this.state,
+          network: {
+            ...this.state.network,
+            checking: false,
+            reconnecting: false,
+            retryable: false,
+            error: errorText(error),
+          },
+        };
+        throw error;
+      }
       // A refresh may follow a workspace switch. Retaining the previous chain view
       // would present another workspace's grant and balances as current evidence.
       this.chain = null;
       this.grantHistory = null;
+      const retryable =
+        isRetryableNetworkFailure(error) && !this.networkBlocked;
+      if (!retryable) this.networkBlocked = true;
       this.state = {
         ...this.state,
         network: {
           ...this.state.network,
           connected: false,
           checking: false,
+          reconnecting: false,
+          retryable,
           historyProgress: null,
           error: errorText(error),
           readiness: this.state.network.readiness.map((item) =>
@@ -499,7 +740,7 @@ export class Application implements ApplicationFacade {
       };
       throw error;
     } finally {
-      if (generation === this.generation)
+      if (current())
         this.state = {
           ...this.state,
           network: { ...this.state.network, historyProgress: null },
@@ -751,9 +992,17 @@ export class Application implements ApplicationFacade {
     await this.journal!.setPreference("recovery", this.recovery);
   }
   private async sign(idValue: string) {
+    const connection = this.connection;
+    const generation = this.generation;
     await signOperation(
       {
         checkPending: (id) => this.checkPending(id),
+        assertNetworkUnchanged: () => {
+          if (connection !== this.connection || generation !== this.generation)
+            throw new Error(
+              "The network changed during signing. Review fresh state before continuing.",
+            );
+        },
         getSelected: () => this.selected(),
         wallets: this.wallets,
         journal: this.journal!,
@@ -768,23 +1017,40 @@ export class Application implements ApplicationFacade {
     );
   }
   private async send(idValue: string) {
+    const connection = this.connection;
+    const generation = this.generation;
+    const assertNetworkUnchanged = () => {
+      if (
+        !connection ||
+        connection !== this.connection ||
+        generation !== this.generation
+      )
+        throw new Error(
+          "The network changed before sending. Reconnect and verify the saved packet before continuing.",
+        );
+    };
     const p = await this.checkPending(idValue);
+    assertNetworkUnchanged();
     if (p.stage !== "signed" || !p.signedBytes)
       throw new Error("A verified, saved signature is required");
     p.stage = "broadcast";
     const priorRecovery = this.recovery;
+    let recoverySaved = false;
     try {
       await this.saveRecovery(p);
+      recoverySaved = true;
+      assertNetworkUnchanged();
     } catch (error) {
       // No submission has begun. Keep the exact saved packet ready for a later,
       // explicit send once the recovery checkpoint can be retained.
       p.stage = "signed";
       this.recovery = priorRecovery;
+      if (recoverySaved) await this.saveRecovery(p);
       throw error;
     }
     this.render();
     try {
-      const receipt = await this.connection!.send(p.signedBytes);
+      const receipt = await connection!.send(p.signedBytes);
       await this.finish(p, receipt);
     } catch (error) {
       p.stage = "unknown";

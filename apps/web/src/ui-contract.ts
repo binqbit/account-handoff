@@ -42,6 +42,10 @@ export interface NetworkView {
   endpoint: string;
   connected: boolean;
   checking: boolean;
+  /** The transport is retrying; live chain state is not yet verified. */
+  reconnecting?: boolean;
+  /** Only transient connection failures are eligible for automatic retry. */
+  retryable?: boolean;
   historyProgress?: { completed: number; total: number } | null;
   genesis?: string | null;
   blockNumber?: string | null;

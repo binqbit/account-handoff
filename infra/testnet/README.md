@@ -29,13 +29,13 @@ docker compose ps
 
 Open **http://127.0.0.1:8080**. The image uses the Node 24 Alpine base and copies the already compiled assets; it does not run npm or compile the project. Initial startup may download the base image. No `.env` is required. If port 8080 is occupied, use `AH_PORT=8081 docker compose up --build -d`.
 
-Stop with `docker compose down`. The container stores no application data. Workspaces and wallet preferences are held in the browser's IndexedDB, scoped to its origin and this testnet build. Keep the same URL and browser profile to retain them. Clearing site data removes these local records.
+Stop with `docker compose down`. The container stores no application data. Workspaces, wallet preferences and the last successfully verified public native endpoint are held in the browser's IndexedDB, scoped to its origin and this testnet build. Keep the same URL and browser profile to retain them. Clearing site data removes these local records. Unsaved setup drafts remain in memory while the page is open; they are not restored after a reload.
 
 ## Connect to the testnet
 
-1. Opening the website automatically checks the preset native endpoint, `wss://test-node-v3.portaldot.dev`. This reads network state and does not connect a wallet or send a transaction.
-2. The workspace form appears after connection. If the connection fails, use **Open network setup**, then **Connect and verify** to retry or select another endpoint for the same testnet. The manual connection button remains available while the initial check runs.
-3. Check the connected runtime, finalized block and readiness indicators in **Network and readiness**. A mismatched or unverified runtime blocks preparation. Use **Back to workspace setup** to return to your form; entered details survive navigation and reconnecting while this page remains open. Reloading the page clears an unsaved draft.
+1. Opening the website automatically checks the last successfully verified public native endpoint or the preset `wss://test-node-v3.portaldot.dev`. This reads network state and does not connect a wallet or send a transaction. Saved connection settings never replace live verification.
+2. The workspace form appears after connection and remains gated while the network is unavailable. Transient failures retry automatically with delays of 2, 5, 10 and then at most 30 seconds. Attempts pause while the browser is offline and resume when it returns online.
+3. Use **Open network setup**, then **Connect and verify** for a manual retry or another secure endpoint for the same testnet. A changed genesis, runtime or metadata stops automatic retries and shows its verification error. The manual button remains available, and **Back to workspace setup** returns to your draft. URLs with query strings are not saved as connection preferences.
 4. Use **Connect wallet** with a supported native Substrate wallet, such as SubWallet or Polkadot.js. Select your own native SS58 account. Do not paste a mnemonic or private key into the app.
 
 Network identity is recorded in `network.json`. The build checks genesis `0xd4f9acbcf7f52388d8b095abe3c198d19fc510e0343e643e87cfbccb155283bd` and permits only DEMO mode. The EVM gateway uses chain ID `420420777`; its HTTP URL is not a replacement for the native WebSocket URL.

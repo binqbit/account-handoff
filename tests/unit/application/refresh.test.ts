@@ -25,7 +25,7 @@ describe("failed finalized-state refresh", () => {
       currentId: string;
       chain: ChainView | null;
       grantHistory: unknown;
-      connection: Pick<NativeConnection, "fingerprint">;
+      connection: Pick<NativeConnection, "fingerprint" | "api">;
       descriptor(): Promise<null>;
     };
     journals.push(access.metadata);
@@ -110,6 +110,9 @@ describe("failed finalized-state refresh", () => {
     };
     let failRead!: (error: Error) => void;
     access.connection = {
+      api: {
+        rpc: { chain_getBlockHash: async () => HASH },
+      } as unknown as NativeConnection["api"],
       fingerprint: vi.fn(
         () =>
           new Promise<never>((_resolve, reject) => {

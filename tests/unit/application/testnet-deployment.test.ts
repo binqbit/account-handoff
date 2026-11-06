@@ -94,6 +94,10 @@ describe("testnet deployment boundary", () => {
       await import("@account-handoff/native-adapter");
     const close = vi.fn(async () => {});
     vi.spyOn(NativeConnection, "connect").mockResolvedValue({
+      api: {
+        on: () => () => {},
+        rpc: { chain_getBlockHash: async () => `0x${"11".repeat(32)}` },
+      },
       close,
       fingerprint: async () => ({ genesis: `0x${"11".repeat(32)}` }),
     } as unknown as Awaited<ReturnType<typeof NativeConnection.connect>>);

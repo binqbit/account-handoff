@@ -12,7 +12,9 @@ npm run doctor
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. The website restores local records and reconnects previously selected wallet providers. The selected account is restored only if that same provider still exposes it; no other signer is selected as a fallback. First-time wallet access remains explicit. Disconnect clears the saved connection. The connection preference contains only provider names and the public account address, never keys or permission to sign. Reloading does not create accounts, connect a native node, request a signature or submit a transaction. The network page separately selects the native WebSocket endpoint.
+Open `http://127.0.0.1:5173`. The website restores local records and reconnects previously selected wallet providers. The selected account is restored only if that same provider still exposes it; no other signer is selected as a fallback. First-time wallet access remains explicit. Disconnect clears the saved wallet connection. The wallet preference contains only provider names and the public account address, never keys or permission to sign. Reloading does not create accounts, request a signature or submit a transaction.
+
+The general development and production builds restore the last successfully verified network mode and endpoint, but connecting a native node remains an explicit action on **Network and readiness**. A fresh general build defaults to LOCAL. The dedicated testnet build below connects and maintains its read-only native connection automatically. Its network preference contains only the permitted mode and a public, credential-free endpoint; URLs containing a query string remain session-only. Restored settings and retained observations never establish current readiness or restore approval to sign.
 
 Build and inspect the production assets with:
 
@@ -31,7 +33,11 @@ Run generation and production-build commands before starting the ordinary browse
 npm run build:testnet
 ```
 
-This emits static production files to `dist-testnet/`, with the native endpoint and expected genesis from [infra/testnet/network.json](infra/testnet/network.json). It starts in DEMO mode, rejects another network's genesis and LOCAL/LIVE connection commands, and uses a separate browser journal. Wallet access and network connection remain explicit. The build excludes the host's `local-run.json` and does not load Vite env files. Never ship `.env`, wallet secrets, or LOCAL state with it.
+This emits static production files to `dist-testnet/`, with the native endpoint and expected genesis from [infra/testnet/network.json](infra/testnet/network.json). It starts in DEMO mode, rejects another network's genesis and LOCAL/LIVE connection commands, and uses a separate browser journal. After rendering, it connects automatically to the last successfully verified public endpoint or the packaged default. Wallet access remains explicit. The build excludes the host's `local-run.json` and does not load Vite env files. Never ship `.env`, wallet secrets, or LOCAL state with it.
+
+The testnet connection supervisor retries transient failures after 2, 5, 10 and then 30 seconds, with subsequent delays capped at 30 seconds. Browser offline status pauses these attempts; returning online resumes them immediately. The native SDK's own short transport retries run first. A recovered transport must pass fresh finalized-state checks before operations resume. Wrong genesis, runtime, metadata or other nonretryable verification failures stop automatic retries and remain visible for review. **Connect and verify** remains the manual fallback and permits an alternative secure endpoint for the same qualified testnet. LOCAL remains bound to its selected run's endpoint.
+
+Reconnection never requests a wallet signature, broadcasts a saved transaction or retries an uncertain chain outcome.
 
 The original, unmodified Vestry is deployed on PortalDot V3 at `0xb8e2d057cf231f265dd6f3841216f4727edad345`. Its deployment finalized in block 189561, and the on-chain runtime matches the pinned artifact byte for byte. [The public deployment record](infra/testnet/vestry-deployment.json) includes the transaction, block, source and bytecode hashes. The native signer was the main account in `TEST_WALLET_0`; no grant or handoff was created during deployment.
 
@@ -133,21 +139,21 @@ The public entry point is [packages/native-adapter/src/index.ts](packages/native
 
 `wallet-connection.ts` owns provider subscriptions, saved public connection preferences, restoration and disconnect cancellation. Reloaded wallet context never restores an approval to sign.
 
-| Files                                                                         | Responsibility                                                                                                       |
-| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Files                                                                         | Responsibility                                                                                                                  |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `network-profile.ts`, `network-state.ts`                                      | Network-specific descriptor/profile qualification, anchored account and grant reads, baseline discovery and network projections |
-| `prepare-operation.ts`, `operation-parameters.ts`                             | Allowed user inputs, exact call plan, reviewed resource limits, frozen envelope and initial signing context          |
-| `operation-inputs.ts`, `accounting.ts`, `resources.ts`                        | Fresh preconditions, named reserve/hold accounting and user-facing resource review                                   |
-| `check-pending.ts`, `sign-operation.ts`                                       | Current signer/runtime/era/nonce/lease checks, explicit wallet request and durable signed-attempt recording          |
-| `finalize-operation.ts`, `operation-postconditions.ts`, `contract-events.ts`  | Receipt-bound state and event checks, business outcome, evidence records and history projection                      |
-| `recover-operation.ts`                                                        | Exact retained attempt reconstruction and historical receipt lookup; resending remains a separate command            |
-| `certificate-state.ts`, `continuity/`                                         | Historical continuity certificate reconstruction and an independent current-state assessment                         |
-| `workspace-state.ts`, `local-import.ts`, `operation-view.ts`, `presentation/` | Workspace creation/import, bounded projections and display state                                                     |
-| `models.ts`, `values.ts`, `record-builders.ts`, `qualification/`              | Internal shapes, canonical record construction and capability-specific qualification                                 |
+| `prepare-operation.ts`, `operation-parameters.ts`                             | Allowed user inputs, exact call plan, reviewed resource limits, frozen envelope and initial signing context                     |
+| `operation-inputs.ts`, `accounting.ts`, `resources.ts`                        | Fresh preconditions, named reserve/hold accounting and user-facing resource review                                              |
+| `check-pending.ts`, `sign-operation.ts`                                       | Current signer/runtime/era/nonce/lease checks, explicit wallet request and durable signed-attempt recording                     |
+| `finalize-operation.ts`, `operation-postconditions.ts`, `contract-events.ts`  | Receipt-bound state and event checks, business outcome, evidence records and history projection                                 |
+| `recover-operation.ts`                                                        | Exact retained attempt reconstruction and historical receipt lookup; resending remains a separate command                       |
+| `certificate-state.ts`, `continuity/`                                         | Historical continuity certificate reconstruction and an independent current-state assessment                                    |
+| `workspace-state.ts`, `local-import.ts`, `operation-view.ts`, `presentation/` | Workspace creation/import, bounded projections and display state                                                                |
+| `models.ts`, `values.ts`, `record-builders.ts`, `qualification/`              | Internal shapes, canonical record construction and capability-specific qualification                                            |
 
 The application supplies callbacks for operations whose owner can change during an asynchronous stage, including the active journal after a refresh. Historical receipt anchors remain distinct from the latest network view. UI components consume the facade and projections; they do not acquire native, wallet or storage authority.
 
-Grant history is read from Pure creation to the requested finalized checkpoint in pages of at most 4,096 blocks. Within one native connection, the application reuses its verified contiguous prefix after rechecking canonical and runtime boundaries, then reads only new blocks. The 4,096-block bound limits each page, not the lifetime of a workspace. The combined history retains an 8,192-event budget and always replays the original creation and any scope breach. A missing block, cancellation or changed canonical/runtime context leaves history incomplete and blocks dependent operations. This cache is held only in memory; a reload or reconnect requires another full historical read, so cold checks of old grants can take longer. Local records never substitute for canonical history.
+Grant history is read from Pure creation to the requested finalized checkpoint in pages of at most 4,096 blocks. Within one native connection, the application reuses its verified contiguous prefix after rechecking canonical and runtime boundaries, then reads only new blocks. The 4,096-block bound limits each page, not the lifetime of a workspace. The combined history retains an 8,192-event budget and always replays the original creation and any scope breach. A missing block, cancellation or changed canonical/runtime context leaves history incomplete and blocks dependent operations. This cache is held only in memory; a reload or replacement native connection requires another full historical read, so cold checks of old grants can take longer. A recovered connection can reuse its in-memory prefix only after canonical and runtime checks. Local records never substitute for canonical history.
 
 ### LOCAL operator
 

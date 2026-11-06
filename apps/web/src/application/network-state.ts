@@ -103,6 +103,8 @@ export function connectedNetwork(
     ...current,
     connected: true,
     checking: false,
+    reconnecting: false,
+    retryable: false,
     historyProgress: null,
     genesis: f.genesis,
     blockHash: f.anchor.hash,

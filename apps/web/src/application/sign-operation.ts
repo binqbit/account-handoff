@@ -16,6 +16,7 @@ import { errorText } from "./values";
 import type { WalletAccount } from "@account-handoff/wallet-adapter";
 export interface SigningContext {
   checkPending: (id: string) => Promise<PendingOperation>;
+  assertNetworkUnchanged: () => void;
   getSelected: () => WalletAccount | null;
   wallets: WalletSession[];
   journal: Journal;
@@ -27,6 +28,7 @@ export interface SigningContext {
 export async function signOperation(
   {
     checkPending,
+    assertNetworkUnchanged,
     getSelected,
     wallets,
     journal,
@@ -40,6 +42,16 @@ export async function signOperation(
   const p = await checkPending(idValue);
   if (p.stage !== "prepared")
     throw new Error("Signing the same request again is prohibited");
+  const assertReviewedConnection = () => {
+    try {
+      assertNetworkUnchanged();
+    } catch (error) {
+      p.stage = "stale";
+      p.blockers = [errorText(error)];
+      throw error;
+    }
+  };
+  assertReviewedConnection();
   const selected = getSelected()!;
   const wallet = wallets.find((s) => s.source === selected.source);
   if (!wallet) throw new Error("Wallet disconnected");
@@ -49,14 +61,23 @@ export async function signOperation(
     atUnixSeconds: String(Math.floor(Date.now() / 1000)),
   });
   await journal.appendProgress(progress, p.lease);
+  assertReviewedConnection();
+  if (p.stage !== "prepared")
+    throw new Error(
+      "The review changed before the wallet request. Review fresh state before signing.",
+    );
   p.stage = "wallet-requested";
+  let recoverySaved = false;
   try {
     await saveRecovery(p);
+    recoverySaved = true;
+    assertReviewedConnection();
   } catch (error) {
     // The wallet has not been invoked, so there is no uncertain signature outcome.
     // Keep the same reviewed request usable after local storage becomes available.
-    p.stage = "prepared";
+    if ((p as PendingOperation).stage !== "stale") p.stage = "prepared";
     clearRecovery();
+    if (recoverySaved) await journal.setPreference("recovery", null);
     throw error;
   }
   render();
@@ -67,7 +88,9 @@ export async function signOperation(
       p.prepared.payload,
       p.prepared.rawPayload,
     );
+    assertNetworkUnchanged();
     await checkPending(idValue);
+    assertNetworkUnchanged();
     const bytes = connection.attachSignature(p.prepared, signature);
     const attempt = await createSignedAttempt({
       envelope: p.envelope,

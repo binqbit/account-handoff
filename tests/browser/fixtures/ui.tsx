@@ -450,17 +450,42 @@ const facade: ApplicationFacade = {
     if (
       command.type === rejectedCommand &&
       !(command.type === "connect-network" && allowRejectedNetworkConnection)
-    )
+    ) {
+      if (command.type === "connect-network")
+        publish({
+          ...snapshot,
+          notice: {
+            id: "synthetic-connection-failure",
+            tone: "negative",
+            message: "Synthetic connect-network failure",
+          },
+          network: {
+            ...snapshot.network,
+            connected: false,
+            checking: false,
+            reconnecting: false,
+            retryable: true,
+            error: "Synthetic connect-network failure",
+          },
+        });
       throw new Error(`Synthetic ${command.type} failure`);
+    }
     if (command.type === "connect-network")
       publish({
         ...snapshot,
+        notice:
+          snapshot.notice?.id === "synthetic-connection-failure"
+            ? null
+            : (snapshot.notice ?? null),
         network: {
           ...snapshot.network,
           mode: command.mode,
           endpoint: command.endpoint,
           connected: true,
           checking: false,
+          reconnecting: false,
+          retryable: true,
+          updatedAt: "2026-11-06T00:00:00.000Z",
           error: null,
         },
       });
@@ -599,6 +624,26 @@ Object.defineProperty(window, "__uiTest", {
           checking: false,
           error: null,
         },
+      });
+    },
+    setNetworkState(
+      change: Partial<
+        Pick<
+          AppSnapshot["network"],
+          | "connected"
+          | "checking"
+          | "reconnecting"
+          | "retryable"
+          | "error"
+          | "updatedAt"
+        >
+      >,
+      notice?: AppSnapshot["notice"],
+    ) {
+      publish({
+        ...snapshot,
+        network: { ...snapshot.network, ...change },
+        notice: notice === undefined ? (snapshot.notice ?? null) : notice,
       });
     },
     allowNetworkConnection() {

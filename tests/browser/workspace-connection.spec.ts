@@ -1,12 +1,31 @@
 import { expect, test, type Page } from "@playwright/test";
 import { resolve } from "node:path";
-import type { AppCommand, RuntimeMode } from "../../apps/web/src/ui-contract";
+import type {
+  AppCommand,
+  AppSnapshot,
+  NetworkView,
+  RuntimeMode,
+} from "../../apps/web/src/ui-contract";
 
 const harness = `/@fs${resolve("tests/browser/fixtures/ui.html")}`;
 const address = (index: number) => `0x${String(index).repeat(64)}`;
 type UiFixture = {
   commands: AppCommand[];
   setNetworkConnected(connected: boolean, mode?: RuntimeMode): void;
+  setNetworkState(
+    change: Partial<
+      Pick<
+        NetworkView,
+        | "connected"
+        | "checking"
+        | "reconnecting"
+        | "retryable"
+        | "error"
+        | "updatedAt"
+      >
+    >,
+    notice?: AppSnapshot["notice"],
+  ): void;
   allowNetworkConnection(): void;
 };
 
@@ -22,6 +41,20 @@ async function connection(page: Page, connected: boolean, mode?: RuntimeMode) {
         window as unknown as { __uiTest: UiFixture }
       ).__uiTest.setNetworkConnected(connected, mode),
     { connected, mode },
+  );
+}
+async function networkState(
+  page: Page,
+  change: Parameters<UiFixture["setNetworkState"]>[0],
+  notice?: AppSnapshot["notice"],
+) {
+  await page.evaluate(
+    ({ change, notice }) =>
+      (window as unknown as { __uiTest: UiFixture }).__uiTest.setNetworkState(
+        change,
+        notice,
+      ),
+    { change, notice },
   );
 }
 async function addAccount(page: Page, group: string, index: number) {
@@ -102,6 +135,70 @@ test("disconnected setup offers a manual connection route before editing, with a
   await openNetwork(page);
   await backToSetup(page);
   await expectGate(page);
+  expect(await commands(page)).toEqual([]);
+});
+
+test("automatic recovery removes the facade-owned connection notice without retaining an App duplicate", async ({
+  page,
+}) => {
+  await page.goto(
+    `${harness}?scenario=fresh-setup-disconnected&mode=DEMO&reject=connect-network#network`,
+  );
+  await page
+    .getByRole("button", { name: "Connect and verify", exact: true })
+    .click();
+  await expect(page.locator(".notification[role=alert]")).toContainText(
+    "Synthetic connect-network failure",
+  );
+  // The application coordinator owns this notice and removes it on recovery.
+  await networkState(
+    page,
+    {
+      connected: true,
+      checking: false,
+      reconnecting: false,
+      error: null,
+      updatedAt: "2026-11-06T00:00:00.000Z",
+    },
+    null,
+  );
+  await expect(page.locator(".notification[role=alert]")).toHaveCount(0);
+  await expect(
+    page.getByText("Synthetic connect-network failure", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Network and readiness", exact: true }),
+  ).toContainText("RPC online");
+  expect((await commands(page)).map((command) => command.type)).toEqual([
+    "connect-network",
+  ]);
+});
+
+test("network recovery preserves an unrelated facade error", async ({
+  page,
+}) => {
+  await page.goto(`${harness}?scenario=fresh-setup&mode=DEMO#setup`);
+  await networkState(
+    page,
+    { connected: false, checking: true, reconnecting: true },
+    {
+      id: "synthetic-storage-failure",
+      tone: "negative",
+      message: "Synthetic workspace storage failure",
+    },
+  );
+  await expect(page.locator(".notification[role=alert]")).toContainText(
+    "Synthetic workspace storage failure",
+  );
+  await networkState(page, {
+    connected: true,
+    checking: false,
+    reconnecting: false,
+    error: null,
+  });
+  await expect(page.locator(".notification[role=alert]")).toContainText(
+    "Synthetic workspace storage failure",
+  );
   expect(await commands(page)).toEqual([]);
 });
 
@@ -214,7 +311,7 @@ test("failed reconnection preserves an existing-account draft and its grant-zero
   await page
     .getByRole("button", { name: "Connect and verify", exact: true })
     .click();
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.locator(".notification[role=alert]")).toContainText(
     "Synthetic connect-network failure",
   );
   await backToSetup(page);

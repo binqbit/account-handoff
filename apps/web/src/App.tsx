@@ -100,13 +100,18 @@ function Application({ application }: { application: ApplicationFacade }) {
           setLocalNotice({ message: result.message, error: false });
         return { succeeded: true, result };
       } catch (error) {
-        setLocalNotice({
-          message:
-            error instanceof Error
-              ? error.message
-              : "Could not complete the action. Check the current state and attempt.",
-          error: true,
-        });
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Could not complete the action. Check the current state and attempt.";
+        const facadeNotice = application.getSnapshot().notice;
+        // Let the facade clear its own connection error after recovery. Keep a
+        // local fallback for failures that did not publish a matching notice.
+        setLocalNotice(
+          facadeNotice?.tone === "negative" && facadeNotice.message === message
+            ? null
+            : { message, error: true },
+        );
         return { succeeded: false };
       } finally {
         pending.current = false;
