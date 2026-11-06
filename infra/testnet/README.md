@@ -33,9 +33,9 @@ Stop with `docker compose down`. The container stores no application data. Works
 
 ## Connect to the testnet
 
-1. Open **Network and readiness** in the header.
-2. Leave the preset native endpoint, `wss://test-node-v3.portaldot.dev`, and click **Connect and verify**.
-3. Check the connected runtime, finalized block and readiness indicators. A mismatched or unverified runtime blocks preparation.
+1. Opening the website automatically checks the preset native endpoint, `wss://test-node-v3.portaldot.dev`. This reads network state and does not connect a wallet or send a transaction.
+2. The workspace form appears after connection. If the connection fails, use **Open network setup**, then **Connect and verify** to retry or select another endpoint for the same testnet. The manual connection button remains available while the initial check runs.
+3. Check the connected runtime, finalized block and readiness indicators in **Network and readiness**. A mismatched or unverified runtime blocks preparation. Use **Back to workspace setup** to return to your form; entered details survive navigation and reconnecting while this page remains open. Reloading the page clears an unsaved draft.
 4. Use **Connect wallet** with a supported native Substrate wallet, such as SubWallet or Polkadot.js. Select your own native SS58 account. Do not paste a mnemonic or private key into the app.
 
 Network identity is recorded in `network.json`. The build checks genesis `0xd4f9acbcf7f52388d8b095abe3c198d19fc510e0343e643e87cfbccb155283bd` and permits only DEMO mode. The EVM gateway uses chain ID `420420777`; its HTTP URL is not a replacement for the native WebSocket URL.

@@ -1,12 +1,14 @@
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { createApplication } from "./application/application";
+import { connectTestnetAtStartup } from "./application/startup-connection";
 const root = document.getElementById("root");
 if (!root) throw new Error("Application root is missing");
 createApplication()
-  .then((application) =>
-    createRoot(root).render(<App application={application} />),
-  )
+  .then((application) => {
+    createRoot(root).render(<App application={application} />);
+    connectTestnetAtStartup(application);
+  })
   .catch((error) => {
     root.replaceChildren();
     const message = document.createElement("p");
