@@ -2,6 +2,7 @@ import type { Destination } from "../../ui-contract";
 import type { ScreenProps } from "../../routes/screen-types";
 import { Button, Icon } from "../ui";
 import { WalletAccountPicker } from "./wallet-account-picker";
+import { networkReady, networkStatus } from "../network-status";
 
 export function Topbar({
   snapshot,
@@ -25,7 +26,7 @@ export function Topbar({
           onClick={() => navigate("network")}
         >
           <span
-            className={`connection-dot ${snapshot.network.connected ? "connected" : ""}`}
+            className={`connection-dot ${networkReady(snapshot.network) ? "connected" : ""}`}
           />
           <span className="header-network__mode">
             {snapshot.network.mode === "DEMO"
@@ -34,8 +35,8 @@ export function Topbar({
                 ? "Mainnet"
                 : "Local"}
           </span>
-          <span className="header-network__state">
-            {snapshot.network.connected ? "RPC online" : "Network disconnected"}
+          <span className="header-network__state" role="status">
+            {networkStatus(snapshot.network)}
           </span>
         </button>
         <button

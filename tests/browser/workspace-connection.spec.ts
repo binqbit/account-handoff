@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import { resolve } from "node:path";
 import type {
   AppCommand,
@@ -257,10 +258,16 @@ test("a filled create draft survives lost connection and a visit to advanced net
   await fillTeam(page, "Preserved create draft");
   const before = await teamValues(page);
   await connection(page, false);
-  await expectGate(page);
+  await expect(page.getByLabel("Workspace name")).toBeEditable();
+  await expect(
+    page.getByRole("button", { name: "Create workspace", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Network and readiness", exact: true }),
+  ).toContainText("Connection interrupted");
   await openNetwork(page);
   await backToSetup(page);
-  await expectGate(page);
+  expect(await teamValues(page)).toEqual(before);
   await connection(page, true);
   await expect(page.getByLabel("Workspace name")).toBeVisible();
   expect(await teamValues(page)).toEqual(before);
@@ -306,7 +313,10 @@ test("failed reconnection preserves an existing-account draft and its grant-zero
     .getByRole("combobox", { name: "Pure beneficiary address", exact: true })
     .inputValue();
   await connection(page, false);
-  await expectGate(page);
+  await expect(page.getByLabel("Workspace name")).toBeEditable();
+  await expect(
+    page.getByRole("button", { name: "Connect workspace", exact: true }),
+  ).toBeDisabled();
   await openNetwork(page);
   await page
     .getByRole("button", { name: "Connect and verify", exact: true })
@@ -315,7 +325,10 @@ test("failed reconnection preserves an existing-account draft and its grant-zero
     "Synthetic connect-network failure",
   );
   await backToSetup(page);
-  await expectGate(page);
+  expect(await teamValues(page)).toEqual(before);
+  await expect(
+    page.getByRole("button", { name: "Connect workspace", exact: true }),
+  ).toBeDisabled();
   await openNetwork(page);
   await page.evaluate(() =>
     (
@@ -396,7 +409,8 @@ test("uncommitted member and reviewer input survives navigation and disconnectio
   await expect(members).toHaveValue("5Grwva");
   await expect(reviewers).toHaveValue(pendingReviewer);
   await connection(page, false);
-  await expectGate(page);
+  await expect(members).toBeEditable();
+  await expect(reviewers).toBeEditable();
   await connection(page, true);
   await expect(members).toHaveValue("5Grwva");
   await expect(reviewers).toHaveValue(pendingReviewer);
@@ -508,3 +522,161 @@ test("a rejected workspace save keeps the draft across route changes", async ({
     "create-workspace",
   ]);
 });
+
+test("checking and reconnecting never claim RPC online or allow saving a previously verified draft", async ({
+  page,
+}) => {
+  await page.goto(`${harness}?scenario=fresh-setup&mode=DEMO#setup`);
+  await fillTeam(page, "Editable interrupted draft");
+  const before = await teamValues(page);
+  const header = page.getByRole("button", {
+    name: "Network and readiness",
+    exact: true,
+  });
+  const save = page.getByRole("button", {
+    name: "Create workspace",
+    exact: true,
+  });
+  await networkState(page, {
+    connected: true,
+    checking: true,
+    reconnecting: false,
+  });
+  await expect(header).toContainText("Checking network…");
+  await expect(header).not.toContainText("RPC online");
+  await expect(page.getByLabel("Workspace name")).toBeEditable();
+  await expect(save).toBeDisabled();
+  await networkState(page, {
+    connected: false,
+    checking: true,
+    reconnecting: true,
+    retryable: true,
+  });
+  await expect(header).toContainText("Reconnecting…");
+  await expect(header).not.toContainText("RPC online");
+  await expect(page.getByLabel("Workspace name")).toBeEditable();
+  await expect(save).toBeDisabled();
+  await page.getByLabel("Workspace name").fill("Edited while reconnecting");
+  await connection(page, true);
+  expect(await teamValues(page)).toEqual({
+    ...before,
+    name: "Edited while reconnecting",
+  });
+  await expect(header).toContainText("RPC online");
+  await expect(save).toBeEnabled();
+  expect(await commands(page)).toEqual([]);
+});
+
+for (const width of [320, 390]) {
+  test(`${width}px visibly communicates connection progress and recovery without overflow`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${harness}?scenario=setup-checking&mode=DEMO#setup`);
+    const status = page.locator(".header-network__state");
+    await expect(status).toBeVisible();
+    await expect(status).toHaveText("Connecting…");
+    await connection(page, true);
+    await expect(status).toHaveText("RPC online");
+    await networkState(page, { checking: true });
+    await expect(status).toHaveText("Checking network…");
+    await networkState(page, {
+      connected: false,
+      checking: true,
+      reconnecting: true,
+    });
+    await expect(status).toHaveText("Reconnecting…");
+    await expect(page.getByLabel("Workspace name")).toBeEditable();
+    await expect(status).toBeInViewport();
+    expect(
+      await status.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth + 1,
+      ),
+    ).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    const result = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze();
+    expect(result.violations.map((violation) => violation.id)).toEqual([]);
+    await page.screenshot({
+      path: testInfo.outputPath(`reconnecting-${width}.png`),
+      fullPage: false,
+    });
+    expect(await commands(page)).toEqual([]);
+  });
+}
+
+test("nonretryable verification failure gates first use and offers manual review without an automatic command", async ({
+  page,
+}) => {
+  await page.goto(
+    `${harness}?scenario=setup-verification-error&mode=DEMO#setup`,
+  );
+  await expectGate(page);
+  await expect(
+    page.getByRole("button", { name: "Network and readiness", exact: true }),
+  ).toContainText("Verification required");
+  await expect(
+    page.getByText("Synthetic runtime verification failure", { exact: true }),
+  ).toBeVisible();
+  await openNetwork(page);
+  await backToSetup(page);
+  await expectGate(page);
+  expect(await commands(page)).toEqual([]);
+});
+
+test("a later nonretryable failure keeps the draft editable while saving remains blocked", async ({
+  page,
+}) => {
+  await page.goto(`${harness}?scenario=fresh-setup&mode=DEMO#setup`);
+  await fillTeam(page, "Draft before verification failure");
+  const before = await teamValues(page);
+  await networkState(page, {
+    connected: false,
+    checking: false,
+    reconnecting: false,
+    retryable: false,
+    error: "Synthetic runtime changed",
+  });
+  await expect(
+    page.getByRole("button", { name: "Network and readiness", exact: true }),
+  ).toContainText("Verification required");
+  await expect(page.getByLabel("Workspace name")).toBeEditable();
+  await expect(
+    page.getByRole("button", { name: "Create workspace", exact: true }),
+  ).toBeDisabled();
+  expect(await teamValues(page)).toEqual(before);
+  expect(await commands(page)).toEqual([]);
+});
+
+for (const [scenario, action] of [
+  ["network-prepared-review", "Request signature"],
+  ["network-signed-review", "Send signed operation"],
+]) {
+  test(`${action} stays blocked and unacknowledged across connection loss`, async ({
+    page,
+  }) => {
+    await page.goto(
+      `${harness}?scenario=${scenario}#review?action=GRC-ROTATION-ADD-M1`,
+    );
+    const button = page.getByRole("button", { name: action!, exact: true });
+    await page.getByRole("checkbox").check();
+    await expect(button).toBeEnabled();
+    await networkState(page, {
+      connected: false,
+      checking: true,
+      reconnecting: true,
+      retryable: true,
+    });
+    await expect(button).toBeDisabled();
+    await expect(page.getByRole("checkbox")).not.toBeChecked();
+    await connection(page, true);
+    await expect(button).toBeDisabled();
+    await expect(page.getByRole("checkbox")).not.toBeChecked();
+    expect(await commands(page)).toEqual([]);
+  });
+}

@@ -153,8 +153,26 @@
     order: 3;
     width: 100%;
   }
+  .header-network {
+    display: grid;
+    grid-template-columns: 7px minmax(0, 1fr);
+    gap: 2px 6px;
+    align-content: center;
+    text-align: left;
+  }
+  .header-network .connection-dot {
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+  .header-network__mode {
+    grid-column: 2;
+    grid-row: 1;
+  }
   .header-network__state {
-    display: none;
+    display: block;
+    grid-column: 2;
+    grid-row: 2;
+    max-width: 108px;
   }
   .site-header__workspace {
     padding: 0 22px;
@@ -197,7 +215,10 @@
   }
   .header-network__mode {
     display: inline;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
+  }
+  .header-network__state {
+    font-size: 0.8rem;
   }
   .site-nav {
     justify-content: space-between;

@@ -14,10 +14,13 @@ import type { RuntimeMode } from "../../ui-contract";
 import type { ScreenProps } from "../screen-types";
 import { ReadinessCards } from "../../components/readiness";
 import { deployment } from "../../config/deployment";
+import { networkReady, networkStatus } from "../../components/network-status";
 
 export function Network(props: ScreenProps & { returnToSetup?: boolean }) {
   const { snapshot, run, navigate, returnToSetup } = props;
   const network = snapshot.network;
+  const ready = networkReady(network);
+  const status = networkStatus(network);
   const readinessBlocked = network.readiness.some(
     (row) => row.status !== "ready",
   );
@@ -172,10 +175,18 @@ export function Network(props: ScreenProps & { returnToSetup?: boolean }) {
           </form>
         </Card>
         <Card
-          title="Current profile"
+          title={
+            network.updatedAt && !ready
+              ? "Last verified profile"
+              : "Current profile"
+          }
           action={
-            <Badge tone={network.connected ? "neutral" : "warning"}>
-              {network.connected ? "RPC connected" : "Disconnected"}
+            <Badge tone={ready ? "neutral" : "warning"}>
+              {ready
+                ? "RPC connected"
+                : status === "Network disconnected"
+                  ? "Disconnected"
+                  : status}
             </Badge>
           }
         >
@@ -206,13 +217,31 @@ export function Network(props: ScreenProps & { returnToSetup?: boolean }) {
               },
             ]}
           />
-          {network.connected && readinessBlocked && (
+          {network.updatedAt && (
+            <p className="footnote">
+              Last verified {new Date(network.updatedAt).toLocaleString()}.
+              {!ready &&
+                " These observations are retained for reference. Current state must be verified before acting."}
+            </p>
+          )}
+          {ready && readinessBlocked && (
             <p className="footnote">
               The node is connected. Review the capability checks below before
               preparing a transaction.
             </p>
           )}
-          {network.error && <Notice tone="negative">{network.error}</Notice>}
+          {deployment.isTestnet && network.retryable && !ready && (
+            <p className="footnote" role="status">
+              The app will retry automatically when the connection is available.
+              You can also use Connect and verify to retry manually when the
+              current check finishes.
+            </p>
+          )}
+          {network.error && (
+            <Notice tone={network.retryable ? "warning" : "negative"}>
+              {network.error}
+            </Notice>
+          )}
         </Card>
       </div>
       <Card title="Transaction readiness">

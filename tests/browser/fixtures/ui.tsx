@@ -25,6 +25,7 @@ let snapshot: AppSnapshot = {
     endpoint: "ws://127.0.0.1:9944",
     connected: true,
     checking: false,
+    updatedAt: "2026-11-06T00:00:00.000Z",
     genesis: `0x${"a".repeat(64)}`,
     blockNumber: "100",
     runtimeVersion: "1",
@@ -248,6 +249,16 @@ if (scenario === "same-names") {
   };
 }
 if (scenario === "unselected-wallet") snapshot.wallet.selectedAddress = null;
+if (
+  scenario === "network-prepared-review" ||
+  scenario === "network-signed-review"
+)
+  snapshot.operation = {
+    ...reviewOperation(),
+    ...(scenario === "network-signed-review"
+      ? { stage: "Signed", canSign: false, canSend: true }
+      : {}),
+  };
 if (scenario === "completed-review")
   snapshot.operation = {
     ...reviewOperation(),
@@ -303,19 +314,35 @@ if (
   scenario === "fresh-setup" ||
   scenario === "fresh-setup-disconnected" ||
   scenario === "setup-checking" ||
-  scenario === "setup-network-error"
+  scenario === "setup-network-error" ||
+  scenario === "setup-verification-error"
 )
   snapshot = { ...snapshot, workspace: null, workspaces: [] };
-if (scenario === "fresh-setup-disconnected") snapshot.network.connected = false;
+if (scenario === "fresh-setup-disconnected") {
+  snapshot.network.connected = false;
+  snapshot.network.updatedAt = null;
+}
 if (scenario === "setup-checking") {
+  snapshot.network.connected = false;
   snapshot.network.checking = true;
+  snapshot.network.updatedAt = null;
   snapshot.busy = "connect-network";
 }
 if (scenario === "setup-network-error")
   snapshot.network = {
     ...snapshot.network,
     connected: false,
+    updatedAt: null,
+    retryable: true,
     error: "Synthetic startup connection failure",
+  };
+if (scenario === "setup-verification-error")
+  snapshot.network = {
+    ...snapshot.network,
+    connected: false,
+    updatedAt: null,
+    retryable: false,
+    error: "Synthetic runtime verification failure",
   };
 if (scenario === "empty")
   snapshot = {
@@ -622,7 +649,14 @@ Object.defineProperty(window, "__uiTest", {
               : fixtureEndpoint(mode),
           connected,
           checking: false,
-          error: null,
+          reconnecting: false,
+          retryable: true,
+          updatedAt: connected
+            ? "2026-11-06T00:00:00.000Z"
+            : mode === snapshot.network.mode
+              ? (snapshot.network.updatedAt ?? null)
+              : null,
+          error: connected ? null : "Synthetic connection interrupted",
         },
       });
     },

@@ -16,6 +16,7 @@ import type { ActionView } from "../../ui-contract";
 import type { ScreenProps } from "../screen-types";
 import { addressError } from "../../components/addresses/options";
 import { displayAddress } from "../../components/addresses/format";
+import { networkReady, networkStatus } from "../../components/network-status";
 
 function ActionForm({
   action,
@@ -36,6 +37,12 @@ function ActionForm({
   async function prepare(event: FormEvent) {
     event.preventDefault();
     setError("");
+    if (!networkReady(props.snapshot.network)) {
+      setError(
+        "Wait for the network connection and current state to be verified before preparing this action.",
+      );
+      return;
+    }
     for (const field of action.fields) {
       const value = values[field.name] ?? "";
       if (field.required && !value.trim()) {
@@ -104,7 +111,11 @@ function ActionForm({
           variant="primary"
           icon="shield"
           type="submit"
-          disabled={!action.enabled || !!props.snapshot.busy}
+          disabled={
+            !action.enabled ||
+            !!props.snapshot.busy ||
+            !networkReady(props.snapshot.network)
+          }
         >
           Prepare for review
         </Button>
@@ -118,13 +129,14 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
   const operation = snapshot.operation;
   const action = snapshot.actions.find((item) => item.id === actionId);
   const [acknowledged, setAcknowledged] = useState(false);
+  const ready = networkReady(snapshot.network);
   const active =
     operation && (!actionId || operation.actionId === actionId)
       ? operation
       : null;
   useEffect(() => {
     setAcknowledged(false);
-  }, [active?.id, active?.stage, snapshot.wallet.selectedAddress]);
+  }, [active?.id, active?.stage, snapshot.wallet.selectedAddress, ready]);
   return (
     <>
       <Button
@@ -146,6 +158,17 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
           "Choose a workspace action to review its parameters and consequences."
         }
       />
+      {active && !ready && (
+        <Notice tone="warning" title={networkStatus(snapshot.network)}>
+          <p>
+            This review stays available. Preparing, signing, sending and
+            checking outcomes wait for a verified connection.
+          </p>
+          <button className="text-button" onClick={() => navigate("network")}>
+            Open network setup
+          </button>
+        </Notice>
+      )}
       {(action || active) && (
         <ol className="review-steps" aria-label="Operation steps">
           {[
@@ -241,7 +264,7 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                       onChange={(event) =>
                         setAcknowledged(event.target.checked)
                       }
-                      disabled={!active.canSign && !active.canSend}
+                      disabled={!ready || (!active.canSign && !active.canSend)}
                     />
                     <span>
                       I have checked the account, route, terms and consequences
@@ -264,7 +287,7 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                   <Button
                     variant="primary"
                     icon="wallet"
-                    disabled={!acknowledged || !!snapshot.busy}
+                    disabled={!acknowledged || !!snapshot.busy || !ready}
                     onClick={() =>
                       void props.run({ type: "sign-operation", id: active.id })
                     }
@@ -276,7 +299,7 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                   <Button
                     variant="primary"
                     icon="arrow"
-                    disabled={!acknowledged || !!snapshot.busy}
+                    disabled={!acknowledged || !!snapshot.busy || !ready}
                     onClick={() =>
                       void props.run({ type: "send-operation", id: active.id })
                     }
@@ -287,7 +310,7 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                 {active.canReconcile && (
                   <Button
                     icon="refresh"
-                    disabled={!!snapshot.busy}
+                    disabled={!!snapshot.busy || !ready}
                     onClick={() =>
                       void props.run({
                         type: "reconcile-operation",

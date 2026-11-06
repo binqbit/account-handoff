@@ -12,6 +12,7 @@ import type { WorkspaceInput } from "../../../ui-contract";
 import type { ScreenProps } from "../../screen-types";
 import { ExistingBeneficiaryFields } from "./existing-beneficiary-fields";
 import type { SetupDraftControls } from "./draft";
+import { networkReady } from "../../../components/network-status";
 
 export function TeamForm({
   snapshot,
@@ -32,7 +33,9 @@ export function TeamForm({
   } = draft;
   const [formError, setFormError] = useState("");
   const options = participantOptions(snapshot);
-  const busy = !!snapshot.busy;
+  const busy =
+    !!snapshot.busy && !["connect-network", "refresh"].includes(snapshot.busy);
+  const ready = networkReady(snapshot.network);
   const derived = useMemo(() => {
     const accounts = members.map((value) => addressKey(value));
     return accounts.length === 3 &&
@@ -44,6 +47,12 @@ export function TeamForm({
   async function submit(event: FormEvent) {
     event.preventDefault();
     setFormError("");
+    if (!ready || snapshot.busy) {
+      setFormError(
+        "Wait for the network connection and current state to be verified before saving.",
+      );
+      return;
+    }
     if (!derived) {
       setFormError("Choose three distinct native signing accounts.");
       return;
@@ -210,7 +219,7 @@ export function TeamForm({
             variant="primary"
             type="submit"
             icon="arrow"
-            disabled={busy || !name.trim() || !snapshot.network.connected}
+            disabled={!!snapshot.busy || !name.trim() || !ready}
           >
             {mode === "create" ? "Create workspace" : "Connect workspace"}
           </Button>

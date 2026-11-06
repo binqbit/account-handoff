@@ -4,11 +4,14 @@ import { ReadinessCards } from "../../components/readiness";
 import type { ScreenProps } from "../screen-types";
 import { TeamForm } from "./setup/team-form";
 import type { SetupDraftControls } from "./setup/draft";
+import { networkReady, networkStatus } from "../../components/network-status";
+import { deployment } from "../../config/deployment";
 
 export function Setup(props: ScreenProps & SetupDraftControls) {
   const { snapshot, navigate, openAction, onConnectNetwork } = props;
   const workspace = snapshot.workspace;
-  const networkReady = snapshot.network.connected && !snapshot.network.checking;
+  const ready = networkReady(snapshot.network);
+  const showForm = ready || !!snapshot.network.updatedAt;
   return (
     <>
       <PageHeader
@@ -17,23 +20,31 @@ export function Setup(props: ScreenProps & SetupDraftControls) {
         title="Start with a stable beneficiary"
         description="Create a multisig configuration or connect your existing group."
       />
-      {!networkReady ? (
+      {!showForm ? (
         <Card
           title={
-            snapshot.network.checking
+            snapshot.network.checking || snapshot.network.reconnecting
               ? "Connecting to the network…"
               : "Connect before setting up your workspace"
           }
         >
           <p role="status">
-            {snapshot.network.checking
+            {snapshot.network.checking || snapshot.network.reconnecting
               ? "Checking the network connection. The workspace form will appear when the connection is ready."
-              : "A network connection is required to create or connect a workspace. Open network setup to connect manually or try again."}
+              : snapshot.network.error && snapshot.network.retryable === false
+                ? "The selected network could not be verified. Open network setup to review the problem before continuing."
+                : "A network connection is required to create or connect a workspace. Open network setup to connect manually or try again."}
           </p>
           <p className="muted">
             Any workspace details already entered are kept while you reconnect
             or visit network setup. Keep this page open to retain your draft.
           </p>
+          {deployment.isTestnet && snapshot.network.retryable && (
+            <p role="status">
+              The app will retry automatically when the connection is available.
+              You can also reconnect manually.
+            </p>
+          )}
           {snapshot.network.error && (
             <Notice tone="negative">{snapshot.network.error}</Notice>
           )}
@@ -43,6 +54,23 @@ export function Setup(props: ScreenProps & SetupDraftControls) {
         </Card>
       ) : (
         <div className="setup-layout">
+          {!ready && (
+            <Notice
+              tone={
+                snapshot.network.retryable === false ? "negative" : "warning"
+              }
+              title={networkStatus(snapshot.network)}
+            >
+              <p>
+                Your draft stays editable. Saving the workspace waits until the
+                network connection and current state are verified.
+              </p>
+              {snapshot.network.error && <p>{snapshot.network.error}</p>}
+              <button className="text-button" onClick={onConnectNetwork}>
+                Open network setup
+              </button>
+            </Notice>
+          )}
           <HelpDisclosure title="How setup works">
             <div
               className="identity-flow"
