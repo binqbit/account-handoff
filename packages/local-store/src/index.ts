@@ -7,6 +7,9 @@ import {
   verifyRecordDigest,
   verifySigningContext,
   semanticIntentDigest,
+  validateRecordSemantics,
+  assertGraphClosure,
+  PORTABLE_LIMITS,
 } from "@account-handoff/contracts";
 import type {
   CanonicalRecord,
@@ -72,6 +75,8 @@ export interface Journal {
   readonly namespace: string;
   appendRecord(record: CanonicalRecord): Promise<void>;
   sealEnvelope(record: FrozenEnvelope): Promise<void>;
+  /** Atomically merge a complete unsigned portable record graph. */
+  importRecords(records: readonly CanonicalRecord[]): Promise<void>;
   appendProgress(
     progress: LocalOperationProgress,
     lease?: Lease,
@@ -92,6 +97,7 @@ export interface Journal {
   releaseLease(lease: Lease): Promise<void>;
   getPreference<T>(key: string): Promise<T | undefined>;
   setPreference(key: string, value: unknown): Promise<void>;
+  setPreferences(values: Readonly<Record<string, unknown>>): Promise<void>;
   listQuarantine(): Promise<QuarantineItem[]>;
   close(): void;
 }
@@ -271,6 +277,117 @@ export async function openJournal(
           recordId: envelope.recordId,
         });
       await tx.done;
+    },
+    async importRecords(records) {
+      if (
+        !Array.isArray(records) ||
+        records.length === 0 ||
+        records.length > PORTABLE_LIMITS.maxRecordItems
+      )
+        throw new ContractError(
+          "InvalidImportSize",
+          "Import requires 1–1,000 unsigned records",
+        );
+      // Do not let caller mutations change bytes after their integrity was
+      // checked. Crypto and semantic validation complete before opening IDB.
+      const incoming = structuredClone(records);
+      const preparedSeals = new Map<string, SemanticSeal>();
+      for (const record of incoming) {
+        await validateRecordIntegrity(record);
+        if (
+          record.kind === "SignedAttempt" &&
+          (record.recordScope !== "portable_export" ||
+            record.signedExtrinsicBytes !== null ||
+            record.bytesOmissionReason !==
+              "portable_export_omits_all_signed_packets")
+        )
+          throw new ContractError(
+            "UnsignedImportRequired",
+            "Only unsigned portable records may be imported",
+          );
+        const issues = await validateRecordSemantics(record);
+        if (issues.length)
+          throw new ContractError(
+            "InvalidRecordSemantics",
+            "Imported record failed consistency checks",
+            issues.map((issue) => `${issue.guardId}: ${issue.message}`),
+          );
+        if (record.kind === "FrozenEnvelope" && record.status !== "draft") {
+          // validateRecordSemantics has already verified this exact digest.
+          preparedSeals.set(record.recordId, {
+            key: keyForEnvelope(record),
+            digest: record.semanticIntentDigest!,
+            recordId: record.recordId,
+          });
+        }
+      }
+      assertGraphClosure(incoming);
+      const tx = db.transaction(["records", "semanticSeals"], "readwrite", {
+        durability: "strict",
+      });
+      let conflictingEnvelope: FrozenEnvelope | null = null;
+      try {
+        const storedRecords = tx.objectStore("records");
+        const storedSeals = tx.objectStore("semanticSeals");
+        const existingIds = new Set<string>();
+        const knownSeals = new Map<string, SemanticSeal>();
+        const addedSeals = new Map<string, SemanticSeal>();
+        // Read and check the entire batch under the same write lock before
+        // adding anything, so another tab cannot race the conflict checks.
+        for (const record of incoming) {
+          const existing = await storedRecords.get(record.recordId);
+          if (existing && existing.digest !== record.digest)
+            throw new ContractError(
+              "ImmutableRecordConflict",
+              "Record ID already identifies different immutable content",
+            );
+          if (existing) existingIds.add(record.recordId);
+          const sameDigest = await storedRecords
+            .index("digest")
+            .get(record.digest);
+          if (sameDigest && sameDigest.recordId !== record.recordId)
+            throw new ContractError(
+              "ImmutableRecordConflict",
+              "Record digest already identifies another immutable record ID",
+            );
+          const proposed = preparedSeals.get(record.recordId);
+          if (!proposed) continue;
+          const seal =
+            knownSeals.get(proposed.key) ??
+            (await storedSeals.get(proposed.key));
+          if (seal && seal.digest !== proposed.digest) {
+            conflictingEnvelope = record as FrozenEnvelope;
+            throw new ContractError(
+              "SemanticIntentConflict",
+              "The same intent revision already has different content",
+            );
+          }
+          knownSeals.set(proposed.key, seal ?? proposed);
+          if (!seal) addedSeals.set(proposed.key, proposed);
+        }
+        for (const record of incoming)
+          if (!existingIds.has(record.recordId))
+            await storedRecords.add(record);
+        for (const seal of addedSeals.values()) await storedSeals.add(seal);
+        await tx.done;
+      } catch (error) {
+        // A request failure can have aborted IDB already. Consume its outcome
+        // in either case and never leave a partially imported graph or seal.
+        try {
+          tx.abort();
+        } catch {
+          /* The transaction may have aborted or completed already. */
+        }
+        await tx.done.catch(() => {});
+        if (conflictingEnvelope)
+          await db.put("quarantine", {
+            id: conflictingEnvelope.recordId,
+            reason: "SemanticIntentConflict",
+            candidate: conflictingEnvelope,
+            at: now(),
+          });
+        throw error;
+      }
     },
     async appendProgress(progress, lease) {
       const checked = validateLocalProgress(progress);
@@ -559,6 +676,27 @@ export async function openJournal(
     async setPreference(key, value) {
       canonicalJson(value);
       await db.put("preferences", value, key);
+    },
+    async setPreferences(values) {
+      const copied = structuredClone(values);
+      canonicalJson(copied);
+      const entries = Object.entries(copied);
+      if (!entries.length) return;
+      const tx = db.transaction("preferences", "readwrite", {
+        durability: "strict",
+      });
+      try {
+        for (const [key, value] of entries) await tx.store.put(value, key);
+        await tx.done;
+      } catch (error) {
+        try {
+          tx.abort();
+        } catch {
+          /* A failed IDB request may have aborted the transaction already. */
+        }
+        await tx.done.catch(() => {});
+        throw error;
+      }
     },
     listQuarantine() {
       return db.getAll("quarantine");
