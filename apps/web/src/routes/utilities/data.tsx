@@ -15,20 +15,31 @@ export function Data(props: ScreenProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
   const [inspected, setInspected] = useState(false);
+  const [reading, setReading] = useState(false);
+  const inputVersion = useRef(0);
   const maxSize = 5 * 1024 * 1024;
   async function loadFile(file: File | undefined) {
     if (!file) return;
+    const version = ++inputVersion.current;
     setError("");
     setInspected(false);
+    setFileName("");
+    setReading(false);
     if (file.size > maxSize) {
       setError("The package exceeds 5 MiB. The file was not read.");
       return;
     }
+    setReading(true);
     try {
-      setContents(await file.text());
+      const nextContents = await file.text();
+      if (inputVersion.current !== version) return;
+      setContents(nextContents);
       setFileName(file.name);
     } catch {
-      setError("Could not read the file.");
+      if (inputVersion.current === version)
+        setError("Could not read the file.");
+    } finally {
+      if (inputVersion.current === version) setReading(false);
     }
   }
   async function inspect(event: FormEvent) {
@@ -38,12 +49,9 @@ export function Data(props: ScreenProps) {
       setError("The package exceeds 5 MiB.");
       return;
     }
-    try {
-      await run({ type: "import-package", contents });
-      setInspected(true);
-    } catch {
-      setInspected(false);
-    }
+    const version = inputVersion.current;
+    const outcome = await run({ type: "import-package", contents });
+    if (inputVersion.current === version) setInspected(outcome.succeeded);
   }
   return (
     <>
@@ -59,6 +67,7 @@ export function Data(props: ScreenProps) {
             <input
               type="file"
               ref={fileInput}
+              tabIndex={-1}
               accept="application/json,.json"
               className="sr-only"
               aria-label="Choose a JSON package"
@@ -72,6 +81,7 @@ export function Data(props: ScreenProps) {
               Choose a JSON file
             </Button>
             {fileName && <p className="muted">{fileName}</p>}
+            {reading && <p role="status">Reading the selected package…</p>}
             <div className="field">
               <label htmlFor="import-json">Or paste JSON</label>
               <textarea
@@ -79,7 +89,10 @@ export function Data(props: ScreenProps) {
                 rows={10}
                 value={contents}
                 onChange={(event) => {
+                  inputVersion.current += 1;
                   setContents(event.target.value);
+                  setFileName("");
+                  setReading(false);
                   setInspected(false);
                 }}
                 placeholder="Unsigned package contents"
@@ -99,7 +112,7 @@ export function Data(props: ScreenProps) {
               variant="primary"
               type="submit"
               icon="shield"
-              disabled={!contents.trim() || !!snapshot.busy}
+              disabled={reading || !contents.trim() || !!snapshot.busy}
             >
               Verify and import
             </Button>

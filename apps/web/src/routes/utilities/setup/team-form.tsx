@@ -80,12 +80,8 @@ export function TeamForm({ snapshot, run, navigate }: ScreenProps) {
       ...attachment,
     };
     if (mode === "connect") input.controllerAddress = controllerAddress.trim();
-    try {
-      await run({ type: "create-workspace", input });
-      navigate("overview");
-    } catch {
-      /* The application displays the command error. */
-    }
+    const outcome = await run({ type: "create-workspace", input });
+    if (outcome.succeeded) navigate("overview");
   }
   return (
     <Card title="Your multisig">

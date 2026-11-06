@@ -156,6 +156,7 @@ let snapshot: AppSnapshot = {
   busy: null,
 };
 const scenario = new URLSearchParams(location.search).get("scenario");
+const rejectedCommand = new URLSearchParams(location.search).get("reject");
 if (scenario?.startsWith("identity-") && snapshot.workspace) {
   const missing = scenario === "identity-unknown";
   snapshot.workspace.identityComparison =
@@ -282,7 +283,7 @@ if (scenario === "empty")
       selectedAddress: null,
     },
   };
-if (scenario === "unknown")
+if (scenario === "unknown" || scenario === "unknown-history")
   snapshot = {
     ...snapshot,
     operation: {
@@ -300,6 +301,24 @@ if (scenario === "history-progress") {
   snapshot.busy = "refresh";
   snapshot.network.historyProgress = { completed: 16, total: 32 };
 }
+if (scenario === "unknown-history" && snapshot.workspace)
+  snapshot.workspace.history = [
+    {
+      id: "uncertain-attempt",
+      title: "Saved uncertain attempt",
+      state: "Unknown",
+      tone: "warning",
+      detail: "Reconcile the retained attempt before acting again.",
+      unresolved: true,
+      operationId: "test-operation",
+      txHash: `0x${"f".repeat(64)}`,
+      layers: [
+        { label: "Outer transaction", value: "Not verified" },
+        { label: "Business outcome", value: "Unknown" },
+      ],
+      evidence: { kind: "synthetic", callHash: `0x${"c".repeat(64)}` },
+    },
+  ];
 if (scenario === "read-only")
   snapshot = {
     ...snapshot,
@@ -359,6 +378,8 @@ const facade: ApplicationFacade = {
   },
   async dispatch(command) {
     commands.push(command);
+    if (command.type === rejectedCommand)
+      throw new Error(`Synthetic ${command.type} failure`);
     if (command.type === "select-account")
       publish({
         ...snapshot,
@@ -460,6 +481,8 @@ const facade: ApplicationFacade = {
           canDiscard: false,
         },
       });
+    if (command.type === "discard-operation")
+      publish({ ...snapshot, operation: null });
     if (command.type === "export-package")
       return {
         download: {

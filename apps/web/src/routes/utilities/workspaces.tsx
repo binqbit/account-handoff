@@ -66,7 +66,9 @@ export function Workspaces(props: ScreenProps) {
                 disabled={!!snapshot.busy}
                 onClick={() =>
                   void run({ type: "select-workspace", id: workspace.id }).then(
-                    () => navigate("overview"),
+                    (outcome) => {
+                      if (outcome.succeeded) navigate("overview");
+                    },
                   )
                 }
               >

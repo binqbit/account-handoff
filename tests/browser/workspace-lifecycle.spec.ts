@@ -105,6 +105,7 @@ test("an existing multisig requires a matching address and membership", async ({
       (window as unknown as { __uiTest: { commands: unknown[] } }).__uiTest
         .commands,
   );
+  await expect(page).toHaveURL(/#overview$/);
   expect(commands).toHaveLength(1);
   expect(commands[0]).toMatchObject({
     type: "create-workspace",

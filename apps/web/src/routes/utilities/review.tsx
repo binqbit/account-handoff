@@ -315,6 +315,12 @@ export function Review(props: ScreenProps & { actionId: string | null }) {
                   </Button>
                 )}
               </div>
+              {active.canDiscard && (
+                <p className="footnote">
+                  Setting this review aside does not cancel an on-chain proposal
+                  or revoke existing signatures.
+                </p>
+              )}
               {active.canSend && (
                 <p className="footnote">
                   Signed bytes are saved locally. Only this separate command

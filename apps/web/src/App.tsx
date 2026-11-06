@@ -33,7 +33,7 @@ import {
   Setup,
   Workspaces,
 } from "./routes/utilities";
-import type { ScreenProps } from "./routes/screen-types";
+import type { CommandOutcome, ScreenProps } from "./routes/screen-types";
 import { deployment } from "./config/deployment";
 import "./styles/app.css";
 
@@ -80,8 +80,8 @@ function Application({ application }: { application: ApplicationFacade }) {
       ? { ...sourceSnapshot, busy: localBusy }
       : sourceSnapshot;
   const run = useCallback(
-    async (command: AppCommand): Promise<CommandResult | void> => {
-      if (pending.current) return;
+    async (command: AppCommand): Promise<CommandOutcome> => {
+      if (pending.current) return { succeeded: false };
       pending.current = true;
       setLocalBusy(command.type);
       setLocalNotice(null);
@@ -90,7 +90,7 @@ function Application({ application }: { application: ApplicationFacade }) {
         if (result?.download) saveDownload(result.download);
         if (result?.message)
           setLocalNotice({ message: result.message, error: false });
-        return result;
+        return { succeeded: true, result };
       } catch (error) {
         setLocalNotice({
           message:
@@ -99,7 +99,7 @@ function Application({ application }: { application: ApplicationFacade }) {
               : "Could not complete the action. Check the current state and attempt.",
           error: true,
         });
-        return;
+        return { succeeded: false };
       } finally {
         pending.current = false;
         setLocalBusy(null);
