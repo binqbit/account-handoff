@@ -232,3 +232,4 @@ export async function isGrantReviewer(
 }
 
 export * from "./history.js";
+export { nativeHistorySource } from "./history-source.js";

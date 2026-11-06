@@ -147,6 +147,8 @@ The public entry point is [packages/native-adapter/src/index.ts](packages/native
 
 The application supplies callbacks for operations whose owner can change during an asynchronous stage, including the active journal after a refresh. Historical receipt anchors remain distinct from the latest network view. UI components consume the facade and projections; they do not acquire native, wallet or storage authority.
 
+Grant history is read from Pure creation to the requested finalized checkpoint in pages of at most 4,096 blocks. Within one native connection, the application reuses its verified contiguous prefix after rechecking canonical and runtime boundaries, then reads only new blocks. The 4,096-block bound limits each page, not the lifetime of a workspace. The combined history retains an 8,192-event budget and always replays the original creation and any scope breach. A missing block, cancellation or changed canonical/runtime context leaves history incomplete and blocks dependent operations. This cache is held only in memory; a reload or reconnect requires another full historical read, so cold checks of old grants can take longer. Local records never substitute for canonical history.
+
 ### LOCAL operator
 
 [scripts/local/native-tools.ts](scripts/local/native-tools.ts) is the CLI entry point. [scripts/local/runtime/operator.ts](scripts/local/runtime/operator.ts) validates the run/deployment/metadata binding, opens the connection, owns the per-run lock and selects the requested scenario.

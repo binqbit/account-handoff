@@ -22,12 +22,12 @@ import {
 } from "@account-handoff/native-adapter";
 import {
   readGrant,
-  scanGrantHistory,
   ZERO_ADDRESS,
   type GrantHistoryEntry,
 } from "@account-handoff/grant-adapter";
 import type { WorkspaceInput } from "../ui-contract";
 import type { LocalDescriptor } from "./models";
+import { readGrantHistory } from "./grant-history";
 
 export interface VerifiedLocalWorkspaceImport {
   input: WorkspaceInput;
@@ -489,7 +489,7 @@ async function validateWorkspaceImport(
     expectedCode,
     current.anchor.hash,
   );
-  const history = await scanGrantHistory(connection, {
+  const history = await readGrantHistory(connection, current, {
     contract,
     grantId,
     fromBlock: blockNumber,

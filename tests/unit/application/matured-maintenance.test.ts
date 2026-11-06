@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { readGrant, scanGrantHistory } from "@account-handoff/grant-adapter";
+import { readGrant } from "@account-handoff/grant-adapter";
+import { readGrantHistory } from "../../../apps/web/src/application/grant-history";
 import { contractAddress } from "@account-handoff/native-adapter";
 import { loadOperationInputs } from "../../../apps/web/src/application/operation-inputs";
 
 vi.mock("@account-handoff/grant-adapter", () => ({
   readGrant: vi.fn(),
-  scanGrantHistory: vi.fn(),
   isGrantReviewer: vi.fn(),
+}));
+vi.mock("../../../apps/web/src/application/grant-history", () => ({
+  readGrantHistory: vi.fn(),
 }));
 vi.mock("../../../apps/web/src/application/presentation", () => ({
   workspaceView: () => ({ continuity: "rotated" }),
@@ -70,7 +73,7 @@ describe("matured vesting maintenance admission", () => {
     vi.mocked(readGrant).mockResolvedValue({
       grantee: contractAddress(pure),
     } as never);
-    vi.mocked(scanGrantHistory).mockResolvedValue({
+    vi.mocked(readGrantHistory).mockResolvedValue({
       complete: true,
       firstVestingRelease: release,
     } as never);
@@ -90,7 +93,7 @@ describe("matured vesting maintenance admission", () => {
     async (caseName) => {
       const { context, pending, fingerprint, account } = fixture();
       if (caseName === "history")
-        vi.mocked(scanGrantHistory).mockResolvedValue({
+        vi.mocked(readGrantHistory).mockResolvedValue({
           complete: false,
           firstVestingRelease: release,
         } as never);

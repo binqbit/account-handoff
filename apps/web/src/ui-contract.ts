@@ -42,6 +42,7 @@ export interface NetworkView {
   endpoint: string;
   connected: boolean;
   checking: boolean;
+  historyProgress?: { completed: number; total: number } | null;
   genesis?: string | null;
   blockNumber?: string | null;
   blockHash?: string | null;

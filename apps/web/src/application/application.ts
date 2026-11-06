@@ -383,7 +383,11 @@ export class Application implements ApplicationFacade {
     const generation = this.generation;
     this.state = {
       ...this.state,
-      network: { ...this.state.network, checking: true },
+      network: {
+        ...this.state.network,
+        checking: true,
+        historyProgress: null,
+      },
     };
     this.render();
     try {
@@ -403,11 +407,26 @@ export class Application implements ApplicationFacade {
       const profile = await this.profile(f, d);
       const w = this.workspace();
       this.grantHistory = null;
+      let lastHistoryProgressAt = 0;
       const observed = await readWorkspaceState(
         connection,
         f,
         w,
         this.state.wallet.accounts,
+        (completed, total) => {
+          if (generation !== this.generation) return;
+          const now = Date.now();
+          if (completed !== total && now - lastHistoryProgressAt < 200) return;
+          lastHistoryProgressAt = now;
+          this.state = {
+            ...this.state,
+            network: {
+              ...this.state.network,
+              historyProgress: { completed, total },
+            },
+          };
+          this.render();
+        },
       );
       this.grantHistory = observed.history;
       if (observed.baselineChanged) await this.save();
@@ -455,11 +474,17 @@ export class Application implements ApplicationFacade {
         network: {
           ...this.state.network,
           checking: false,
+          historyProgress: null,
           error: errorText(error),
         },
       };
       throw error;
     } finally {
+      if (generation === this.generation)
+        this.state = {
+          ...this.state,
+          network: { ...this.state.network, historyProgress: null },
+        };
       this.render();
     }
   }

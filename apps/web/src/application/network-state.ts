@@ -4,19 +4,17 @@ import {
   NativeConnection,
   type NativeFingerprint,
 } from "@account-handoff/native-adapter";
-import {
-  readGrant,
-  scanGrantHistory,
-  type GrantHistory,
-} from "@account-handoff/grant-adapter";
+import { readGrant, type GrantHistory } from "@account-handoff/grant-adapter";
 import type { AppSnapshot } from "../ui-contract";
 import type { ChainView, WorkspaceRecord } from "./models";
 import type { WalletAccount } from "@account-handoff/wallet-adapter";
+import { readGrantHistory } from "./grant-history";
 export async function readWorkspaceState(
   connection: NativeConnection,
   f: NativeFingerprint,
   w: WorkspaceRecord | null,
   walletAccounts: WalletAccount[],
+  onHistoryProgress?: (completed: number, total: number) => void,
 ): Promise<{
   accounts: ChainView["accounts"];
   grant: ChainView["grant"];
@@ -60,11 +58,12 @@ export async function readWorkspaceState(
     );
   let history: GrantHistory | null = null;
   if (w?.contract && w.grantId !== null && w.creationBlock !== undefined) {
-    history = await scanGrantHistory(connection, {
+    history = await readGrantHistory(connection, f, {
       contract: w.contract,
       grantId: w.grantId,
       fromBlock: w.creationBlock,
       toBlock: f.anchor.number,
+      ...(onHistoryProgress ? { onProgress: onHistoryProgress } : {}),
     });
     const release = history.firstVestingRelease;
     if (!w.baseline && release && w.pure && history.complete) {
@@ -104,6 +103,7 @@ export function connectedNetwork(
     ...current,
     connected: true,
     checking: false,
+    historyProgress: null,
     genesis: f.genesis,
     blockHash: f.anchor.hash,
     blockNumber: String(f.anchor.number),

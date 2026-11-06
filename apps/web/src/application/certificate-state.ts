@@ -5,13 +5,10 @@ import {
   hex,
   type NativeFingerprint,
 } from "@account-handoff/native-adapter";
-import {
-  readGrant,
-  scanGrantHistory,
-  type GrantHistory,
-} from "@account-handoff/grant-adapter";
+import { readGrant, type GrantHistory } from "@account-handoff/grant-adapter";
 import { type Journal } from "@account-handoff/local-store";
 import type { ChainView, WorkspaceRecord } from "./models";
+import { readGrantHistory } from "./grant-history";
 import {
   assessCurrentContinuity,
   buildWorkspaceCertificate,
@@ -97,7 +94,7 @@ export async function updateWorkspaceCertificate({
           BigInt(w.grantId),
           f.anchor.hash,
         ),
-        scanGrantHistory(connection, {
+        readGrantHistory(connection, f, {
           contract: w.contract,
           grantId: w.grantId,
           fromBlock: w.creationBlock,

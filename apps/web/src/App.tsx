@@ -222,7 +222,26 @@ function Application({ application }: { application: ApplicationFacade }) {
       {snapshot.busy && (
         <div className="activity-indicator" role="status" aria-live="polite">
           <span className="spinner" />
-          Processing request…
+          {snapshot.network.historyProgress ? (
+            <div className="history-progress">
+              <span>Verifying grant history…</span>
+              <div aria-live="off">
+                <small>
+                  {snapshot.network.historyProgress.completed.toLocaleString()}
+                  {" of "}
+                  {snapshot.network.historyProgress.total.toLocaleString()}
+                  {" blocks checked"}
+                </small>
+                <progress
+                  aria-label="Grant history blocks checked"
+                  value={snapshot.network.historyProgress.completed}
+                  max={snapshot.network.historyProgress.total}
+                />
+              </div>
+            </div>
+          ) : (
+            "Processing request…"
+          )}
         </div>
       )}
     </>

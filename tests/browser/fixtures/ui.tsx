@@ -296,6 +296,10 @@ if (scenario === "unknown")
       blockers: ["Reconcile the existing attempt's outcome first."],
     },
   };
+if (scenario === "history-progress") {
+  snapshot.busy = "refresh";
+  snapshot.network.historyProgress = { completed: 16, total: 32 };
+}
 if (scenario === "read-only")
   snapshot = {
     ...snapshot,

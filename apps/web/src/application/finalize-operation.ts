@@ -8,10 +8,7 @@ import {
   type NativeReceipt,
 } from "@account-handoff/native-adapter";
 
-import {
-  scanGrantHistory,
-  type GrantHistory,
-} from "@account-handoff/grant-adapter";
+import { type GrantHistory } from "@account-handoff/grant-adapter";
 import { type Journal } from "@account-handoff/local-store";
 
 import type { ChainView, WorkspaceRecord, PendingOperation } from "./models";
@@ -20,6 +17,7 @@ import { buildReadAnchor, buildReceipt } from "./record-builders";
 
 import { id } from "./values";
 import { findContractEvent } from "./contract-events";
+import { readGrantHistory } from "./grant-history";
 export async function finalizeOperation(
   {
     workspace: w,
@@ -68,7 +66,7 @@ export async function finalizeOperation(
   const check = await postconditions(p, receipt);
   let history: GrantHistory | null = null;
   if (w.contract && w.grantId !== null && w.creationBlock !== undefined)
-    history = await scanGrantHistory(connection, {
+    history = await readGrantHistory(connection, f, {
       contract: w.contract,
       grantId: w.grantId,
       fromBlock: w.creationBlock,

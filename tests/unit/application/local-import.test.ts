@@ -20,8 +20,10 @@ import type { TestnetDescriptor } from "../../../apps/web/src/application/networ
 const readers = vi.hoisted(() => ({ history: vi.fn(), grant: vi.fn() }));
 vi.mock("@account-handoff/grant-adapter", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@account-handoff/grant-adapter")>()),
-  scanGrantHistory: readers.history,
   readGrant: readers.grant,
+}));
+vi.mock("../../../apps/web/src/application/grant-history", () => ({
+  readGrantHistory: readers.history,
 }));
 import {
   validateLocalWorkspaceImport,

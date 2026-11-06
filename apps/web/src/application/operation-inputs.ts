@@ -7,15 +7,12 @@ import {
   object,
   type NativeFingerprint,
 } from "@account-handoff/native-adapter";
-import {
-  readGrant,
-  scanGrantHistory,
-  isGrantReviewer,
-} from "@account-handoff/grant-adapter";
+import { readGrant, isGrantReviewer } from "@account-handoff/grant-adapter";
 import type { ChainView, WorkspaceRecord, PendingOperation } from "./models";
 import { workspaceView } from "./presentation";
 import { schedules } from "./values";
 import { hasMaturedReleaseSchedule } from "./continuity/vesting";
+import { readGrantHistory } from "./grant-history";
 export async function loadOperationInputs(
   {
     connection,
@@ -65,7 +62,7 @@ export async function loadOperationInputs(
       : null;
   const history =
     w.contract && w.grantId !== null && w.creationBlock !== undefined
-      ? await scanGrantHistory(connection, {
+      ? await readGrantHistory(connection, f, {
           contract: w.contract,
           grantId: w.grantId,
           fromBlock: w.creationBlock,

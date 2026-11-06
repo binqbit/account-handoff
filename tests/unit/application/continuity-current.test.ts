@@ -18,7 +18,8 @@ import type {
 } from "../../../apps/web/src/application/models";
 import type { Journal } from "@account-handoff/local-store";
 import { sealRecord } from "@account-handoff/contracts";
-import { readGrant, scanGrantHistory } from "@account-handoff/grant-adapter";
+import { readGrant } from "@account-handoff/grant-adapter";
+import { readGrantHistory } from "../../../apps/web/src/application/grant-history";
 import { buildWorkspaceCertificate } from "../../../apps/web/src/application/continuity";
 import {
   account,
@@ -41,7 +42,9 @@ vi.mock("../../../apps/web/src/application/continuity", async (original) => ({
 vi.mock("@account-handoff/grant-adapter", async (original) => ({
   ...(await original<typeof import("@account-handoff/grant-adapter")>()),
   readGrant: vi.fn(),
-  scanGrantHistory: vi.fn(),
+}));
+vi.mock("../../../apps/web/src/application/grant-history", () => ({
+  readGrantHistory: vi.fn(),
 }));
 
 async function fixture() {
@@ -333,7 +336,7 @@ describe("immutable certificate reuse and current continuity", () => {
         afterSnapshot: {} as never,
       });
     vi.mocked(readGrant).mockResolvedValue(input.chain.grant!);
-    vi.mocked(scanGrantHistory).mockResolvedValue({
+    vi.mocked(readGrantHistory).mockResolvedValue({
       ...input.history,
       toBlock: 30,
       scannedThrough: 30,
