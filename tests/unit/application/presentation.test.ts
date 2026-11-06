@@ -346,6 +346,43 @@ describe("UI presentation preserves authoritative distinctions", () => {
       "GRC-GRANT-APPROVE",
     );
   });
+  it("guides reviewers to the submitted first milestone while the second is still open", () => {
+    const { workspace, chain } = fixture();
+    chain.grant!.milestones[0]!.state = 1;
+    chain.grant!.milestones[1]!.state = 0;
+    expect(workspaceView(workspace, chain).currentTask.actionId).toBe(
+      "GRC-GRANT-APPROVE",
+    );
+  });
+  it("offers funding rather than a disabled manual mapping call on automatic runtimes", () => {
+    const { workspace, chain } = fixture();
+    chain.profile.mappingPolicy.autoMap = true;
+    chain.profile.mappingPolicy.explicitMappingRequired = false;
+    chain.accounts[P!]!.mappedTo = null;
+    chain.accounts[P!]!.free = 0n;
+    const task = workspaceView(workspace, chain).currentTask;
+    expect(task.actionId).toBe("GRC-SETUP-FUND-P");
+    expect(
+      actionViews(workspace, chain, F!).find(
+        (action) => action.id === task.actionId,
+      )?.enabled,
+    ).toBe(true);
+  });
+  it("requires a fresh check when a funded beneficiary has no verified automatic mapping", () => {
+    const { workspace, chain } = fixture();
+    chain.profile.mappingPolicy.autoMap = true;
+    chain.accounts[P!]!.mappedTo = null;
+    expect(workspaceView(workspace, chain).currentTask.destination).toBe(
+      "network",
+    );
+  });
+  it("sends an unqualified runtime back to network checks before suggesting transactions", () => {
+    const { workspace, chain } = fixture();
+    chain.profile.status = "candidate";
+    expect(workspaceView(workspace, chain).currentTask.destination).toBe(
+      "network",
+    );
+  });
   it("keeps exactly fourteen actions and disables disconnected preparation", () => {
     const { workspace } = fixture();
     const actions = actionViews(workspace, null, null);
@@ -421,6 +458,19 @@ describe("UI presentation preserves authoritative distinctions", () => {
         (action) => action.id === "GRC-ROTATION-ADD-M1",
       )?.enabled,
     ).toBe(false);
+  });
+  it("prioritizes unexpected authority over further beneficiary setup", () => {
+    const { workspace, chain } = fixture();
+    chain.accounts[P!]!.proxies.push({
+      delegate: hex("f"),
+      proxyType: "Any",
+      delay: 0,
+    });
+    chain.accounts[P!]!.mappedTo = null;
+    chain.grant = null;
+    expect(workspaceView(workspace, chain).currentTask.destination).toBe(
+      "team",
+    );
   });
   it("requires baseline, distinct removal and later same-grant submission", () => {
     const { workspace, chain } = fixture();

@@ -183,7 +183,12 @@ export function workspaceView(
     },
   ];
   let currentTask: WorkspaceView["currentTask"];
-  if (!chain || !eq(chain.fingerprint.genesis, workspace.genesis))
+  if (
+    !chain ||
+    !eq(chain.fingerprint.genesis, workspace.genesis) ||
+    chain.profile.status !== "accepted" ||
+    chain.descriptor?.mode !== workspace.mode
+  )
     currentTask = {
       title: "Check the workspace network",
       detail: "Select the matching native endpoint and read finalized data.",
@@ -196,24 +201,39 @@ export function workspaceView(
         "Fund the controller’s creation reserve, then create the beneficiary through your current group.",
       actionId: "GRC-SETUP-CREATE-PURE",
     };
-  else if (!mapped(pureState))
+  else if (current === "Diverged")
     currentTask = {
-      title: "Prepare beneficiary mapping",
-      detail: "Fund P's liquidity and verify its persistent mapping to h(P).",
-      actionId: "GRC-SETUP-MAP-P",
+      title: "Review unexpected authority",
+      detail: "The delegate inventory differs from the configured groups.",
+      destination: "team",
     };
+  else if (!mapped(pureState))
+    currentTask = chain.profile.mappingPolicy.autoMap
+      ? pureState?.free === 0n
+        ? {
+            title: "Fund the beneficiary",
+            detail:
+              "This network maps funded accounts automatically. Add beneficiary liquidity, then verify the reverse mapping.",
+            actionId: "GRC-SETUP-FUND-P",
+          }
+        : {
+            title: "Verify the beneficiary mapping",
+            detail:
+              "This network maps funded accounts automatically. Refresh finalized state and verify that its reverse mapping resolves to the beneficiary.",
+            destination: "network",
+          }
+      : {
+          title: "Prepare beneficiary mapping",
+          detail:
+            "Fund P's liquidity and verify its persistent mapping to h(P).",
+          actionId: "GRC-SETUP-MAP-P",
+        };
   else if (!grant || workspace.grantId === null)
     currentTask = {
       title: "Create a grant for h(P)",
       detail:
         "The funder finances two milestones for the prepared beneficiary.",
       actionId: "GRC-GRANT-CREATE",
-    };
-  else if (current === "Diverged")
-    currentTask = {
-      title: "Review unexpected authority",
-      detail: "The delegate inventory differs from the configured groups.",
-      destination: "team",
     };
   else if (current === "DualControl")
     currentTask = {
@@ -232,10 +252,7 @@ export function workspaceView(
         "All milestones are closed. Review the payment history or manage the signing group.",
       destination: "history",
     };
-  else if (
-    milestones.some((item) => item.state === "Submitted") &&
-    !milestones.some((item) => item.state === "Open")
-  )
+  else if (milestones.some((item) => item.state === "Submitted"))
     currentTask = {
       title: "The milestone awaits reviewers",
       detail:
